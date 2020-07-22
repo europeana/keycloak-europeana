@@ -41,7 +41,7 @@ For testing, this project can also be run in a local Docker environment:
 
 - check this project out from Github
 
-- execute `mvn clean package` to create the necessary .jar file
+- execute `mvn clean package` to create the necessary .jar files
 
 - build the docker image: 
 
