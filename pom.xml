@@ -15,7 +15,6 @@
 
     <modules>
         <module>bcrypt-addon</module>
-<!--        <module>postgresql-driver</module>-->
     </modules>
 
     <name>Keycloak Docker on Cloud Foundry</name>
@@ -27,9 +26,6 @@
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
-
-        <!-- Libraries -->
-        <postgresql.version>42.2.14</postgresql.version>
     </properties>
 
     <build>

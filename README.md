@@ -1,36 +1,55 @@
 # keycloak-cf-docker
 
-This project prepares all necessary resources needed to build a Keycloak docker container
-to deploy on Cloud Foundry:
+This project contains: 
 
-- compile the Bcrypt addon module as a jar file; this is copied to the Wildfly deployment
-directory in the Docker image;
+- the Dockerfile needed to build the docker image of Keycloak as used by Europeana
 
-- copy the two necessary dependencies to the Keycloak Modules directory;
+- the java source code needed to build the BCrypt module .jar file that is to be added to the docker image
 
-- copy the PostgreSQL driver jar to the Keycloak Modules directory;
+- placeholder directories for the BCrypt dependencies (to be added to keycloak/modules/)
 
-- patch the Keycloak configuration to use PostgreSQL
+- a placeholder directory for the bcrypt-addon.jar file (to be added to keycloak/standalone/deployments/) 
 
-The above is all done by issuing a mvn clean package on the root pom.
-After that is done, the Docker image can be built with (example)
+### Check the versions in the pom.xml files
 
-docker build --no-cache --tag keycloak-cf-docker:0.12 .
+The version of Keycloak and all dependencies are set in `bcrypt-addon/pom.xml`. Most important are:
 
-The docker image thus produced can be run when DB connection settings are provided as environment
-variables like this: 
+- keycloak: **10.0.2**
 
-docker run --publish 8080:8080 --detach  \
--e DB_ADDR='weird-ibm-db-url' \
--e DB_PORT='16080' \
--e DB_DATABASE='keycloak4cf' \
--e DB_SCHEMA='public' \
--e DB_PASSWORD='now-way-jose' \
--e DB_USER='admin' \
---name kccf keycloak-cf-docker:0.12
+- apache commons-codec: **1.14**
 
-This connects to the small test DB prepared earlier for the first test with Keycloak on Docker
-and it works.
+- spring-security-crypto: **5.1.4.RELEASE**
 
-Note that the BCrypt pepper is for now stored in the keycloak.user.properties (not uploaded), and
-needs to be substituted in the bcryptpasswordhashproviderfactory class. This will be fixed asap.
+### How to build a Docker image in Jenkins:
+
+- pull this project
+
+- provide a properties file containing the settings needed for the BCrypt module 
+(see `bcrypt-addon/src/main/resources/bcrypt.properties`) and copy that to the same directory, 
+renaming it to `bcrypt-user.properties`
+
+- add a top level Maven target: `clean package -U`; this will compile the project, package it 
+and copy the dependency `.jar` files and `bcrypt-addon.jar` to the placeholder directories
+
+- build the docker image in an _Execute Shell_ module, e.g. `docker build -t ${DOCKER_IMAGE_NAME} .`
+
+- and push the image to Docker Hub
+
+### building and running the image locally:
+
+For testing, this project can also be run in a local Docker environment:
+
+- check this project out from Github
+
+- execute `mvn clean package` to create the necessary .jar file
+
+- build the docker image: 
+
+`docker build --no-cache --tag {imagename}:{tag} .`
+
+- run the image: 
+
+`docker run --publish 8080:8080 --detach  -e DB_ADDR={POSTGRES URL} -e DB_PORT={POSTGRES PORT} -e DB_DATABASE={DATABASE NAME}' -e DB_SCHEMA={SCHEMA NAME} -e DB_PASSWORD={DB PASSWORD} -e DB_USER={DB USER} --name {CONTAINER_NAME} {imagename}:{tag}`
+
+Note that the `{imagename}:{tag}` provided in the run command has to match was was specified when 
+building the image.

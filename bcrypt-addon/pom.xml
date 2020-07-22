@@ -78,6 +78,7 @@
     </dependencies>
 
     <build>
+        <finalName>bcrypt-addon</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -103,7 +104,7 @@
                             <type>jar</type>
                             <overWrite>true</overWrite>
                             <outputDirectory>../bcrypt-dependencies/commons-codec/main</outputDirectory>
-                            <destFileName>commons-codec-1.14.jar</destFileName>
+                            <destFileName>commons-codec.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
                             <groupId>org.springframework.security</groupId>
@@ -112,7 +113,7 @@
                             <type>jar</type>
                             <overWrite>true</overWrite>
                             <outputDirectory>../bcrypt-dependencies/spring-security-crypto/main</outputDirectory>
-                            <destFileName>spring-security-crypto-5.1.4.RELEASE.jar</destFileName>
+                            <destFileName>spring-security-crypto.jar</destFileName>
                         </artifactItem>
                     </artifactItems>
                 </configuration>
