@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<module xmlns="urn:jboss:module:1.1" name="spring-security-crypto">
+
+    <resources>
+        <resource-root path="spring-security-crypto-5.1.4.RELEASE.jar"/>
+    </resources>
+</module>

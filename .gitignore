@@ -1,0 +1,20 @@
+### Maven ###
+**/target/
+.idea/
+
+### Intellij ###
+*.iml
+
+### Secrets ###
+**/bcrypt.user.properties
+
+### Java spills ###
+*.class
+*.jar
+*.war
+*.ear
+
+### Specific ###
+**/data/
+/bcrypt-addon/target/
+/bcrypt-addon-jar/bcrypt-addon.jar
