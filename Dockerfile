@@ -17,8 +17,8 @@ COPY bcrypt-dependencies keycloak/modules
 # Copy BCrypt addon to the Wildfly deployment directory
 COPY bcrypt-addon-jar keycloak/standalone/deployments
 
-# port to open
-EXPOSE 8080
+# port to open DISABLED FOR USE WITH CF
+#EXPOSE 8080
 
 # Entrypoint
 USER jboss
