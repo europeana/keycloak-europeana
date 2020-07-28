@@ -11,8 +11,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.Properties;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Factory for creating BCrypt password hashing provider
@@ -24,7 +22,7 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
 
     private static final String ID = "BCrypt";
     private static final String PROPERTY_FILE       = "bcrypt.properties";
-    private static final String PROPERTY_USER_FILE  = "bcrypt.user.properties";
+    private static final String PROPERTY_USER_FILE  = "bcrypt-user.properties";
 
     private static int defaultLogRounds = 13;
     private static int minLogRounds = 4;
@@ -42,7 +40,8 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
             if (null == resource) {
                 resource = Thread.currentThread().getContextClassLoader().getResource(PROPERTY_FILE);
                 if (null == resource) {
-                    throw new FileNotFoundException(PROPERTY_FILE + " nor " + PROPERTY_USER_FILE + " found; therefore, BCrypt cannot be used.");
+                    throw new FileNotFoundException(PROPERTY_FILE + " nor " + PROPERTY_USER_FILE +
+                                                    " found; therefore, BCrypt will use an empty pepper!");
                 }
             }
 
@@ -55,7 +54,7 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
             }
 
         } catch (Exception e) {
-            System.out.println("Exception: " + e);
+            LOG.error("Exception reading BCrypt properties", e);
         }
     }
 

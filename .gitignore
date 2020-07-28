@@ -6,7 +6,7 @@
 *.iml
 
 ### Secrets ###
-**/bcrypt.user.properties
+**/bcrypt-user.properties
 
 ### Java spills ###
 *.class
