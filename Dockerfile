@@ -6,9 +6,10 @@ WORKDIR /opt/jboss/
 # Set environment variables
 ENV DB_VENDOR postgres
 
+# Note: credentials are used only when initialising a new empty DB
 ENV KEYCLOAK_USER: admin
 
-ENV KEYCLOAK_PASSWORD: w@hw@hpedal5
+ENV KEYCLOAK_PASSWORD: change-this-into-something-useful
 
 # Copy commons-codec & spring-security-crypto (BCrypt dependencies) to keycloak/modules
 COPY bcrypt-dependencies keycloak/modules
