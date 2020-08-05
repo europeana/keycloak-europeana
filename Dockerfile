@@ -22,7 +22,7 @@ COPY bcrypt-addon-jar keycloak/standalone/deployments
 
 # Copy Europeana theme to keycloak/themes
 RUN mkdir -p keycloak/themes/europeana
-COPY keycloak-theme/theme keycloak/themes/europeana
+COPY keycloak-theme keycloak/themes/europeana
 
 # port to open DISABLED FOR USE WITH CF
 #EXPOSE 8080
