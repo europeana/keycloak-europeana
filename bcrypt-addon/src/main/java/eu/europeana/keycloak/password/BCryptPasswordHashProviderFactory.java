@@ -9,6 +9,7 @@ import org.keycloak.models.KeycloakSessionFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
@@ -20,44 +21,38 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
 
     private static final Logger LOG = Logger.getLogger(BCryptPasswordHashProviderFactory.class);
 
-    private static final String ID = "BCrypt";
-    private static final String PROPERTY_FILE       = "bcrypt.properties";
-    private static final String PROPERTY_USER_FILE  = "bcrypt-user.properties";
+    private static final String ID                 = "BCrypt";
+    private static final String PROPERTY_FILE      = "/bcrypt.properties";
+    private static final String PROPERTY_USER_FILE = "bcrypt-user.properties";
 
     private static int defaultLogRounds = 13;
-    private static int minLogRounds = 4;
-    private static int maxlogRounds = 31;
-
-    private int configuredLogRounds = defaultLogRounds;
-
-    private static String pepper =  "";
+    private static int minLogRounds     = 4;
+    private static int maxlogRounds     = 31;
+    private static String pepper = "";
 
     static {
         try {
-            Properties properties         = new Properties();
-
-            URL resource = Thread.currentThread().getContextClassLoader().getResource(PROPERTY_USER_FILE);
-            if (null == resource) {
-                resource = Thread.currentThread().getContextClassLoader().getResource(PROPERTY_FILE);
-                if (null == resource) {
+            Properties  properties = new Properties();
+            InputStream is;
+            is = BCryptPasswordHashProviderFactory.class.getResourceAsStream(PROPERTY_FILE);
+            if (null == is) {
+                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROPERTY_USER_FILE);
+                if (null == is) {
                     throw new FileNotFoundException(PROPERTY_FILE + " nor " + PROPERTY_USER_FILE +
                                                     " found; therefore, BCrypt will use an empty pepper!");
                 }
             }
-
-            try (FileInputStream fis = new FileInputStream(resource.getFile())) {
-                properties.load(fis);
-                pepper = properties.getProperty("bcrypt.pepper");
-                defaultLogRounds = Integer.parseInt(properties.getProperty("bcrypt.default-log-rounds"));
-                minLogRounds = Integer.parseInt(properties.getProperty("bcrypt.min-log-rounds"));
-                maxlogRounds =Integer.parseInt( properties.getProperty("bcrypt.max-log-rounds"));
-            }
-
+            properties.load(is);
+            pepper = properties.getProperty("bcrypt.pepper");
+            defaultLogRounds = Integer.parseInt(properties.getProperty("bcrypt.default-log-rounds"));
+            minLogRounds = Integer.parseInt(properties.getProperty("bcrypt.min-log-rounds"));
+            maxlogRounds = Integer.parseInt(properties.getProperty("bcrypt.max-log-rounds"));
         } catch (Exception e) {
             LOG.error("Exception reading BCrypt properties", e);
         }
     }
 
+    private int configuredLogRounds = defaultLogRounds;
 
     @Override
     public PasswordHashProvider create(KeycloakSession keycloakSession) {
