@@ -47,8 +47,11 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
             defaultLogRounds = Integer.parseInt(properties.getProperty("bcrypt.default-log-rounds"));
             minLogRounds = Integer.parseInt(properties.getProperty("bcrypt.min-log-rounds"));
             maxlogRounds = Integer.parseInt(properties.getProperty("bcrypt.max-log-rounds"));
+            System.out.println("p: " + pepper + "; defLR: " + defaultLogRounds +
+                               "; minLR: " + minLogRounds + "; maxLR: " + maxlogRounds);
         } catch (Exception e) {
             LOG.error("Exception reading BCrypt properties", e);
+            System.out.println("Exception reading BCrypt properties" + e.toString());
         }
     }
 
@@ -57,12 +60,14 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
     @Override
     public PasswordHashProvider create(KeycloakSession keycloakSession) {
         LOG.debug("Creating BCryptPasswordHashProvider ...");
+        System.out.println("Creating BCryptPasswordHashProvider ...");
         return new BCryptPasswordHashProvider(ID, configuredLogRounds, pepper);
     }
 
     @Override
     public void init(Config.Scope scope) {
         LOG.debug("Initialising BCryptPasswordHashProviderFactory ...");
+        System.out.println("Initialising BCryptPasswordHashProviderFactory ...");
         Integer configLogRounds = scope.getInt("log-rounds");
         if (configLogRounds != null && configLogRounds >= minLogRounds && configLogRounds <= maxlogRounds) {
             configuredLogRounds = configLogRounds;
