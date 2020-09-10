@@ -2,7 +2,7 @@
     <deployment>
         <dependencies>
             <module name="commons-codec" />
-            <module name="bcrypt" />
+            <module name="favre" />
         </dependencies>
     </deployment>
 </jboss-deployment-structure>

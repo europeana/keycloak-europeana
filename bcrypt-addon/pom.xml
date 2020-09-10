@@ -26,6 +26,7 @@
         <commons-codec.version>1.14</commons-codec.version>
 <!--        <spring-security-crypto.version>5.1.4.RELEASE</spring-security-crypto.version>-->
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
+        <favre-bytes.version>1.4.0</favre-bytes.version>
     </properties>
 
     <dependencies>
@@ -76,6 +77,13 @@
             <version>${favre-bcrypt.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/at.favre.lib/bytes -->
+        <dependency>
+            <groupId>at.favre.lib</groupId>
+            <artifactId>bytes</artifactId>
+            <version>${favre-bytes.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
         <dependency>
             <groupId>commons-codec</groupId>
@@ -119,8 +127,17 @@
                             <version>${favre-bcrypt.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../bcrypt-dependencies/bcrypt/main</outputDirectory>
+                            <outputDirectory>../bcrypt-dependencies/favre/main</outputDirectory>
                             <destFileName>bcrypt.jar</destFileName>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>at.favre.lib</groupId>
+                            <artifactId>bytes</artifactId>
+                            <version>${favre-bytes.version}</version>
+                            <type>jar</type>
+                            <overWrite>true</overWrite>
+                            <outputDirectory>../bcrypt-dependencies/favre/main</outputDirectory>
+                            <destFileName>bytes.jar</destFileName>
                         </artifactItem>
                     </artifactItems>
                 </configuration>
