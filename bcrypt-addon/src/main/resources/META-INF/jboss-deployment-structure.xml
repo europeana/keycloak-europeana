@@ -2,6 +2,7 @@
     <deployment>
         <dependencies>
             <module name="commons-codec" />
+            <module name="favre-bcrypt" />
             <module name="spring-security-crypto" />
         </dependencies>
     </deployment>
