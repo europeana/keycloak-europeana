@@ -6,7 +6,6 @@ import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.credential.hash.PasswordHashProviderFactory;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -22,7 +21,6 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
     private static final String ID                 = "BCrypt";
     private static final String PROPERTY_FILE      = "/bcrypt.properties";
     private static final String PROPERTY_USER_FILE = "bcrypt-user.properties";
-
 
     private static int    defaultIterations = 13;
     private static String pepper            = "";
