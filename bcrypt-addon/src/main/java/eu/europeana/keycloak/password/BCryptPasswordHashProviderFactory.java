@@ -6,6 +6,7 @@ import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.credential.hash.PasswordHashProviderFactory;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -22,10 +23,9 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
     private static final String PROPERTY_FILE      = "/bcrypt.properties";
     private static final String PROPERTY_USER_FILE = "bcrypt-user.properties";
 
-    private static int defaultLogRounds = 13;
-    private static int minLogRounds     = 4;
-    private static int maxlogRounds     = 31;
-    private static String pepper = "";
+
+    private static int    defaultIterations = 13;
+    private static String pepper            = "";
 
     static {
         try {
@@ -41,29 +41,21 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
             }
             properties.load(is);
             pepper = properties.getProperty("bcrypt.pepper");
-            defaultLogRounds = Integer.parseInt(properties.getProperty("bcrypt.default-log-rounds"));
-            minLogRounds = Integer.parseInt(properties.getProperty("bcrypt.min-log-rounds"));
-            maxlogRounds = Integer.parseInt(properties.getProperty("bcrypt.max-log-rounds"));
+            defaultIterations = Integer.parseInt(properties.getProperty("bcrypt.default-iterations"));
         } catch (Exception e) {
             LOG.error("Exception reading BCrypt properties", e);
         }
     }
 
-    private int configuredLogRounds = defaultLogRounds;
-
     @Override
-    public PasswordHashProvider create(KeycloakSession keycloakSession) {
+    public PasswordHashProvider create(KeycloakSession session) {
         LOG.debug("Creating BCryptPasswordHashProvider ...");
-        return new BCryptPasswordHashProvider(ID, configuredLogRounds, pepper);
+        return new BCryptPasswordHashProvider(ID, defaultIterations, pepper);
     }
 
     @Override
     public void init(Config.Scope scope) {
-        LOG.debug("Initialising BCryptPasswordHashProviderFactory ...");
-        Integer configLogRounds = scope.getInt("log-rounds");
-        if (configLogRounds != null && configLogRounds >= minLogRounds && configLogRounds <= maxlogRounds) {
-            configuredLogRounds = configLogRounds;
-        }
+        // no need to do anything
     }
 
     @Override

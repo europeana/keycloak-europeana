@@ -26,6 +26,7 @@
         <jboss.logging.version>3.4.1.Final</jboss.logging.version>
         <commons-codec.version>1.14</commons-codec.version>
         <spring-security-crypto.version>5.1.4.RELEASE</spring-security-crypto.version>
+        <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
     </properties>
 
     <dependencies>
@@ -67,6 +68,13 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
             <version>${spring-security-crypto.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/at.favre.lib/bcrypt -->
+        <dependency>
+            <groupId>at.favre.lib</groupId>
+            <artifactId>bcrypt</artifactId>
+            <version>${favre-bcrypt.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
@@ -114,6 +122,15 @@
                             <overWrite>true</overWrite>
                             <outputDirectory>../bcrypt-dependencies/spring-security-crypto/main</outputDirectory>
                             <destFileName>spring-security-crypto.jar</destFileName>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>at.favre.lib</groupId>
+                            <artifactId>bcrypt</artifactId>
+                            <version>${favre-bcrypt.version}</version>
+                            <type>jar</type>
+                            <overWrite>true</overWrite>
+                            <outputDirectory>../bcrypt-dependencies/favre-bcrypt/main</outputDirectory>
+                            <destFileName>bcrypt.jar</destFileName>
                         </artifactItem>
                     </artifactItems>
                 </configuration>
