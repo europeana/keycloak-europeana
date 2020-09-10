@@ -46,6 +46,8 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     public PasswordCredentialModel encodedCredential(String rawPassword, int iterations) {
         String encodedPassword = encode(rawPassword, iterations);
 
+        LOG.debug("BCryptPasswordHashProvider hashed: " + encodedPassword);
+
         // bcrypt salt is stored as part of the encoded password so no need to store salt separately
         return PasswordCredentialModel.createFromValues(providerId, new byte[0], iterations, encodedPassword);
     }
@@ -64,6 +66,8 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
         String pepperedPassword = rawPassword + pepper;
         String base64PepperedPw = new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
                                              StandardCharsets.UTF_8);
+        LOG.debug("BCryptPasswordHashProvider base64PepperedPW = " + base64PepperedPw);
+
         return BCrypt.with(BCrypt.Version.VERSION_2Y).hashToString(cost, base64PepperedPw.toCharArray());
     }
 
@@ -76,7 +80,12 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     public boolean verify(String rawPassword, PasswordCredentialModel credential) {
         LOG.debug("BCryptPasswordHashProvider verifying password ...");
         final String  hash     = credential.getPasswordSecretData().getValue();
+
+        LOG.debug("Verifying: hash from cred object is: " + hash);
+
         BCrypt.Result verifier = BCrypt.verifyer().verify(rawPassword.toCharArray(), hash.toCharArray());
+
+        LOG.debug("Verifier toString: " + verifier.toString());
         return verifier.verified;
     }
 
