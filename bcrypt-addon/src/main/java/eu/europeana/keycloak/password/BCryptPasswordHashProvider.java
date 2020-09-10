@@ -25,6 +25,7 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider  {
 
     public BCryptPasswordHashProvider(String providerId, int configuredLogRounds, String pepper) {
         LOG.debug("BCryptPasswordHashProvider created");
+        LOG.debug("using providerID " + providerId + ", configuredlogrounds " + configuredLogRounds+  ", pepper " + pepper);
         this.providerId     = providerId;
         this.logRounds      = configuredLogRounds;
         this.pepper         = pepper;
@@ -54,6 +55,7 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider  {
     public String encode(String rawPassword, int iterations) {
         LOG.debug("BCryptPasswordHashProvider encoding password ...");
         String salt     = BCrypt.gensalt(logRounds);
+        LOG.debug("Salt: " + salt + ", rawPW: " + rawPassword + ", iterations: " + iterations);
         return getHash(rawPassword, salt);
     }
 
