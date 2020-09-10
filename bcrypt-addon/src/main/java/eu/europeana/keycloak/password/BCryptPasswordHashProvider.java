@@ -46,7 +46,7 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     public PasswordCredentialModel encodedCredential(String rawPassword, int iterations) {
         String encodedPassword = encode(rawPassword, iterations);
 
-        LOG.debug("BCryptPasswordHashProvider hashed: " + encodedPassword);
+        LOG.error("BCryptPasswordHashProvider hashed: " + encodedPassword);
 
         // bcrypt salt is stored as part of the encoded password so no need to store salt separately
         return PasswordCredentialModel.createFromValues(providerId, new byte[0], iterations, encodedPassword);
@@ -54,20 +54,15 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
     @Override
     public String encode(String rawPassword, int iterations) {
-        LOG.debug("BCryptPasswordHashProvider encoding password ..." + rawPassword + ", using " + iterations +
-                  " iterations");
         int cost;
         if (iterations == -1) {
             cost = defaultIterations;
         } else {
             cost = iterations;
         }
-        LOG.debug("BCryptPasswordHashProvider adding pepper ...");
-        String pepperedPassword = rawPassword + pepper;
-        String base64PepperedPw = new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
-                                             StandardCharsets.UTF_8);
-        LOG.debug("BCryptPasswordHashProvider base64PepperedPW = " + base64PepperedPw);
-
+        LOG.error("BCryptPasswordHashProvider encoding password ..." + rawPassword + ", using " + cost +
+                  " iterations");
+        String base64PepperedPw = pepperer(rawPassword);
         return BCrypt.with(BCrypt.Version.VERSION_2Y).hashToString(cost, base64PepperedPw.toCharArray());
     }
 
@@ -81,12 +76,22 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
         LOG.debug("BCryptPasswordHashProvider verifying password ...");
         final String  hash     = credential.getPasswordSecretData().getValue();
 
-        LOG.debug("Verifying: hash from cred object is: " + hash);
+        LOG.error("Verifying: hash from cred object is: " + hash);
 
-        BCrypt.Result verifier = BCrypt.verifyer().verify(rawPassword.toCharArray(), hash.toCharArray());
+        String base64PepperedPw = pepperer(rawPassword);
+        BCrypt.Result verifier = BCrypt.verifyer().verify(base64PepperedPw.toCharArray(), hash.toCharArray());
 
-        LOG.debug("Verifier toString: " + verifier.toString());
+        LOG.error("Verifier toString: " + verifier.toString());
         return verifier.verified;
+    }
+
+    private String pepperer(String rawPassword){
+        LOG.debug("BCryptPasswordHashProvider adding pepper ...");
+        String pepperedPassword = rawPassword + pepper;
+        String base64PepperedPw = new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
+                                             StandardCharsets.UTF_8);
+        LOG.error("BCryptPasswordHashProvider base64PepperedPW = " + base64PepperedPw);
+        return base64PepperedPw;
     }
 
 }
