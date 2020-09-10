@@ -70,7 +70,8 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider  {
     @Override
     public boolean verify(String rawPassword, PasswordCredentialModel credentialModel) {
         LOG.debug("BCryptPasswordHashProvider verifying password ...");
-        return BCrypt.checkpw(rawPassword, credentialModel.getPasswordSecretData().getValue());
+        return getHash(rawPassword, new String(credentialModel.getPasswordSecretData().getSalt(), StandardCharsets.UTF_8))
+                .equals(credentialModel.getPasswordSecretData().getValue());
     }
 
     @Override
