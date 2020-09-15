@@ -1,4 +1,4 @@
 embed-server --admin-only=true
 /subsystem=logging/json-formatter=logstash:add(exception-output-type=formatted, key-overrides=[timestamp="@timestamp"],
-meta-data={this=that})
+meta-data={appname=${env.LOGSTASH_APPNAME:kibana}, @version=1})
 stop-embedded-server
