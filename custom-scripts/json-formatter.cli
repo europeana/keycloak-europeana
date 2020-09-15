@@ -1,3 +1,3 @@
 embed-server --admin-only=true
-/subsystem=logging/json-formatter=logstash:add(exception-output-type=formatted, key-overrides=[timestamp="@timestamp"], @version=1})
+/subsystem=logging/json-formatter=logstash:add(exception-output-type=formatted, key-overrides=[timestamp="@timestamp"])
 stop-embedded-server
