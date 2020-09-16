@@ -146,7 +146,7 @@
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <outputDirectory>../bcrypt-addon-jar</outputDirectory>
+                    <outputDirectory>../addon-jars</outputDirectory>
                 </configuration>
             </plugin>
 

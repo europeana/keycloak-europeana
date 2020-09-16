@@ -17,7 +17,7 @@
 ### Specific ###
 **/data/
 /bcrypt-addon/target/
-/bcrypt-addon-jar/bcrypt-addon.jar
+/addon-jars/bcrypt-addon.jar
 
 bcrypt-addon/src/main/java/test/
 bcrypt-addon/src/test/
