@@ -1,2 +1,4 @@
+embed-server --admin-only=true
 /subsystem=logging/pattern-formatter=LOGSTASH_PATTERN:add(pattern="{level}%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n")
 /subsystem=logging/console-handler=CONSOLE:write-attribute(name=named-formatter,value=LOGSTASH_PATTERN)
+stop-embedded-server
