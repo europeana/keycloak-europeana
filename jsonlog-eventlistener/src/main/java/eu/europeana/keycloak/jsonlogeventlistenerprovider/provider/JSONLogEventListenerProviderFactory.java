@@ -14,7 +14,7 @@ public class JSONLogEventListenerProviderFactory implements EventListenerProvide
     private static final Logger logger = Logger.getLogger("org.keycloak.events");
     private static final String JSONLOGPREFIXENVVAR = "KEYCLOAK_JSONLOG_PREFIX";
 
-    String prefix = "KEYCLOAK_EVENT::";
+    String prefix = "KEYCLOAK_EVENT:";
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
