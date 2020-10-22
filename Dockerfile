@@ -24,6 +24,14 @@ COPY addon-jars keycloak/standalone/deployments
 RUN mkdir -p keycloak/themes/europeana
 COPY keycloak-theme keycloak/themes/europeana
 
+# Copy translated message files into the theme keycloak/themes/europeana/account/messages ~/login/messages
+RUN rm keycloak/themes/europeana/account/messages/messages_en.properties
+RUN rm keycloak/themes/europeana/login/messages/messages_en.properties
+COPY internationalisation/values-en/strings.properties keycloak/themes/europeana/account/messages/messages_en.properties
+COPY internationalisation/values-en/strings.properties keycloak/themes/login/account/messages/messages_en.properties
+COPY internationalisation/values-nl/strings.properties keycloak/themes/europeana/account/messages/messages_nl.properties
+COPY internationalisation/values-nl/strings.properties keycloak/themes/login/account/messagesmessages_nl.properties
+
 # Copy log formatter script
 COPY custom-scripts/ /opt/jboss/startup-scripts/
 
