@@ -1,11 +1,15 @@
 package eu.europeana.keycloak.password;
 
+import at.favre.lib.crypto.bcrypt.LongPasswordStrategies;
+import at.favre.lib.crypto.bcrypt.LongPasswordStrategy;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
 import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.models.PasswordPolicy;
+
 import java.nio.charset.StandardCharsets;
+
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
 
@@ -55,7 +59,8 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
             cost = iterations;
         }
         String base64PepperedPw = pepperer(rawPassword);
-        return BCrypt.with(BCrypt.Version.VERSION_2Y).hashToString(cost, base64PepperedPw.toCharArray());
+        return BCrypt.with(BCrypt.Version.VERSION_2Y, LongPasswordStrategies.truncate(BCrypt.Version.VERSION_2Y))
+                     .hashToString(cost, base64PepperedPw.toCharArray());
     }
 
     @Override
@@ -66,17 +71,19 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     @Override
     public boolean verify(String rawPassword, PasswordCredentialModel credential) {
         LOG.debug("BCryptPasswordHashProvider verifying password ...");
-        final String  hash     = credential.getPasswordSecretData().getValue();
-        String base64PepperedPw = pepperer(rawPassword);
-        BCrypt.Result verifier = BCrypt.verifyer().verify(base64PepperedPw.toCharArray(), hash.toCharArray());
+        final String  hash             = credential.getPasswordSecretData().getValue();
+        String        base64PepperedPw = pepperer(rawPassword);
+        BCrypt.Result verifier         = BCrypt.verifyer(BCrypt.Version.VERSION_2Y,
+                                                         LongPasswordStrategies.truncate(BCrypt.Version.VERSION_2Y))
+                                               .verify(base64PepperedPw.toCharArray(), hash.toCharArray());
         return verifier.verified;
     }
 
-    private String pepperer(String rawPassword){
+    private String pepperer(String rawPassword) {
         LOG.debug("BCryptPasswordHashProvider adding pepper ...");
         String pepperedPassword = rawPassword + pepper;
         return new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
-                                             StandardCharsets.UTF_8);
+                          StandardCharsets.UTF_8);
     }
 
 }

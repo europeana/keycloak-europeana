@@ -53,3 +53,6 @@ For testing, this project can also be run in a local Docker environment:
 
 Note that the `{imagename}:{tag}` provided in the run command has to match was was specified when 
 building the image.
+
+
+_The password encryption is uses the Bcrypt Library by Patrick Favre-Bulle (https://github.com/patrickfav/bcrypt), licensed under the Apache License, Version 2.0 (see the BCRYPT 3rd party license in the bcrypt-addon module)_
