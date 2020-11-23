@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  keycloak-cf:
+    build:
+      context: .
+    # volumes:
+      # generate self-signed certs 
+      # - "./certs:/etc/x509/https" 
+    environment:
+       DB_ADDR: postgres
+       DB_VENDOR: POSTGRES
+       DB_PASSWORD: "password"
+       DB_DATABASE: "keycloak"
+       DB_USER: "keycloak"
+       KEYCLOAK_USER: admin
+       KEYCLOAK_PASSWORD: Pa55w0rd
+       KEYCLOAK_HTTP_PORT: 8180
+       KEYCLOAK_HTTPS_PORT: 8543
+       KEYCLOAK_LOGLEVEL: "INFO"
+       PROXY_ADDRESS_FORWARDING: "true"
+       ROOT_LOGLEVEL: "INFO"
+       JVM_OPTS: -Djboss.socket.binding.port-offset=100
+       #  KEYCLOAK_DEFAULT_THEME: europeana
+    ports: 
+      - "8080:8080"
+      - "8443:8443"
+    depends_on: 
+      - postgres
+  postgres:
+      image: postgres
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: keycloak
+        POSTGRES_USER: keycloak
+        POSTGRES_PASSWORD: password
+
+volumes:
+  postgres_data:
+      driver: local

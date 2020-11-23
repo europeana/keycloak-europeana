@@ -3,6 +3,15 @@ FROM jboss/keycloak:10.0.2
 # Set workdir to jboss home
 WORKDIR /opt/jboss/
 
+# install nginx as root
+USER root
+RUN microdnf install -y nginx
+COPY nginx.conf /etc/nginx/
+COPY docker-start-script.sh /opt/jboss/start.sh
+
+
+USER jboss
+
 # Set environment variables
 ENV DB_VENDOR postgres
 
@@ -29,6 +38,4 @@ COPY custom-scripts/ /opt/jboss/startup-scripts/
 
 # port to open DISABLED FOR USE WITH CF
 #EXPOSE 8080
-
-# Entrypoint
-USER jboss
+ENTRYPOINT [ "/opt/jboss/start.sh" ]

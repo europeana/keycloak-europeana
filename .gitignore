@@ -14,6 +14,12 @@
 *.war
 *.ear
 
+.project
+.settings
+.classpath
+
+
+
 ### Specific ###
 **/data/
 /bcrypt-addon/target/
@@ -21,3 +27,5 @@
 
 bcrypt-addon/src/main/java/test/
 bcrypt-addon/src/test/
+
+certs
