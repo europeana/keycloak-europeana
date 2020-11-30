@@ -1,0 +1,46 @@
+version: "3.8"
+services:
+  keycloak-cf:
+    build: .
+    environment:
+       DB_ADDR: postgres
+       DB_VENDOR: POSTGRES
+       DB_PASSWORD: "password"
+       DB_DATABASE: "keycloak"
+       DB_USER: "keycloak"
+       PROXY_ADDRESS_FORWARDING: "true"
+       KEYCLOAK_USER: admin
+       KEYCLOAK_PASSWORD: Pa55w0rd
+       KEYCLOAK_HTTP_PORT: 8080
+       KEYCLOAK_HTTPS_PORT: 8443
+       KEYCLOAK_LOGLEVEL: "INFO"
+       ROOT_LOGLEVEL: "INFO"
+       # enable /metrics endpoint on keycloak
+       KEYCLOAK_STATISTICS: "all"
+       EUROPEANA_JBOSS_ADMIN_USER: "admin"
+       EUROPEANA_JBOSS_ADMIN_PASSWORD: "Password1"
+       # Enable wildfly statistics for all subsystems.
+       # For specific subsystems, use
+       #    -Dwildfly.datasources.statistics-enabled=true
+       JAVA_OPTS: > 
+          -Dwildfly.undertow.statistics-enabled=true
+          -Dwildfly.datasources.statistics-enabled=true
+          -Dwildfly.metrics.prefix=keycloak
+    ports: 
+      - "8080:8080"
+      - "9990:9990"
+      - "8443:8443"
+    depends_on: 
+      - postgres
+  postgres:
+      image: postgres
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: keycloak
+        POSTGRES_USER: keycloak
+        POSTGRES_PASSWORD: password
+
+volumes:
+  postgres_data:
+      driver: local

@@ -10,9 +10,13 @@ ENV DB_VENDOR postgres
 #ENV KEYCLOAK_DEFAULT_THEME europeana
 
 # Note: credentials are used only when initialising a new empty DB
-ENV KEYCLOAK_USER: admin
+ENV KEYCLOAK_USER admin
 
 ENV KEYCLOAK_PASSWORD: change-this-into-something-useful
+COPY docker-scripts/ /opt/docker-scripts
+# create user for accessing Wildfly metrics.
+# only used if EUROPEANA_JBOSS_ADMIN_PASSWORD is set 
+ENV EUROPEANA_JBOSS_ADMIN_USER admin
 
 # Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) to keycloak/modules
 COPY bcrypt-dependencies keycloak/modules
@@ -27,8 +31,6 @@ COPY keycloak-theme keycloak/themes/europeana
 # Copy log formatter script
 COPY custom-scripts/ /opt/jboss/startup-scripts/
 
-# port to open DISABLED FOR USE WITH CF
-#EXPOSE 8080
+ENTRYPOINT [ "/opt/docker-scripts/custom-docker-entrypoint.sh" ]
 
-# Entrypoint
 USER jboss
