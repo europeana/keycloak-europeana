@@ -8,5 +8,8 @@ if [[ -n ${EUROPEANA_JBOSS_ADMIN_USER:-} && -n ${EUROPEANA_JBOSS_ADMIN_PASSWORD:
     /opt/jboss/keycloak/bin/add-user.sh --user "$EUROPEANA_JBOSS_ADMIN_USER" --password "$EUROPEANA_JBOSS_ADMIN_PASSWORD"
 fi
 
-# execute default entrypoint script for keycloak
+
+# Let the default keycloak startup script handle its own errors
+set +e
+
 /opt/jboss/tools/docker-entrypoint.sh
