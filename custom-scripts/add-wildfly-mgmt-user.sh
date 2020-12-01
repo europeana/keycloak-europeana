@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script creates a Wildfly management user for accessing metrics on the server
+# The user is only created if EUROPEANA_JBOSS_ADMIN_USER and EUROPEANA_JBOSS_ADMIN_PASSWORD env variables are set
 
 # Exit with error if jboss add-user.sh script fails
 set -e
@@ -9,7 +11,5 @@ if [[ -n ${EUROPEANA_JBOSS_ADMIN_USER:-} && -n ${EUROPEANA_JBOSS_ADMIN_PASSWORD:
 fi
 
 
-# Let the default keycloak startup script handle its own errors
+# Let keycloak startup process handle its own errors
 set +e
-
-/opt/jboss/tools/docker-entrypoint.sh
