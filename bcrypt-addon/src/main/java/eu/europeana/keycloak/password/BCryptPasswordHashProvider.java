@@ -9,6 +9,7 @@ import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.models.PasswordPolicy;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
@@ -19,16 +20,26 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
  */
 public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
+    private static final int     HARDCODEDNROFITERATIONS = 13;
     private static final Logger LOG = Logger.getLogger(BCryptPasswordHashProvider.class);
     private final        int    defaultIterations;
     private final        String providerId;
     private final        String pepper;
+    private final        Pattern pattern                 = Pattern.compile("-?\\d+(\\.\\d+)?");
 
-    public BCryptPasswordHashProvider(String providerId, int defaultIterations, String pepper) {
+    public BCryptPasswordHashProvider(String providerId) {
         LOG.debug("BCryptPasswordHashProvider created");
         this.providerId = providerId;
-        this.defaultIterations = defaultIterations;
-        this.pepper = pepper;
+        if (isNumeric(System.getenv("BCRYPT_ITERATIONS"))) {
+            this.defaultIterations = Integer.parseInt(System.getenv("BCRYPT_ITERATIONS"));
+        } else {
+            this.defaultIterations = HARDCODEDNROFITERATIONS;
+        }
+        if (null != System.getenv("BCRYPT_PEPPER")){
+            this.pepper = System.getenv("BCRYPT_PEPPER");
+        } else {
+            throw new RuntimeException("Bcrypt pepper environment variable not found, exiting ...");
+        }
     }
 
     @Override
@@ -84,6 +95,13 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
         String pepperedPassword = rawPassword + pepper;
         return new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
                           StandardCharsets.UTF_8);
+    }
+
+    public boolean isNumeric(String strNum) {
+        if (strNum == null) {
+            return false;
+        }
+        return pattern.matcher(strNum).matches();
     }
 
 }
