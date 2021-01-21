@@ -1,17 +1,15 @@
 package eu.europeana.keycloak.password;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies;
-import at.favre.lib.crypto.bcrypt.LongPasswordStrategy;
 import org.apache.commons.codec.binary.Base64;
 import org.jboss.logging.Logger;
-import org.keycloak.models.credential.PasswordCredentialModel;
 import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.models.PasswordPolicy;
+import org.keycloak.models.credential.PasswordCredentialModel;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
-
-import at.favre.lib.crypto.bcrypt.BCrypt;
 
 
 /**

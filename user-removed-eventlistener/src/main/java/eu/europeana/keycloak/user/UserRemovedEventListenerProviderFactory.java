@@ -1,6 +1,5 @@
-package eu.europeana.keycloak.jsonlogeventlistenerprovider.provider;
+package eu.europeana.keycloak.user;
 
-import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -8,25 +7,24 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 
 
+public class UserRemovedEventListenerProviderFactory implements EventListenerProviderFactory {
 
-public class JSONLogEventListenerProviderFactory implements EventListenerProviderFactory {
 
-    private static final Logger logger = Logger.getLogger("org.keycloak.events");
-    private static final String JSONLOGPREFIXENVVAR = "KEYCLOAK_JSONLOG_PREFIX";
+//    private static final Logger LOG = Logger.getLogger(UserRemovedEventListenerProviderFactory.class);
+    private static final String MODULENAME                 = "UserRemoved";
 
-    String prefix = "KEYCLOAK_EVENT:";
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
-        return new JSONLogEventListenerProvider(session, logger, prefix);
+        return new UserRemovedEventListenerProvider(session, MODULENAME);
     }
 
     @Override
     public void init(Config.Scope scope) {
-        String envPrefix = System.getenv(JSONLOGPREFIXENVVAR);
-        if (envPrefix != null) {
-            prefix = envPrefix;
-        }
+//        String envPrefix = System.getenv(JSONLOGPREFIXENVVAR);
+//        if (envPrefix != null) {
+//            prefix = envPrefix;
+//        }
     }
 
     @Override
@@ -41,6 +39,6 @@ public class JSONLogEventListenerProviderFactory implements EventListenerProvide
 
     @Override
     public String getId() {
-        return "jsonlog_event_listener";
+        return "user-removed-eventlistener";
     }
 }

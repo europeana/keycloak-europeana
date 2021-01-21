@@ -15,4 +15,4 @@
 # limitations under the License.
 #
 
-eu.europeana.keycloak.logging.JSONLogEventListenerProviderFactory
+eu.europeana.keycloak.user.UserRemovedEventListenerProviderFactory
