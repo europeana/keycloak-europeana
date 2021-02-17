@@ -27,8 +27,4 @@ COPY keycloak-theme keycloak/themes/europeana
 # Copy log formatter script
 COPY custom-scripts/ /opt/jboss/startup-scripts/
 
-# port to open DISABLED FOR USE WITH CF
-#EXPOSE 8080
-
-# Entrypoint
 USER jboss
