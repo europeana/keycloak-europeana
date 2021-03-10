@@ -70,11 +70,11 @@
               </div>  
               <div class="form-check">
                 <input type="checkbox" required class="form-check-input" id="user.attributes.ageconfirm" name="user.attributes.ageconfirm"/>
-                <label for="user.attributes.ageconfirm" class="form-check-label">${msg("ageconfirm")}</label>
+                <label for="user.attributes.ageconfirm" class="form-check-label">${msg("ageconfirm")?no_esc}</label>
               </div>
               <div class="form-check">
                 <input type="checkbox" required class="form-check-input" id="user.attributes.terms" name="user.attributes.terms"/>
-                <label for="user.attributes.terms" class="form-check-label">${msg("terms")?no_esc}</label>
+                  <label for="user.attributes.terms" class="form-check-label">${msg("terms")?no_esc}</label>
               </div>   
             </div>
 
