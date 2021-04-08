@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>0.2</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -25,12 +25,12 @@
     <properties>
         <!-- Check this version to match the one in the Dockerfile! -->
         <keycloak.version>12.0.3</keycloak.version>
-        <!-- Maven -->
+
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.source>11</maven.compiler.source>
-        <!-- Plugins -->
+
         <maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
-        <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+        <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
     </properties>

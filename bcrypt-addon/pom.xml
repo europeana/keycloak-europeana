@@ -6,51 +6,43 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>keycloak-cf-docker</artifactId>
-        <version>0.2</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>bcrypt-addon</artifactId>
-    <version>0.2</version>
+    <version>1.0-SNAPSHOT</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
 
-
     <properties>
-        <!-- Dependencies -->
         <jboss.logging.version>3.4.1.Final</jboss.logging.version>
         <commons-codec.version>1.14</commons-codec.version>
-<!--        <spring-security-crypto.version>5.1.4.RELEASE</spring-security-crypto.version>-->
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
         <favre-bytes.version>1.4.0</favre-bytes.version>
     </properties>
 
     <dependencies>
-        <!-- JBoss -->
+
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <version>${jboss.logging.version}</version>
         </dependency>
 
-        <!-- Keycloak -->
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-common</artifactId>
-            <version>${keycloak.version}</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
             <version>${keycloak.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
             <version>${keycloak.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
@@ -58,33 +50,18 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Spring BCrypt -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.security</groupId>-->
-<!--            <artifactId>spring-security-crypto</artifactId>-->
-<!--            <version>${spring-security-crypto.version}</version>-->
-<!--        </dependency>-->
-
-        <!-- https://mvnrepository.com/artifact/at.favre.lib/bcrypt -->
         <dependency>
             <groupId>at.favre.lib</groupId>
             <artifactId>bcrypt</artifactId>
             <version>${favre-bcrypt.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/at.favre.lib/bytes -->
-        <dependency>
-            <groupId>at.favre.lib</groupId>
-            <artifactId>bytes</artifactId>
-            <version>${favre-bytes.version}</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>${commons-codec.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
