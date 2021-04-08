@@ -10,21 +10,27 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>0.1</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>bcrypt-addon</module>
         <module>jsonlog-eventlistener</module>
+<!--        <module>user-removed-eventlistener</module>-->
     </modules>
 
     <name>Keycloak Docker on Cloud Foundry</name>
     <description>Running Keycloak as a Docker image on Cloud Foundry using PostgreSQL en Europeana BCrypt module</description>
 
     <properties>
-        <!-- Plugins -->
+        <!-- Check this version to match the one in the Dockerfile! -->
+        <keycloak.version>12.0.4</keycloak.version>
+
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+
         <maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
-        <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+        <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
     </properties>

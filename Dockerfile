@@ -1,4 +1,5 @@
-FROM jboss/keycloak:10.0.2
+# Check that this version matches the one in the pom.xml!
+FROM jboss/keycloak:12.0.4
 
 # Set workdir to jboss home
 WORKDIR /opt/jboss/
@@ -10,9 +11,13 @@ ENV DB_VENDOR postgres
 #ENV KEYCLOAK_DEFAULT_THEME europeana
 
 # Note: credentials are used only when initialising a new empty DB
-ENV KEYCLOAK_USER: admin
+ENV KEYCLOAK_USER admin
 
 ENV KEYCLOAK_PASSWORD: change-this-into-something-useful
+
+# create user for accessing Wildfly metrics.
+# only used if EUROPEANA_JBOSS_ADMIN_PASSWORD is set (see custom-scripts/add-wildfly-mgmt-user.sh)
+# ENV EUROPEANA_JBOSS_ADMIN_USER admin
 
 # Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) to keycloak/modules
 COPY bcrypt-dependencies keycloak/modules

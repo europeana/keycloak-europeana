@@ -1,8 +1,10 @@
-package eu.europeana.keycloak.jsonlogeventlistenerprovider.provider;
+package eu.europeana.keycloak.logging;
 
+import eu.europeana.keycloak.user.UserDeleteRequestHandler;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
+import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.KeycloakSession;
 
@@ -12,6 +14,7 @@ import java.util.Map;
 
 public class JSONLogEventListenerProvider implements EventListenerProvider {
 
+    UserDeleteRequestHandler userDeleteRequestHandler;
     KeycloakSession session;
     Logger logger;
     String prefix;
@@ -20,10 +23,17 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
         this.session = session;
         this.logger = logger;
         this.prefix = prefix;
+        this.userDeleteRequestHandler = new UserDeleteRequestHandler();
     }
 
     @Override
     public void onEvent(Event event) {
+        if (EventType.DELETE_ACCOUNT.equals(event.getType())) {
+//            KeycloakContext keycloakContext = session.getContext();
+//            UserModel user = keycloakContext.getAuthenticationSession().getAuthenticatedUser();
+            logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(event) + "; user: " + event.getUserId());
+//            logger.errorv("Event caught in {} module when deleting user {}", prefix, event.getUserId());
+        }
         String msg = prefix + toString(event);
         logger.log(Logger.Level.INFO, msg);
     }
