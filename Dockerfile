@@ -13,24 +13,9 @@ ENV DB_VENDOR=postgres \
     KEYCLOAK_USER=admin \
     KEYCLOAK_PASSWORD=change-this-into-something-useful
 
-# Build theme from GitHub
+COPY bin/build-theme.sh ./tools
 USER root
-RUN microdnf install git-core xz && \
-    curl -O https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-linux-x64.tar.xz && \
-    tar -xf node-v${NODEJS_VERSION}-linux-x64.tar.xz && \
-    export PATH=/opt/jboss/node-v${NODEJS_VERSION}-linux-x64/bin:${PATH} && \
-    git clone https://github.com/europeana/keycloak-theme.git && \
-    cd keycloak-theme && \
-    git checkout ${KEYCLOAK_THEME_GIT_REF} && \
-    npm install && \
-    npm run build && \
-    mkdir -p /opt/jboss/keycloak/themes/europeana && \
-    chown -R jboss /opt/jboss/keycloak/themes/europeana && \
-    mv theme /opt/jboss/keycloak/themes/europeana && \
-    cd .. && \
-    rm -rf keycloak-theme node-v${NODEJS_VERSION}-linux-x64* && \
-    microdnf remove git-core xz && \
-    microdnf clean all
+RUN ./tools/build-theme.sh
 USER jboss
 
 # create user for accessing Wildfly metrics.
