@@ -2,6 +2,8 @@
 
 # Builds europeana Keycloak theme from GitHub
 
+set -e
+
 # Install dependencies
 microdnf install git-core xz
 curl -O https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-linux-x64.tar.xz
