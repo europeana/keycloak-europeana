@@ -12,7 +12,7 @@
     <artifactId>keycloak-metrics-spi</artifactId>
     <version>1.2-SNAPSHOT</version>
 
-    <name>Keycloak metrics SPI</name>
+    <name>Keycloak Stats SPI</name>
     <description>A Service Provider that adds a metrics endpoint to Keycloak</description>
 
     <packaging>jar</packaging>

@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.metrics;
+package eu.europeana.keycloak.stats;
 
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.models.KeycloakSession;

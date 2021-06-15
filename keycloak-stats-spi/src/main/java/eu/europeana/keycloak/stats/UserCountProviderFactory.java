@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.metrics;
+package eu.europeana.keycloak.stats;
 
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
@@ -11,7 +11,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
  */
 public class UserCountProviderFactory implements RealmResourceProviderFactory {
 
-    public static final String ID = "usercount";
+    public static final String ID = "stats";
 
     @Override
     public String getId() {
