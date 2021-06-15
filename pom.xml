@@ -10,12 +10,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>1.0</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>bcrypt-addon</module>
         <module>jsonlog-eventlistener</module>
+        <module>keycloak-metrics-spi</module>
 <!--        <module>user-removed-eventlistener</module>-->
     </modules>
 
