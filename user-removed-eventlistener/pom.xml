@@ -6,11 +6,11 @@
     <parent>
         <artifactId>keycloak-cf-docker</artifactId>
         <groupId>eu.europeana</groupId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.2</version>
     </parent>
 
     <artifactId>user-removed-eventlistener</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <name>User Removed Event Listener</name>
     <description>Addon package to (1) send a User Entity delete request to the Entity API, and (2) send email- and Slack messages following a user delete event</description>

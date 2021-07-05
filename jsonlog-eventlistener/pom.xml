@@ -4,10 +4,10 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>keycloak-cf-docker</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.2</version>
     </parent>
     <artifactId>jsonlog_event_listener</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <name>JSON Log Event Listener</name>
     <description>Addon package to output Keycloak events as JSON into the keycloak server log</description>

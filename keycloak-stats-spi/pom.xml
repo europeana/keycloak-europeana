@@ -6,11 +6,11 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>keycloak-cf-docker</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.2</version>
     </parent>
 
     <artifactId>keycloak-metrics-spi</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <name>Keycloak Stats SPI</name>
     <description>A Service Provider that adds a metrics endpoint to Keycloak</description>
