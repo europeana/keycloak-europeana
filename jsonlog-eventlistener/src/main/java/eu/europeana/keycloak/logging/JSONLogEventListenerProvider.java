@@ -6,6 +6,8 @@ import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.events.admin.OperationType;
+import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.KeycloakSession;
 
 import javax.json.Json;
@@ -18,12 +20,18 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
     KeycloakSession session;
     Logger logger;
     String prefix;
+    EventReporter eventReporter;
 
     public JSONLogEventListenerProvider(KeycloakSession session, Logger logger, String prefix) {
         this.session = session;
         this.logger = logger;
         this.prefix = prefix;
         this.userDeleteRequestHandler = new UserDeleteRequestHandler();
+        if (null != System.getenv("SLACK_WEBHOOK")){
+            eventReporter = new EventReporter(System.getenv("SLACK_WEBHOOK"));
+        } else {
+            throw new RuntimeException("Slack webhook environment variable not found, exiting ...");
+        }
     }
 
     @Override
@@ -40,6 +48,10 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
+        if (ResourceType.USER.equals(adminEvent.getResourceType()) &&
+            OperationType.DELETE.equals(adminEvent.getOperationType())){
+            logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(adminEvent) + "; user: {TBD}" );
+        }
         String msg = prefix + toString(adminEvent);
         logger.log(Logger.Level.INFO, msg);
     }

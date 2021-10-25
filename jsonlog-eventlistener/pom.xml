@@ -10,7 +10,8 @@
     <version>1.2</version>
 
     <name>JSON Log Event Listener</name>
-    <description>Addon package to output Keycloak events as JSON into the keycloak server log</description>
+    <description>Addon package to (1) output Keycloak events as JSON into the keycloak server log,
+        (2) send a User Entity delete request to the Entity API, and (3) send email- and Slack messages following a user delete event</description>
 
     <packaging>jar</packaging>
 
