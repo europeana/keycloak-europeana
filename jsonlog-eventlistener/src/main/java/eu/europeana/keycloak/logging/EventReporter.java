@@ -7,6 +7,10 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.jboss.logging.Logger;
+import org.keycloak.email.DefaultEmailSenderProvider;
+import org.keycloak.email.EmailException;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.UserModel;
 
 /**
  * Created by luthien on 25/10/2021.
@@ -46,6 +50,20 @@ public class EventReporter {
 
     public EventReporter(String slackWebHook) {
         this.slackWebHook = slackWebHook;
+    }
+
+    protected void sendUserDeletedMessage(KeycloakSession session, UserModel user){
+        if (user != null && user.getEmail() != null) {
+            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>" + user.getEmail());
+
+            DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+            try {
+                senderProvider.send(session.getContext().getRealm().getSmtpConfig(), user, "test", "body test",
+                                    "html test");
+            } catch (EmailException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

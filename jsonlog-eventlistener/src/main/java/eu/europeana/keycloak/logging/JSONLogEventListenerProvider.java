@@ -2,6 +2,7 @@ package eu.europeana.keycloak.logging;
 
 import eu.europeana.keycloak.user.UserDeleteRequestHandler;
 import org.jboss.logging.Logger;
+import org.keycloak.email.EmailException;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
@@ -9,6 +10,10 @@ import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.events.admin.ResourceType;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.RealmProvider;
+import org.keycloak.models.UserModel;
+import org.keycloak.email.DefaultEmailSenderProvider;
 
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -17,13 +22,15 @@ import java.util.Map;
 public class JSONLogEventListenerProvider implements EventListenerProvider {
 
     UserDeleteRequestHandler userDeleteRequestHandler;
-    KeycloakSession session;
+    private final KeycloakSession session;
+    private final RealmProvider realmProvider;
     Logger logger;
     String prefix;
     EventReporter eventReporter;
 
     public JSONLogEventListenerProvider(KeycloakSession session, Logger logger, String prefix) {
         this.session = session;
+        this.realmProvider = session.realms();
         this.logger = logger;
         this.prefix = prefix;
         this.userDeleteRequestHandler = new UserDeleteRequestHandler();
@@ -37,10 +44,13 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(Event event) {
         if (EventType.DELETE_ACCOUNT.equals(event.getType())) {
-//            KeycloakContext keycloakContext = session.getContext();
-//            UserModel user = keycloakContext.getAuthenticationSession().getAuthenticatedUser();
             logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(event) + "; user: " + event.getUserId());
-//            logger.errorv("Event caught in {} module when deleting user {}", prefix, event.getUserId());
+
+            RealmModel realm = this.realmProvider.getRealm(event.getRealmId());
+            UserModel  user  = this.session.users().getUserById(event.getUserId(), realm);
+            eventReporter.sendUserDeletedMessage(session, user);
+
+            System.out.println("********************[ Event Occurred:" + toString(event) + " ]");
         }
         String msg = prefix + toString(event);
         logger.log(Logger.Level.INFO, msg);
@@ -51,6 +61,11 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
         if (ResourceType.USER.equals(adminEvent.getResourceType()) &&
             OperationType.DELETE.equals(adminEvent.getOperationType())){
             logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(adminEvent) + "; user: {TBD}" );
+
+
+            RealmModel realm = this.realmProvider.getRealm(adminEvent.getRealmId());
+//            UserModel  user  = this.session.users().getUserById(adminEvent.getUserId(), realm);
+
         }
         String msg = prefix + toString(adminEvent);
         logger.log(Logger.Level.INFO, msg);
