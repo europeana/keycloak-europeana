@@ -6,6 +6,8 @@ import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.UserModel.UserRemovedEvent;
 
 
 public class JSONLogEventListenerProviderFactory implements EventListenerProviderFactory {
@@ -30,7 +32,14 @@ public class JSONLogEventListenerProviderFactory implements EventListenerProvide
 
     @Override
     public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-        // no need to implement this
+        keycloakSessionFactory.register(
+            (event) -> {
+                //do something here with the UserRemovedEvent
+                //the user is available via event.getUser()
+                if (event instanceof UserModel.UserRemovedEvent){
+                    logger.info("Boom! User removed event just dropped with user: " + ((UserRemovedEvent) event).getUser().getEmail());
+                }
+            });
     }
 
     @Override

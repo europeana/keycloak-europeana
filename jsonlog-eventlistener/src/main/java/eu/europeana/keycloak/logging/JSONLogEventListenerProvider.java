@@ -34,23 +34,29 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
         this.logger = logger;
         this.prefix = prefix;
         this.userDeleteRequestHandler = new UserDeleteRequestHandler();
-        if (null != System.getenv("SLACK_WEBHOOK")){
-            eventReporter = new EventReporter(System.getenv("SLACK_WEBHOOK"));
+        if (null != System.getenv("SLACK_WEBHOOK") && null != System.getenv("SLACK_USER")){
+            eventReporter = new EventReporter(System.getenv("SLACK_WEBHOOK"), System.getenv("SLACK_USER"));
+        } else if (null == System.getenv("SLACK_USER")){
+            eventReporter = new EventReporter(System.getenv("SLACK_WEBHOOK"), true);
+        } else if (null == System.getenv("SLACK_WEBHOOK")){
+            eventReporter = new EventReporter(System.getenv("SLACK_USER"), false);
         } else {
-            throw new RuntimeException("Slack webhook environment variable not found, exiting ...");
+            throw new RuntimeException("Slack webhook nor user environment variables found, exiting ...");
+
         }
     }
 
     @Override
     public void onEvent(Event event) {
         if (EventType.DELETE_ACCOUNT.equals(event.getType())) {
-            logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(event) + "; user: " + event.getUserId());
+            logger.log(Logger.Level.DEBUG, "PINGGGGG DELETE USER! --> " + toString(event) + "; user " + event.getUserId());
 
-            RealmModel realm = this.realmProvider.getRealm(event.getRealmId());
-            UserModel  user  = this.session.users().getUserById(event.getUserId(), realm);
-            eventReporter.sendUserDeletedMessage(session, user);
+//            RealmModel realm = this.realmProvider.getRealm(event.getRealmId());
+//            UserModel  user  = this.session.users().getUserById(event.getUserId(), realm);
+//
+//            System.out.println("********************[ USER EMAIL: " + user.getEmail() + " ]");
+//            eventReporter.sendUserDeletedMessage(session, user);
 
-            System.out.println("********************[ Event Occurred:" + toString(event) + " ]");
         }
         String msg = prefix + toString(event);
         logger.log(Logger.Level.INFO, msg);
@@ -58,15 +64,18 @@ public class JSONLogEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
-        if (ResourceType.USER.equals(adminEvent.getResourceType()) &&
-            OperationType.DELETE.equals(adminEvent.getOperationType())){
-            logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(adminEvent) + "; user: {TBD}" );
-
-
-            RealmModel realm = this.realmProvider.getRealm(adminEvent.getRealmId());
-//            UserModel  user  = this.session.users().getUserById(adminEvent.getUserId(), realm);
-
-        }
+//        if (ResourceType.USER.equals(adminEvent.getResourceType()) &&
+//            OperationType.DELETE.equals(adminEvent.getOperationType())){
+//
+//            RealmModel realm = session.realms().getRealm(adminEvent.getRealmId());
+//
+//            UserModel  user  = session.users().getUserById(adminEvent.getResourcePath().substring("users/".length()), realm);
+//
+//            logger.log(Logger.Level.ERROR, "PINGGGGG DELETE USER! --> " + toString(adminEvent) + "; user: " + user.getId() );
+//
+//
+//            eventReporter.sendUserDeleteMessage(session, adminEvent);
+//        }
         String msg = prefix + toString(adminEvent);
         logger.log(Logger.Level.INFO, msg);
     }

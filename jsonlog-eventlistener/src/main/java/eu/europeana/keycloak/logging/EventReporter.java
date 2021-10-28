@@ -3,13 +3,20 @@ package eu.europeana.keycloak.logging;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.UriBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.jboss.logging.Logger;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
+import org.keycloak.email.EmailTemplateProvider;
+import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 
 /**
@@ -46,10 +53,53 @@ public class EventReporter {
         NO_ACTION_LOGGED_AND_ERROR;
 
     private String slackWebHook;
+    private String slackUser;
 
 
-    public EventReporter(String slackWebHook) {
+    public EventReporter(String slackWebHook, String slackUser) {
         this.slackWebHook = slackWebHook;
+        this.slackUser = slackUser;
+    }
+
+    public EventReporter(String slackId, boolean isWebHook) {
+        if (isWebHook){
+            this.slackWebHook = slackId;
+        } else {
+            this.slackUser = slackId;
+        }
+    }
+
+    protected void sendUserDeleteMessage(KeycloakSession session, AdminEvent adminEvent){
+
+        //, );
+        RealmModel realm = session.realms().getRealm(adminEvent.getRealmId());
+        UserModel slackUser = session.users().getUserByUsername(this.slackUser, realm);
+        UserModel  user  = session.users().getUserById(adminEvent.getResourcePath().substring("users/".length()), realm);
+
+        if (user.getEmail() == null) {
+            LOG.warnf("Could not send welcome email due to missing email. realm=%s user=%s", realm.getId(), user.getUsername());
+            return;
+        }
+
+        UriBuilder authUriBuilder = UriBuilder.fromUri(session.getContext().getUri().getBaseUri());
+
+        Map<String, Object> mailBodyAttributes = new HashMap<>();
+        mailBodyAttributes.put("baseUri", authUriBuilder.replacePath("/auth").build());
+        mailBodyAttributes.put("username", user.getUsername());
+
+        String       realmName     = realm.getDisplayName() != null ? realm.getDisplayName() : realm.getName();
+        List<Object> subjectParams = List.of(realmName);
+
+        try {
+            EmailTemplateProvider emailProvider = session.getProvider(EmailTemplateProvider.class);
+            emailProvider.setRealm(realm);
+            emailProvider.setUser(user);
+            // Don't forget to add the welcome-email.ftl (html and text) template to your theme.
+            emailProvider.send("welcomeEmailSubject", subjectParams, "welcome-email.ftl", mailBodyAttributes);
+        } catch (EmailException eex) {
+            LOG.errorf(eex, "Failed to send welcome email. realm=%s user=%s", realm.getId(), user.getUsername());
+        }
+
     }
 
     protected void sendUserDeletedMessage(KeycloakSession session, UserModel user){
