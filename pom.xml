@@ -15,9 +15,8 @@
 
     <modules>
         <module>bcrypt-addon</module>
-        <module>jsonlog-eventlistener</module>
-        <module>keycloak-stats-spi</module>
-<!--        <module>user-removed-eventlistener</module>-->
+        <module>keycloak-metrics-spi</module>
+        <module>europeana-eventlistener</module>
     </modules>
 
     <name>Keycloak Docker on Cloud Foundry</name>
