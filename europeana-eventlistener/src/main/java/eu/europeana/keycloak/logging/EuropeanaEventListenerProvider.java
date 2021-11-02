@@ -22,14 +22,14 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void onEvent(Event event) {
-        String msg = prefix + toString(event);
-        logger.log(Logger.Level.INFO, msg);
+        String msg = prefix + toJson(event);
+        logger.info(msg);
     }
 
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
-        String msg = prefix + toString(adminEvent);
-        logger.log(Logger.Level.INFO, msg);
+        String msg = prefix + toJson(adminEvent);
+        logger.info(msg);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
         // no need to implement this
     }
 
-    private String toString(Event event) {
+    private String toJson(Event event) {
 
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
@@ -74,7 +74,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
     }
 
 
-    private String toString(AdminEvent adminEvent) {
+    private String toJson(AdminEvent adminEvent) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
         obj.add("type", "ADMIN_EVENT");

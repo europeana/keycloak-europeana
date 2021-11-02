@@ -23,9 +23,6 @@ public class UserDeleteConfig {
         "[:x:] Mailchimp\\n\\n" +
         "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"}";
     private static final String REQUEST_RECEIVED                      = "{\"text\":\"On %s, a request was received to remove user account with ID %s.\\n\\n";
-    public static final  String SLACK_USER_NOTFOUND_MESSAGEBODY       =
-        REQUEST_RECEIVED + "this userID could not be found in Keycloak (HTTP %d), which might indicate a problem " +
-        "with the token used to send the request. Therefore the token has been logged in Kibana.\"}";
     private static final String NO_ACTION_BUT_LOGGED                  = "carrying out this request.\\nNo action was taken.\\nThe user token has been logged in Kibana.";
     private static final String NO_ACTION_BUT_LOGGED_PERIOD           = NO_ACTION_BUT_LOGGED + "\"}";
     public static final  String SLACK_KC_COMM_ISSUE_MESSAGEBODY       =

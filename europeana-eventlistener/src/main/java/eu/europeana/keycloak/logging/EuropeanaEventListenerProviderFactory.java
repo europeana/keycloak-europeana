@@ -5,8 +5,7 @@ import static eu.europeana.keycloak.user.UserDeleteConfig.LOG_PREFIX;
 import static eu.europeana.keycloak.user.UserDeleteConfig.SLACK_USER;
 import static eu.europeana.keycloak.user.UserDeleteConfig.SLACK_WEBHOOK;
 
-import eu.europeana.keycloak.user.UserDeleteEmailHandler;
-import eu.europeana.keycloak.user.UserDeleteHttpHandler;
+import eu.europeana.keycloak.user.UserDeleteMessageHandler;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
@@ -23,8 +22,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
 
     KeycloakSession session;
 
-    UserDeleteEmailHandler userDeleteEmailHandler;
-    UserDeleteHttpHandler userDeleteHttpHandler;
+    UserDeleteMessageHandler userDeleteMessageHandler;
     private String logPrefix;
 
     @Override
@@ -36,22 +34,16 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     @Override
     public void init(Config.Scope scope) {
 
-        this.userDeleteHttpHandler = new UserDeleteHttpHandler();
-
-        if (null != System.getenv(SLACK_WEBHOOK) && null != System.getenv(SLACK_USER)){
-            this.userDeleteEmailHandler = new UserDeleteEmailHandler(System.getenv(SLACK_WEBHOOK), System.getenv(SLACK_USER));
-        } else if (null == System.getenv(SLACK_USER)){
-            this.userDeleteEmailHandler = new UserDeleteEmailHandler(System.getenv(SLACK_WEBHOOK), true);
-        } else if (null == System.getenv(SLACK_WEBHOOK)){
-            this.userDeleteEmailHandler = new UserDeleteEmailHandler(System.getenv(SLACK_USER), false);
-        } else {
-            throw new RuntimeException("Slack webhook nor user environment variables found, exiting ...");
-        }
-
         if (null != System.getenv(JSONLOGPREFIXENVVAR)){
             logPrefix = System.getenv(JSONLOGPREFIXENVVAR);
         } else {
             logPrefix = LOG_PREFIX;
+        }
+
+        if (null == System.getenv(SLACK_WEBHOOK) && null == System.getenv(SLACK_USER)){
+            throw new RuntimeException("Slack webhook nor user environment variables found, exiting ...");
+        } else {
+            this.userDeleteMessageHandler = new UserDeleteMessageHandler(System.getenv(SLACK_WEBHOOK), System.getenv(SLACK_USER), LOG, logPrefix);
         }
     }
 
@@ -62,7 +54,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
                 //do something here with the UserRemovedEvent
                 //the user is available via event.getUser()
                 if (event instanceof UserModel.UserRemovedEvent){
-                    userDeleteEmailHandler.sendUserDeletedMessage(session, (UserRemovedEvent) event);
+                    userDeleteMessageHandler.sendUserDeleteMessage(session, (UserRemovedEvent) event);
                     LOG.info("Boom! User removed event just dropped with user: " + ((UserRemovedEvent) event).getUser().getEmail());
                 }
             });
