@@ -11,6 +11,11 @@ public class UserDeleteConfig {
     public static final String SLACK_WEBHOOK = "SLACK_WEBHOOK";
     public static final String SLACK_USER    = "SLACK_USER";
 
+//    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
+
+    public static final String SET_API_URL = "https://set-api-test.eanadev.org/set/";
+
 
     public static final  String ERROR_ICON                            = ":x:";
     public static final  String ERROR_ASCII                           = "✘";
