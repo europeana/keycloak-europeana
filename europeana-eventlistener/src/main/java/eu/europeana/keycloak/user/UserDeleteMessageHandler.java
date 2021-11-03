@@ -65,11 +65,13 @@ public class UserDeleteMessageHandler {
 
 
     /**
-     * Configure post request sending the User delete confirmation to Slack
+     * Retrieve UserModel for the account that's being deleted, send the Set delete request using the user token,
+     * and send a confirmation message to Slack (using HTTP Post first, and email if that fails).
+     * If both methods fail, the delete information is logged instead and should appear in Kibana.
      *
      * @param session       KeycloakSession
-     * @param deleteEvent   user delete event captured by the keycloak ProviderEventManager
-     * @return boolean whether or not sending the message succeeded
+     * @param deleteEvent   user delete event captured by the custorm ProviderEventManager in
+     *                      EuropeanaEventListenerProviderFactory.postInit()
      */
     public void sendUserDeleteMessage(KeycloakSession session, UserRemovedEvent deleteEvent) {
         RealmModel realm      = deleteEvent.getRealm();
@@ -89,7 +91,11 @@ public class UserDeleteMessageHandler {
             slackMsgSent = sendEmailMessage(session, formatUserDeleteMessage(deleteUser.getEmail(), false, setsDeleted), slackUser);
         }
 
-        
+        if (!slackMsgSent){
+            logger.error(toJson("EmailException occurred while sending Slack message: " +
+                                e.getMessage()));
+        }
+
     }
 
     private String formatUserDeleteMessage(String email, boolean useIcon, boolean setsDeleted){

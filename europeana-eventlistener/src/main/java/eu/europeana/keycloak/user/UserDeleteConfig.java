@@ -27,12 +27,10 @@ public class UserDeleteConfig {
         "[%s] Keycloak\\n" + "[%s] The User Sets API\\n" + "[:x:] The recommendation engine\\n" +
         "[:x:] Mailchimp\\n\\n" +
         "From the remaining systems (marked with :x: above) their account should be removed within 30 days (before %s).\"}";
-    private static final String REQUEST_RECEIVED                      = "{\"text\":\"On %s, a request was received to remove user account with ID %s.\\n\\n";
+    private static final String REQUEST_RECEIVED                      = "A problem prevented sending a Delete User Account notification for user ID %s to Slack.";
     private static final String NO_ACTION_BUT_LOGGED                  = "carrying out this request.\\nNo action was taken.\\nThe user token has been logged in Kibana.";
     private static final String NO_ACTION_BUT_LOGGED_PERIOD           = NO_ACTION_BUT_LOGGED + "\"}";
-    public static final  String SLACK_KC_COMM_ISSUE_MESSAGEBODY       =
-        REQUEST_RECEIVED + "there was a problem connecting to " + "Keycloak (HTTP %d), preventing " +
-        NO_ACTION_BUT_LOGGED_PERIOD;
+
     public static final  String SLACK_SERVICE_UNAVAILABLE_MESSAGEBODY =
         REQUEST_RECEIVED + "a server error occurred which prevented " + NO_ACTION_BUT_LOGGED_PERIOD;
     private static final String NO_ACTION_LOGGED_AND_ERROR            = NO_ACTION_BUT_LOGGED + "\\n\\n[%s]\"}";
