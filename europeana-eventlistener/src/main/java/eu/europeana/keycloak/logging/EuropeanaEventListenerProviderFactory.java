@@ -55,7 +55,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
                 //the user is available via event.getUser()
                 if (event instanceof UserModel.UserRemovedEvent){
                     userDeleteMessageHandler.sendUserDeleteMessage(session, (UserRemovedEvent) event);
-                    LOG.info("Boom! User removed event just dropped with user: " + ((UserRemovedEvent) event).getUser().getEmail());
+                    LOG.info("User removed event happened for user: " + ((UserRemovedEvent) event).getUser().getEmail());
                 }
             });
     }

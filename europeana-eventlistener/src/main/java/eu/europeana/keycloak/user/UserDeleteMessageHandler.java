@@ -77,23 +77,24 @@ public class UserDeleteMessageHandler {
         RealmModel realm      = deleteEvent.getRealm();
         UserModel  slackUser  = session.users().getUserByUsername(this.slackUser, realm);
         UserModel  deleteUser = deleteEvent.getUser();
-        logger.debug("sendUserDeleteMessage for: " + deleteUser.getUsername() + ", email: " + deleteUser.getEmail());
+        logger.info(toJson(deleteEvent,
+                            "User account removed, sending confirmation message to Slack"));
 
-        boolean slackMsgSent;
+        boolean slackHttpSent = false;
+        boolean slackEmailSent = false;
         boolean setsDeleted = deleteUserSets(session, deleteUser);
 
         if (null != slackWebHook && !slackWebHook.equalsIgnoreCase("")){
-            slackMsgSent = sendHttpMessage(formatUserDeleteMessage(deleteUser.getEmail(), true, setsDeleted));
-            if (DEBUG || !slackMsgSent) {
-                sendEmailMessage(session, formatUserDeleteMessage(deleteUser.getEmail(), false, setsDeleted), slackUser);
-            }
-        } else {
-            slackMsgSent = sendEmailMessage(session, formatUserDeleteMessage(deleteUser.getEmail(), false, setsDeleted), slackUser);
+            slackHttpSent = sendHttpMessage(formatUserDeleteMessage(deleteUser.getEmail(), true, setsDeleted), deleteEvent);
         }
 
-        if (!slackMsgSent){
-            logger.error(toJson("EmailException occurred while sending Slack message: " +
-                                e.getMessage()));
+        if (DEBUG || !slackHttpSent) {
+            slackEmailSent = sendEmailMessage(session, formatUserDeleteMessage(deleteUser.getEmail(), false, setsDeleted), slackUser, deleteEvent);
+        }
+
+        if (!slackEmailSent){
+            logger.error(toJson(deleteEvent,
+                                "User account was removed but failed to send confirmation message to Slack"));
         }
 
     }
@@ -115,7 +116,7 @@ public class UserDeleteMessageHandler {
      * @param message  contents of the messages
      * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendHttpMessage(String message) {
+    private boolean sendHttpMessage(String message, UserRemovedEvent deleteEvent) {
         StringEntity entity;
         HttpPost     httpPost = new HttpPost(slackWebHook);
 
@@ -132,14 +133,15 @@ public class UserDeleteMessageHandler {
 
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                logger.error(toJson("Error sending Slack message: received HTTP " +
+                logger.error(toJson(deleteEvent,
+                                    "Error sending Slack message: received HTTP " +
                                     response.getStatusLine().getStatusCode() +
                                     " response"));
                 return false;
             }
         } catch (IOException e) {
-            logger.error(toJson("IOException occurred while sending Slack message: " +
-                                e.getMessage()));
+            logger.error(toJson(deleteEvent,
+                                "IOException occurred while sending Slack message by HTTP: " + e.getMessage()));
             return false;
         }
         return true;
@@ -154,10 +156,11 @@ public class UserDeleteMessageHandler {
      * @param slackUser UserModel
      * @return boolean whether or not sending the message succeeded
      */
-    private boolean sendEmailMessage (KeycloakSession session, String message, UserModel slackUser){
+    private boolean sendEmailMessage (KeycloakSession session, String message, UserModel slackUser, UserRemovedEvent deleteEvent) {
         DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
         try {
-            logger.info(toJson("sending email to: " + slackUser.getEmail()));
+            logger.info(toJson(deleteEvent,
+                               "Sending email to Slack user: " + slackUser.getEmail()));
             senderProvider.send(
                 session.getContext().getRealm().getSmtpConfig(),
                 slackUser,
@@ -165,8 +168,8 @@ public class UserDeleteMessageHandler {
                 message,
                 message);
         } catch (EmailException e) {
-            logger.error(toJson("EmailException occurred while sending Slack message: " +
-                                e.getMessage()));
+            logger.error(toJson(deleteEvent,
+                                "EmailException occurred while sending Slack message by email: " + e.getMessage()));
             return false;
         }
         return true;
@@ -204,50 +207,36 @@ public class UserDeleteMessageHandler {
         return new JWSBuilder().kid(key.getKid()).type("JWT").jsonContent(token).sign(new AsymmetricSignatureSignerContext(key));
     }
 
-    /**
-     * Sends a report about errors that occurred while processing the user delete request to Slack using email
-     *
-     * @param userId    user id as found in the User Token. If this could not be retrieved, it will default to
-     *                  "unknown"
-     * @param errorType String defining error type to determine the contents of the email to be sent: "M" if user cannot
-     *                  be found; "C" in case of errors communicating with KeyCloak; "F" if designated admin user isn't
-     *                  authorised; and "U" for unknown / unexpected errors
-     * @param status    int value representing the HTTP return status of
-     * @return boolean whether or not sending the message succeeded
-     */
-    private boolean sendErrorEmail(String userId, String errorType, int status) {
-        /*
-        SimpleMailMessage mailTemplate;
-        switch (errorType) {
-            case "C":
-                mailTemplate = kcCommProblemSlackMail;
-                break;
-            case "M":
-                mailTemplate = userNotFoundSlackMail;
-                break;
-            case "F":
-                mailTemplate = kcForbiddenSlackMail;
-                break;
-            case "U":
-                mailTemplate = unavailableSlackMail;
-                break;
-            default: // shouldn't happen but just in case
-                mailTemplate = unavailableSlackMail;
-        }
-        mailTemplate.setTo(slackEmail);
-        return emailService.sendUserProblemEmail(mailTemplate, LocalDate.now().toString(), userId, status);
-        */
-        return false;
-    }
-
-    private String toJson(String msg) {
+    private String toJson(UserRemovedEvent event, String msg) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
-        obj.add("type", "MESSAGE_HANDLER_EVENT");
+        obj.add("type", "USER_DELETE_EVENT");
 
-        obj.add("message", msg);
+        if (event.getRealm() != null) {
+            obj.add("realmName", event.getRealm().getDisplayName());
+        }
+
+        if (event.getUser() != null) {
+            if (isNotBlank(event.getUser().getId())){
+                obj.add("userId", event.getUser().getId());
+            }
+            if (isNotBlank(event.getUser().getEmail())){
+                obj.add("userEmail", event.getUser().getEmail());
+            }
+            if (isNotBlank(event.getUser().getUsername())){
+                obj.add("userName", event.getUser().getUsername());
+            }
+        }
+
+        if (msg != null) {
+            obj.add("message", msg);
+        }
 
         return prefix + obj.build().toString();
+    }
+
+    private boolean isNotBlank(String str){
+        return (null != str && !str.isEmpty() && !str.isBlank());
     }
 
 }
