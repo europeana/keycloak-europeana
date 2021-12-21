@@ -3,7 +3,7 @@ package eu.europeana.keycloak.user;
 /**
  * Created by luthien on 01/11/2021.
  */
-public class UserDeleteConfig {
+public class UserRemovedConfig {
 
     public static final String JSONLOGPREFIXENVVAR = "KEYCLOAK_JSONLOG_PREFIX";
     public static final String LOG_PREFIX          = "KEYCLOAK_EVENT:";

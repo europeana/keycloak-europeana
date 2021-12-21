@@ -1,11 +1,11 @@
 package eu.europeana.keycloak.logging;
 
-import static eu.europeana.keycloak.user.UserDeleteConfig.JSONLOGPREFIXENVVAR;
-import static eu.europeana.keycloak.user.UserDeleteConfig.LOG_PREFIX;
-import static eu.europeana.keycloak.user.UserDeleteConfig.SLACK_USER;
-import static eu.europeana.keycloak.user.UserDeleteConfig.SLACK_WEBHOOK;
+import static eu.europeana.keycloak.user.UserRemovedConfig.JSONLOGPREFIXENVVAR;
+import static eu.europeana.keycloak.user.UserRemovedConfig.LOG_PREFIX;
+import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_USER;
+import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_WEBHOOK;
 
-import eu.europeana.keycloak.user.UserDeleteMessageHandler;
+import eu.europeana.keycloak.user.UserRemovedMessageHandler;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
@@ -22,7 +22,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
 
     KeycloakSession session;
 
-    UserDeleteMessageHandler userDeleteMessageHandler;
+    UserRemovedMessageHandler userRemovedMessageHandler;
     private String logPrefix;
 
     @Override
@@ -43,7 +43,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
         if (null == System.getenv(SLACK_WEBHOOK) && null == System.getenv(SLACK_USER)){
             throw new RuntimeException("Slack webhook nor user environment variables found, exiting ...");
         } else {
-            this.userDeleteMessageHandler = new UserDeleteMessageHandler(System.getenv(SLACK_WEBHOOK), System.getenv(SLACK_USER), LOG, logPrefix);
+            this.userRemovedMessageHandler = new UserRemovedMessageHandler(System.getenv(SLACK_WEBHOOK), System.getenv(SLACK_USER), LOG, logPrefix);
         }
     }
 
@@ -54,7 +54,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
                 //do something here with the UserRemovedEvent
                 //the user is available via event.getUser()
                 if (event instanceof UserModel.UserRemovedEvent){
-                    userDeleteMessageHandler.sendUserDeleteMessage(session, (UserRemovedEvent) event);
+                    userRemovedMessageHandler.handleUserRemoveEvent(session, (UserRemovedEvent) event);
                     LOG.info("User removed event happened for user: " + ((UserRemovedEvent) event).getUser().getEmail());
                 }
             });
