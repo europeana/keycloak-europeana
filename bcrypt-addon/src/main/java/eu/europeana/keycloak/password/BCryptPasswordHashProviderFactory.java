@@ -19,7 +19,7 @@ public class BCryptPasswordHashProviderFactory implements PasswordHashProviderFa
     @Override
     public PasswordHashProvider create(KeycloakSession session) {
         LOG.debug("Creating BCryptPasswordHashProvider ...");
-        return new BCryptPasswordHashProvider(ID);
+        return new BCryptPasswordHashProvider(ID, LOG);
     }
 
     @Override

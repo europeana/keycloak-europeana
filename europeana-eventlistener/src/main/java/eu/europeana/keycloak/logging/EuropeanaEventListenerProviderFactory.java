@@ -18,7 +18,7 @@ import org.keycloak.models.UserModel.UserRemovedEvent;
 
 public class EuropeanaEventListenerProviderFactory implements EventListenerProviderFactory {
 
-    private static final Logger LOG = Logger.getLogger("org.keycloak.events");
+    private static final Logger LOG = Logger.getLogger(EuropeanaEventListenerProviderFactory.class);
 
     KeycloakSession session;
 

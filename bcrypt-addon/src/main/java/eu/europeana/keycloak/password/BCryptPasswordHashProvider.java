@@ -19,13 +19,14 @@ import java.util.regex.Pattern;
 public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
     private static final int     HARDCODEDNROFITERATIONS = 13;
-    private static final Logger LOG = Logger.getLogger(BCryptPasswordHashProvider.class);
     private final        int    defaultIterations;
     private final        String providerId;
     private final        String pepper;
     private final        Pattern pattern                 = Pattern.compile("-?\\d+(\\.\\d+)?");
+    Logger LOG;
 
-    public BCryptPasswordHashProvider(String providerId) {
+    public BCryptPasswordHashProvider(String providerId, Logger LOG) {
+        this.LOG = LOG;
         LOG.debug("BCryptPasswordHashProvider created");
         this.providerId = providerId;
         if (isNumeric(System.getenv("BCRYPT_ITERATIONS"))) {

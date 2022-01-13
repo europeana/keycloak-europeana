@@ -13,23 +13,23 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
 
     private final String prefix;
-    Logger logger;
+    Logger LOG;
 
-    public EuropeanaEventListenerProvider(KeycloakSession session, Logger logger, String prefix) {
-        this.logger = logger;
+    public EuropeanaEventListenerProvider(KeycloakSession session, Logger LOG, String prefix) {
+        this.LOG    = LOG;
         this.prefix = prefix;
     }
 
     @Override
     public void onEvent(Event event) {
         String msg = prefix + toJson(event);
-        logger.info(msg);
+        LOG.info(msg);
     }
 
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
         String msg = prefix + toJson(adminEvent);
-        logger.info(msg);
+        LOG.info(msg);
     }
 
     @Override
