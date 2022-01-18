@@ -16,9 +16,6 @@ public class UserRemovedConfig {
     public static final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
     public static final String SCOPE         = System.getenv("SCOPE");
 
-    //    public static final boolean DEBUG = true;
-    public static final boolean DEBUG = false;
-
     public static final String SET_API_URL = "https://set-api-test.eanadev.org/set/";
 
 

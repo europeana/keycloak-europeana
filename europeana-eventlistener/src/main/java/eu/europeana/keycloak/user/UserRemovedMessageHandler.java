@@ -6,7 +6,6 @@ import static eu.europeana.keycloak.user.UserRemovedConfig.OK_ASCII;
 import static eu.europeana.keycloak.user.UserRemovedConfig.OK_ICON;
 import static eu.europeana.keycloak.user.UserRemovedConfig.SET_API_URL;
 import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_USER_DELETE_MESSAGEBODY;
-import static eu.europeana.keycloak.user.UserRemovedConfig.DEBUG;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -41,14 +40,17 @@ import org.keycloak.services.Urls;
  */
 public class UserRemovedMessageHandler {
 
+    //    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
+
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
     private final CloseableHttpClient httpClient;
     private final String              slackWebHook;
     private final String              slackUser;
     private final String              prefix;
-    boolean areSetsDeleted   = false;
-    boolean isSlackHttpSent  = false;
-    boolean isSlackEmailSent = false;
+    boolean areSetsDeleted      = false;
+    boolean slackHttpSendError  = false;
+    boolean slackEmailSendError = false;
 
 
     public UserRemovedMessageHandler(String slackWebHook, String slackUser, Logger logger, String prefix) {
@@ -81,35 +83,44 @@ public class UserRemovedMessageHandler {
         UserModel  slackUser  = session.users().getUserByUsername(this.slackUser, realm);
         UserModel  deleteUser = deleteEvent.getUser();
 
-        LOG.info(toJson(deleteEvent,
-                        "User account removed, trying to delete user sets ..."));
+//        LOG.info(toJson(deleteEvent, "User account removed, trying to delete user sets ..."));
 
         // TODO this is still to be fixed, commenting out now to prevent error messages
-        //areSetsDeleted = deleteUserSets(session, deleteUser);
+//        areSetsDeleted = deleteUserSets(session, deleteUser);
 
-        if (areSetsDeleted) {
-            LOG.info(toJson(deleteEvent, "User sets deleted."));
-        }
-        LOG.info(toJson(deleteEvent, "User account removed, sending confirmation message to Slack"));
+//        if (areSetsDeleted)) {
+//            LOG.info(toJson(deleteEvent, "User sets deleted."));
+//        }
+
+        LOG.info(toJson(deleteEvent, "Sending confirmation message to Slack"));
 
         if (null != slackWebHook && !slackWebHook.equalsIgnoreCase("")) {
-            isSlackHttpSent = sendHttpMessage(formatUserRemovedMessage(
+            slackHttpSendError = sendHttpMessage(formatUserRemovedMessage(
                                                   deleteUser.getEmail(),
                                                   true),
-                                              deleteEvent);
+                                                 deleteEvent);
         }
 
-        if (DEBUG || !isSlackHttpSent) {
-            isSlackEmailSent = sendEmailMessage(session,
-                                                formatUserRemovedMessage(deleteUser.getEmail(),
+        if (slackHttpSendError) {
+            LOG.error(toJson(deleteEvent, "Error occurred trying to send the message over HTTP, now trying to " +
+                                          "send it via email ..."));
+        }
+
+        if (DEBUG || slackHttpSendError) {
+            slackEmailSendError = sendEmailMessage(session,
+                                                   formatUserRemovedMessage(deleteUser.getEmail(),
                                                                          false),
-                                                slackUser,
-                                                deleteEvent);
+                                                   slackUser,
+                                                   deleteEvent);
         }
 
-        if (!isSlackEmailSent) {
+        if (slackEmailSendError) {
             LOG.error(toJson(deleteEvent,
-                             "User account was removed but failed to send confirmation message to Slack"));
+                             "!IMPORTANT! User account was removed, but failed to send confirmation message to Slack. " +
+                             "Please notify the Slack delete_user_account channel, providing details about the " +
+                             "error and the deleted user, so they can handle the issue manually."));
+        } else {
+            LOG.info(toJson(deleteEvent, "Confirmation message was sent to Slack"));
         }
 
     }
@@ -166,7 +177,8 @@ public class UserRemovedMessageHandler {
      * Send message to the Slack channel with a POST HTTP request
      *
      * @param message contents of the messages
-     * @return boolean whether or not sending the message succeeded
+     * @return boolean: TRUE if an error occurred, preventing the message to be sent
+     *                  FALSE if the message was sent without an error
      */
     private boolean sendHttpMessage(String message, UserRemovedEvent deleteEvent) {
         StringEntity entity;
@@ -176,7 +188,7 @@ public class UserRemovedMessageHandler {
             entity = new StringEntity(message);
         } catch (UnsupportedEncodingException e) {
             LOG.errorf("UnsupportedEncodingException occurred while creating Slack message: {}", e.getMessage());
-            return false;
+            return true;
         }
 
         httpPost.setEntity(entity);
@@ -194,9 +206,9 @@ public class UserRemovedMessageHandler {
         } catch (IOException e) {
             LOG.error(toJson(deleteEvent,
                              "IOException occurred while sending Slack message by HTTP: " + e.getMessage()));
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
 
@@ -206,7 +218,8 @@ public class UserRemovedMessageHandler {
      * @param session   email address of the User to delete
      * @param message   message
      * @param slackUser UserModel
-     * @return boolean whether or not sending the message succeeded
+     * @return boolean TRUE if an error occurred, preventing the email to be sent
+     *                 FALSE if the email was sent without an error
      */
     private boolean sendEmailMessage(KeycloakSession session, String message, UserModel slackUser,
                                      UserRemovedEvent deleteEvent) {
@@ -223,9 +236,9 @@ public class UserRemovedMessageHandler {
         } catch (EmailException e) {
             LOG.error(toJson(deleteEvent,
                              "EmailException occurred while sending Slack message by email: " + e.getMessage()));
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private String toJson(UserRemovedEvent event, String msg) {
