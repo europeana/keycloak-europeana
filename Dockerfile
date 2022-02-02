@@ -14,7 +14,7 @@ RUN npm run build
 
 # 1. Build Keycloak
 # Check that this version matches the one in the pom.xml!
-FROM jboss/keycloak:12.0.4
+FROM jboss/keycloak:16.1.0
 
 # Set workdir to jboss home
 WORKDIR /opt/jboss/
@@ -30,7 +30,7 @@ ENV DB_VENDOR=postgres \
 # ENV EUROPEANA_JBOSS_ADMIN_USER admin
 
 # Copy theme from stage 0
-COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
+# COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
 
 # Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) to keycloak/modules
 COPY bcrypt-dependencies keycloak/modules

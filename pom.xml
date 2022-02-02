@@ -10,14 +10,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>1.2</version>
+    <version>1.3</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>bcrypt-addon</module>
-        <module>jsonlog-eventlistener</module>
-        <module>keycloak-stats-spi</module>
-<!--        <module>user-removed-eventlistener</module>-->
+        <module>keycloak-metrics-spi</module>
+        <module>europeana-eventlistener</module>
     </modules>
 
     <name>Keycloak Docker on Cloud Foundry</name>
@@ -25,7 +24,7 @@
 
     <properties>
         <!-- Check this version to match the one in the Dockerfile! -->
-        <keycloak.version>12.0.4</keycloak.version>
+        <keycloak.version>16.1.0</keycloak.version>
 
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.source>11</maven.compiler.source>
