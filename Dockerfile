@@ -30,7 +30,7 @@ ENV DB_VENDOR=postgres \
 # ENV EUROPEANA_JBOSS_ADMIN_USER admin
 
 # Copy theme from stage 0
-# COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
+COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
 
 # Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) to keycloak/modules
 COPY bcrypt-dependencies keycloak/modules
