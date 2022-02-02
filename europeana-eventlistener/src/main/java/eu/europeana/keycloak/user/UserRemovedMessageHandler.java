@@ -10,17 +10,23 @@ import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_USER_DELETE_MES
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import javax.annotation.PreDestroy;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.jboss.logging.Logger;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.crypto.AsymmetricSignatureSignerContext;
 import org.keycloak.crypto.KeyUse;
 import org.keycloak.crypto.KeyWrapper;
@@ -34,6 +40,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.services.Urls;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.idm.RealmRepresentation;
 //import org.keycloak.representations.
 
 /**
@@ -52,6 +60,8 @@ public class UserRemovedMessageHandler {
     boolean areSetsDeleted      = false;
     boolean slackHttpSendError  = false;
     boolean slackEmailSendError = false;
+
+    private final String OIDTokenURL = "http://localhost:8080/auth/realms/europeana/protocol/openid-connect/token";
 
 
     public UserRemovedMessageHandler(String slackWebHook, String slackUser, Logger logger, String prefix) {
@@ -85,6 +95,7 @@ public class UserRemovedMessageHandler {
         UserModel  deleteUser = deleteEvent.getUser();
 
 //        LOG.info(toJson(deleteEvent, "User account removed, trying to delete user sets ..."));
+        getTrustedClientToken(session, deleteUser);
 
         // TODO this is still to be fixed, commenting out now to prevent error messages
 //        areSetsDeleted = deleteUserSets(session, deleteUser);
@@ -147,6 +158,60 @@ public class UserRemovedMessageHandler {
         }
         return true;
     }
+
+    private void getTrustedClientToken(KeycloakSession session, UserModel deleteUser) {
+        HttpPost     httpPost = new HttpPost(OIDTokenURL);
+
+        Keycloak keycloak = KeycloakBuilder.builder()
+                                           .serverUrl("http://localhost:8080/auth")
+                                           .realm("master")
+                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                                           .clientId("Account2")
+                                           .clientSecret("cTXdyvBqrCuZY07k1iRHubDlZkkqlcmC")
+                                           .build();
+
+//        Keycloak keycloak = Keycloak.getInstance(
+//            "http://localhost:8080/auth",
+//            "master",
+//            "admin",
+//            "password",
+//            "admin-cli");
+        RealmRepresentation realm = keycloak.realm("master").toRepresentation();
+
+
+//        ArrayList<NameValuePair> postParameters;
+//
+//        postParameters = new ArrayList<>();
+//        postParameters.add(new BasicNameValuePair("grant_type", "password"));
+//        postParameters.add(new BasicNameValuePair("username", "fifi"));
+//        postParameters.add(new BasicNameValuePair("password", "finufi"));
+//        postParameters.add(new BasicNameValuePair("client_id", "test_client_userset"));
+//        postParameters.add(new BasicNameValuePair("client_secret", "3dde4cdb-ee54-42f2-a198-5f38a753f5cc"));
+//        postParameters.add(new BasicNameValuePair("scope", "usersets"));
+//
+//        try {
+//            httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+
+//        httpPost.setHeader("Accept", "application/json");
+//        httpPost.setHeader("Content-type", "application/json");
+
+//        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+//            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+//                LOG.error("Error sending POST request, received HTTP " +
+//                                 response.getStatusLine().getStatusCode() +
+//                                 " response");
+//
+//            }
+//            LOG.info(response.toString());
+//        } catch (IOException e) {
+//            LOG.error("IOException occurred while sending Slack message by HTTP: " + e.getMessage());
+//
+//        }
+    }
+
 
     private String getAccessToken(KeycloakSession session, UserModel deleteUser) {
         KeycloakContext keycloakContext = session.getContext();
