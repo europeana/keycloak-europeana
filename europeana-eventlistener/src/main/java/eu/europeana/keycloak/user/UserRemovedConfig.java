@@ -16,6 +16,10 @@ public class UserRemovedConfig {
     public static final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
     public static final String SCOPE         = System.getenv("SCOPE");
 
+    public static final String DELETE_MGR_ID = System.getenv("DELETE_MGR_ID");
+    public static final String DELETE_MGR_PW = System.getenv("DELETE_MGR_PW");
+
+
     public static final String SET_API_URL = "https://set-api-test.eanadev.org/set/";
 
 

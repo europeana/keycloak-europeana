@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.PreDestroy;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -26,6 +27,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.crypto.AsymmetricSignatureSignerContext;
 import org.keycloak.crypto.KeyUse;
@@ -39,9 +41,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
 import org.keycloak.representations.AccessToken;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.services.Urls;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.idm.RealmRepresentation;
+
 //import org.keycloak.representations.
 
 /**
@@ -61,7 +63,9 @@ public class UserRemovedMessageHandler {
     boolean slackHttpSendError  = false;
     boolean slackEmailSendError = false;
 
-    private final String OIDTokenURL = "http://localhost:8080/auth/realms/europeana/protocol/openid-connect/token";
+    private final String AUTHSERVERURL = "http://localhost:8080/auth/";
+    private final String OIDTokenURL = AUTHSERVERURL + "realms/europeana/protocol/openid-connect/token";
+
 
 
     public UserRemovedMessageHandler(String slackWebHook, String slackUser, Logger logger, String prefix) {
@@ -95,14 +99,15 @@ public class UserRemovedMessageHandler {
         UserModel  deleteUser = deleteEvent.getUser();
 
 //        LOG.info(toJson(deleteEvent, "User account removed, trying to delete user sets ..."));
-        getTrustedClientToken(session, deleteUser);
+//        getTrustedClientToken(session, deleteUser);
+        getKCClient();
 
         // TODO this is still to be fixed, commenting out now to prevent error messages
-//        areSetsDeleted = deleteUserSets(session, deleteUser);
+        areSetsDeleted = deleteUserSets(session, deleteUser);
 
-//        if (areSetsDeleted)) {
-//            LOG.info(toJson(deleteEvent, "User sets deleted."));
-//        }
+        if (areSetsDeleted) {
+            LOG.info(toJson(deleteEvent, "User sets deleted."));
+        }
 
         LOG.info(toJson(deleteEvent, "Sending confirmation message to Slack"));
 
@@ -142,9 +147,9 @@ public class UserRemovedMessageHandler {
     // 2) it's probably too late to use a token for the user in this class because it's already being deleted
     // so we should probably think of something else in the Set API
     private boolean deleteUserSets(KeycloakSession session, UserModel deleteUser) {
-        String     userToken  = getAccessToken(session, deleteUser);
+//        String     userToken  = getAccessToken(session);
         HttpDelete httpDelete = new HttpDelete(SET_API_URL);
-        httpDelete.setHeader("Authorization", "Bearer " + userToken);
+//        httpDelete.setHeader("Authorization", "Bearer " + userToken);
 
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
@@ -159,16 +164,40 @@ public class UserRemovedMessageHandler {
         return true;
     }
 
-    private void getTrustedClientToken(KeycloakSession session, UserModel deleteUser) {
-        HttpPost     httpPost = new HttpPost(OIDTokenURL);
+//    private String getAccessToken(KeycloakSession session) {
+//
+//        KeycloakContext context = session.getContext();
+//        RealmModel realm = context.getRealm();
+//        UserModel deleteManagerUser = session.users().getUserByUsername("keycloak_user_delete", realm);
+////        UserModel user = session.users().getUserById(realm, token.getSubject());
+////        if (user == null) {
+////            return Response.status(UNAUTHORIZED).build();
+////        }
+//
+//        AccessToken token = new AccessToken();
+//        token.subject(deleteManagerUser.getId());
+//        token.issuer(Urls.realmIssuer(context.getUri().getBaseUri(), context.getRealm().getName()));
+//        token.issuedNow();
+//        token.setScope("usersets");
+////        token.
+//        token.expiration((int) (token.getIat() + 60L)); //Lifetime of 60 seconds
+//
+//        KeyWrapper key = session.keys().getActiveKey(context.getRealm(), KeyUse.SIG, "RS256");
+//
+//        return new JWSBuilder().kid(key.getKid()).type("JWT").jsonContent(token).sign(
+//            new AsymmetricSignatureSignerContext(key));
+//    }
 
-        Keycloak keycloak = KeycloakBuilder.builder()
-                                           .serverUrl("http://localhost:8080/auth")
-                                           .realm("master")
-                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                                           .clientId("Account2")
-                                           .clientSecret("cTXdyvBqrCuZY07k1iRHubDlZkkqlcmC")
-                                           .build();
+    private void getTrustedClientToken(KeycloakSession session, UserModel deleteUser) {
+
+
+//        Keycloak keycloak = KeycloakBuilder.builder()
+//                                           .serverUrl("http://localhost:8080/auth")
+//                                           .realm("master")
+//                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+//                                           .clientId("Account2")
+//                                           .clientSecret("cTXdyvBqrCuZY07k1iRHubDlZkkqlcmC")
+//                                           .build();
 
 //        Keycloak keycloak = Keycloak.getInstance(
 //            "http://localhost:8080/auth",
@@ -176,57 +205,68 @@ public class UserRemovedMessageHandler {
 //            "admin",
 //            "password",
 //            "admin-cli");
-        RealmRepresentation realm = keycloak.realm("master").toRepresentation();
+//        RealmRepresentation realm = keycloak.realm("master").toRepresentation();
 
 
-//        ArrayList<NameValuePair> postParameters;
-//
-//        postParameters = new ArrayList<>();
-//        postParameters.add(new BasicNameValuePair("grant_type", "password"));
-//        postParameters.add(new BasicNameValuePair("username", "fifi"));
-//        postParameters.add(new BasicNameValuePair("password", "finufi"));
-//        postParameters.add(new BasicNameValuePair("client_id", "test_client_userset"));
-//        postParameters.add(new BasicNameValuePair("client_secret", "3dde4cdb-ee54-42f2-a198-5f38a753f5cc"));
-//        postParameters.add(new BasicNameValuePair("scope", "usersets"));
-//
-//        try {
-//            httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
-//        } catch (UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
+        HttpPost     httpPost = new HttpPost(OIDTokenURL);
+        ArrayList<NameValuePair> postParameters;
+
+        postParameters = new ArrayList<>();
+        postParameters.add(new BasicNameValuePair("grant_type", "password"));
+        postParameters.add(new BasicNameValuePair("username", "fifi"));
+        postParameters.add(new BasicNameValuePair("password", "finufi"));
+        postParameters.add(new BasicNameValuePair("client_id", "test_client_userset"));
+        postParameters.add(new BasicNameValuePair("client_secret", "3dde4cdb-ee54-42f2-a198-5f38a753f5cc"));
+        postParameters.add(new BasicNameValuePair("scope", "usersets"));
+
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
 //        httpPost.setHeader("Accept", "application/json");
-//        httpPost.setHeader("Content-type", "application/json");
+        httpPost.setHeader("Content-type", "application/x-www-form-urlencoded");
 
-//        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-//            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-//                LOG.error("Error sending POST request, received HTTP " +
-//                                 response.getStatusLine().getStatusCode() +
-//                                 " response");
-//
-//            }
-//            LOG.info(response.toString());
-//        } catch (IOException e) {
-//            LOG.error("IOException occurred while sending Slack message by HTTP: " + e.getMessage());
-//
-//        }
+        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                LOG.error("Error sending POST request, received HTTP " +
+                                 response.getStatusLine().getStatusCode() +
+                                 " response");
+
+            }
+            LOG.info(response.toString());
+            System.out.println(response.toString());
+        } catch (Exception e) {
+            LOG.error("IOException occurred while sending Slack message by HTTP: " + e.getMessage());
+
+        } finally {
+            LOG.info("Finally");
+
+        }
     }
 
 
-    private String getAccessToken(KeycloakSession session, UserModel deleteUser) {
-        KeycloakContext keycloakContext = session.getContext();
+    public void getKCClient() {
+        String realm = "europeana";
+        // idm-client needs to allow "Direct Access Grants: Resource Owner Password Credentials Grant"
+        String clientId = "test_client_userset";
+        String clientSecret = "3dde4cdb-ee54-42f2-a198-5f38a753f5cc";
 
-        AccessToken token = new AccessToken();
-        token.subject(deleteUser.getId());
-        token.issuer(Urls.realmIssuer(keycloakContext.getUri().getBaseUri(), keycloakContext.getRealm().getName()));
-        token.issuedNow();
-        token.expiration((int) (token.getIat() + 60L)); //Lifetime of 60 seconds
+        // Client "idm-helper" needs service-account with at least "manage-users, view-clients, view-realm, view-users" roles for "realm-management"
+        Keycloak keycloak = KeycloakBuilder.builder() //
+                                           .serverUrl(AUTHSERVERURL) //
+                                           .realm(realm) //
+                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS) //
+                                           .clientId(clientId) //
+                                           .clientSecret(clientSecret).build();
 
-        KeyWrapper key = session.keys().getActiveKey(keycloakContext.getRealm(), KeyUse.SIG, "RS256");
+        List<UserRepresentation> users = keycloak.realm(realm).users().search("userset", true);
+        System.out.println("users: " + users.toString());
+        //userset
 
-        return new JWSBuilder().kid(key.getKid()).type("JWT").jsonContent(token).sign(
-            new AsymmetricSignatureSignerContext(key));
     }
+
 
     private String formatUserRemovedMessage(String email, boolean useIcon) {
         String okString    = useIcon ? OK_ICON : OK_ASCII;

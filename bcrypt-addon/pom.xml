@@ -90,7 +90,7 @@
                             <version>${commons-codec.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../bcrypt-dependencies/commons-codec/main</outputDirectory>
+                            <outputDirectory>../dependencies/commons-codec/main</outputDirectory>
                             <destFileName>commons-codec.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
@@ -99,7 +99,7 @@
                             <version>${favre-bcrypt.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../bcrypt-dependencies/favre/main</outputDirectory>
+                            <outputDirectory>../dependencies/favre/main</outputDirectory>
                             <destFileName>bcrypt.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
@@ -108,7 +108,7 @@
                             <version>${favre-bytes.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../bcrypt-dependencies/favre/main</outputDirectory>
+                            <outputDirectory>../dependencies/favre/main</outputDirectory>
                             <destFileName>bytes.jar</destFileName>
                         </artifactItem>
                     </artifactItems>
