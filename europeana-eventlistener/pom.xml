@@ -24,7 +24,7 @@
     <jboss.logging.version>3.4.1.Final</jboss.logging.version>
     <apache.httpclient.version>4.5.13</apache.httpclient.version>
     <jboss.resteasy.version>3.13.2.Final</jboss.resteasy.version>
-    <resteasy.version>2.0.1.Final</resteasy.version>
+    <resteasy.version>2.0.2.Final</resteasy.version>
     <selenium.version>2.35.0</selenium.version>
   </properties>
 
@@ -86,7 +86,7 @@
     </dependency>
 
 
-<!--    dependencies of admin client-->
+    <!--    dependencies of admin client-->
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-common</artifactId>
@@ -107,62 +107,67 @@
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <version>${jboss.resteasy.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-jackson2-provider</artifactId>
       <version>${jboss.resteasy.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-client-registration-api</artifactId>
-      <version>${keycloak.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.seleniumhq.selenium</groupId>
-      <artifactId>selenium-java</artifactId>
-      <version>${selenium.version}</version>
+      <groupId>org.jboss.spec.javax.ws.rs</groupId>
+      <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+      <version>${resteasy.version}</version>
+      <scope>provided</scope>
     </dependency>
 
 <!--    <dependency>-->
-<!--      <groupId>org.jboss.resteasy</groupId>-->
-<!--      <artifactId>resteasy-multipart-provider</artifactId>-->
-<!--      <version>${jboss.resteasy.version}</version>-->
+<!--      <groupId>org.keycloak</groupId>-->
+<!--      <artifactId>keycloak-client-registration-api</artifactId>-->
+<!--      <version>${keycloak.version}</version>-->
 <!--    </dependency>-->
 
+    <!--    <dependency>-->
+    <!--      <groupId>org.seleniumhq.selenium</groupId>-->
+    <!--      <artifactId>selenium-java</artifactId>-->
+    <!--      <version>${selenium.version}</version>-->
+    <!--    </dependency>-->
 
-<!--    <dependency>-->
-<!--      <groupId>org.jboss.resteasy</groupId>-->
-<!--      <artifactId>resteasy-jaxb-provider</artifactId>-->
-<!--      <version>${jboss.resteasy.version}</version>-->
-<!--    </dependency>-->
-
-
-<!--    <dependency>-->
-<!--      <groupId>org.jboss.spec.javax.ws.rs</groupId>-->
-<!--      <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>-->
-<!--      <version>${resteasy.version}</version>-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.jboss.resteasy</groupId>-->
+    <!--      <artifactId>resteasy-multipart-provider</artifactId>-->
+    <!--      <version>${jboss.resteasy.version}</version>-->
+    <!--    </dependency>-->
 
 
-<!--    <dependency>-->
-<!--      <groupId>javax.ws.rs</groupId>-->
-<!--      <artifactId>javax.ws.rs-api</artifactId>-->
-<!--      <version>2.1.1</version>-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.jboss.resteasy</groupId>-->
+    <!--      <artifactId>resteasy-jaxb-provider</artifactId>-->
+    <!--      <version>${jboss.resteasy.version}</version>-->
+    <!--    </dependency>-->
 
-<!--    <dependency>-->
-<!--      <groupId>org.jboss.resteasy</groupId>-->
-<!--      <artifactId>resteasy-jaxb-provider</artifactId>-->
-<!--      <version>${jboss.reasteasy.version}</version>-->
-<!--    </dependency>-->
 
-<!--    <dependency>-->
-<!--      <groupId>javax.json</groupId>-->
-<!--      <artifactId>javax.json-api</artifactId>-->
-<!--      <version>${javax.version}</version>-->
-<!--      &lt;!&ndash;      <scope>provided</scope>&ndash;&gt;-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>javax.ws.rs</groupId>-->
+    <!--      <artifactId>javax.ws.rs-api</artifactId>-->
+    <!--      <version>2.1.1</version>-->
+    <!--    </dependency>-->
 
+    <!--    <dependency>-->
+    <!--      <groupId>org.jboss.resteasy</groupId>-->
+    <!--      <artifactId>resteasy-jaxb-provider</artifactId>-->
+    <!--      <version>${jboss.reasteasy.version}</version>-->
+    <!--    </dependency>-->
+
+    <!--    <dependency>-->
+    <!--      <groupId>javax.json</groupId>-->
+    <!--      <artifactId>javax.json-api</artifactId>-->
+    <!--      <version>${javax.version}</version>-->
+    <!--      &lt;!&ndash;      <scope>provided</scope>&ndash;&gt;-->
+    <!--    </dependency>-->
 
 
   </dependencies>
@@ -187,6 +192,7 @@
         </executions>
         <configuration>
           <artifactItems>
+<!--            keycloak-admin-client-->
             <artifactItem>
               <groupId>org.keycloak</groupId>
               <artifactId>keycloak-admin-client</artifactId>
@@ -196,31 +202,79 @@
               <outputDirectory>
                 ../dependencies/system/layers/keycloak/org/keycloak/keycloak-admin-client/main
               </outputDirectory>
-              <destFileName>keycloak-client-admin-${keycloak.version}.jar</destFileName>
+              <destFileName>keycloak-client-admin.jar</destFileName>
+            </artifactItem>
+<!--            javax/ws/rs/api-->
+            <artifactItem>
+              <groupId>org.jboss.spec.javax.ws.rs</groupId>
+              <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+              <version>${resteasy.version}</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>
+                ../dependencies/system/layers/base/javax/ws/rs/api/main
+              </outputDirectory>
+              <destFileName>jboss-jaxrs-api_2.1_spec-${resteasy.version}.jar</destFileName>
+            </artifactItem>
+<!--            resteasy-client-->
+<!--            <artifactItem>-->
+<!--              <groupId>org.jboss.resteasy</groupId>-->
+<!--              <artifactId>resteasy-client</artifactId>-->
+<!--              <version>${jboss.resteasy.version}</version>-->
+<!--              <type>jar</type>-->
+<!--              <overWrite>true</overWrite>-->
+<!--              <outputDirectory>-->
+<!--                ../dependencies/system/layers/base/org/jboss/resteasy/resteasy-client/main-->
+<!--              </outputDirectory>-->
+<!--              <destFileName>resteasy-client-${jboss.resteasy.version}.jar</destFileName>-->
+<!--            </artifactItem>-->
+<!--            resteasy-jackson2-provider-->
+<!--            <artifactItem>-->
+<!--              <groupId>org.jboss.resteasy</groupId>-->
+<!--              <artifactId>resteasy-jackson2-provider</artifactId>-->
+<!--              <version>${jboss.resteasy.version}</version>-->
+<!--              <type>jar</type>-->
+<!--              <overWrite>true</overWrite>-->
+<!--              <outputDirectory>-->
+<!--                ../dependencies/system/layers/base/org/jboss/resteasy/resteasy-jackson2-provider/main-->
+<!--              </outputDirectory>-->
+<!--              <destFileName>resteasy-jackson2-provider-${jboss.resteasy.version}.jar</destFileName>-->
+<!--            </artifactItem>-->
+<!--            resteasy-jaxrs-->
+            <artifactItem>
+              <groupId>org.jboss.resteasy</groupId>
+              <artifactId>resteasy-jaxrs</artifactId>
+              <version>${jboss.resteasy.version}</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>
+                ../dependencies/system/layers/base/org/jboss/resteasy/resteasy-jaxrs/main
+              </outputDirectory>
+              <destFileName>resteasy-jaxrs-${jboss.resteasy.version}.jar</destFileName>
             </artifactItem>
           </artifactItems>
         </configuration>
       </plugin>
 
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-shade-plugin</artifactId>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <phase>package</phase>-->
-<!--            <goals>-->
-<!--              <goal>shade</goal>-->
-<!--            </goals>-->
-<!--            <configuration>-->
-<!--              <artifactSet>-->
-<!--                <includes>-->
-<!--                  <include>org.keycloak:keycloak-admin-client</include>-->
-<!--                </includes>-->
-<!--              </artifactSet>-->
-<!--            </configuration>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <!--      <plugin>-->
+      <!--        <groupId>org.apache.maven.plugins</groupId>-->
+      <!--        <artifactId>maven-shade-plugin</artifactId>-->
+      <!--        <executions>-->
+      <!--          <execution>-->
+      <!--            <phase>package</phase>-->
+      <!--            <goals>-->
+      <!--              <goal>shade</goal>-->
+      <!--            </goals>-->
+      <!--            <configuration>-->
+      <!--              <artifactSet>-->
+      <!--                <includes>-->
+      <!--                  <include>org.keycloak:keycloak-admin-client</include>-->
+      <!--                </includes>-->
+      <!--              </artifactSet>-->
+      <!--            </configuration>-->
+      <!--          </execution>-->
+      <!--        </executions>-->
+      <!--      </plugin>-->
 
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
