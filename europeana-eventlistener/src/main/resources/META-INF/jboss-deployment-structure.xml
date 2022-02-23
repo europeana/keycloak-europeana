@@ -1,13 +1,11 @@
-<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.0">
+<jboss-deployment-structure>
     <deployment>
         <dependencies>
             <module name="org.keycloak.keycloak-core"/>
             <module name="org.keycloak.keycloak-server-spi"/>
             <module name="org.keycloak.keycloak-server-spi-private"/>
             <module name="org.keycloak.keycloak-services"/>
-            <module name="org.keycloak.keycloak-admin-client"/>
-            <module name="javax.ws.rs.api"/>
-<!--            <module name="org.keycloak.keycloak-saml-core-public"/>-->
+            <module name="org.keycloak.keycloak-saml-core-public"/>
             <module name="org.jboss.logging"/>
         </dependencies>
     </deployment>

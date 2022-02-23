@@ -1,20 +1,36 @@
 package eu.europeana.keycloak.user;
 
+import static eu.europeana.keycloak.user.UserRemovedConfig.CLIENT_ID;
+import static eu.europeana.keycloak.user.UserRemovedConfig.CLIENT_SECRET;
+import static eu.europeana.keycloak.user.UserRemovedConfig.DELETE_MGR_ID;
+import static eu.europeana.keycloak.user.UserRemovedConfig.DELETE_MGR_PW;
 import static eu.europeana.keycloak.user.UserRemovedConfig.ERROR_ASCII;
 import static eu.europeana.keycloak.user.UserRemovedConfig.ERROR_ICON;
+import static eu.europeana.keycloak.user.UserRemovedConfig.GRANT_TYPE;
+import static eu.europeana.keycloak.user.UserRemovedConfig.HTTP_AND_EMAIL_FAILED;
+import static eu.europeana.keycloak.user.UserRemovedConfig.HTTP_FAILED_TRYING_EMAIL;
+import static eu.europeana.keycloak.user.UserRemovedConfig.OIDTokenURL;
 import static eu.europeana.keycloak.user.UserRemovedConfig.OK_ASCII;
 import static eu.europeana.keycloak.user.UserRemovedConfig.OK_ICON;
+import static eu.europeana.keycloak.user.UserRemovedConfig.SCOPE;
+import static eu.europeana.keycloak.user.UserRemovedConfig.SENDING_CONFIRM_MSG_SLACK;
 import static eu.europeana.keycloak.user.UserRemovedConfig.SET_API_URL;
+import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_MSG_SENT;
 import static eu.europeana.keycloak.user.UserRemovedConfig.SLACK_USER_DELETE_MESSAGEBODY;
+import static eu.europeana.keycloak.user.UserRemovedConfig.USER_SETS_DELETED;
+import static eu.europeana.keycloak.user.UserRemovedConfig.USER_SETS_NOT_DELETED;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import javax.annotation.PreDestroy;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -25,48 +41,36 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
-import org.keycloak.OAuth2Constants;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.crypto.AsymmetricSignatureSignerContext;
-import org.keycloak.crypto.KeyUse;
-import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
-import org.keycloak.jose.jws.JWSBuilder;
-import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
-import org.keycloak.representations.AccessToken;
-import org.keycloak.representations.idm.UserRepresentation;
-import org.keycloak.services.Urls;
 
 //import org.keycloak.representations.
 
 /**
  * Created by luthien on 25/10/2021.
+ * Processes a User Removed event caught by EuropeanaEventListenerProviderFactory
  */
 public class UserRemovedMessageHandler {
 
-    //    public static final boolean DEBUG = true;
-    public static final boolean DEBUG = false;
+        public static final boolean DEBUG = true;
+//    public static final boolean DEBUG = false;
 
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
     private final CloseableHttpClient httpClient;
     private final String              slackWebHook;
     private final String              slackUser;
-    private final String              prefix;
-    boolean areSetsDeleted      = false;
-    boolean slackHttpSendError  = false;
-    boolean slackEmailSendError = false;
+    private final String prefix;
+    private boolean setsDeleteOK       = false;
+    private boolean slackHttpMessageOK  = false;
+    private boolean slackEmailMessageOK = false;
 
-    private final String AUTHSERVERURL = "http://localhost:8080/auth/";
-    private final String OIDTokenURL = AUTHSERVERURL + "realms/europeana/protocol/openid-connect/token";
-
-
+    private String userSetToken;
 
     public UserRemovedMessageHandler(String slackWebHook, String slackUser, Logger logger, String prefix) {
         this.slackWebHook = slackWebHook;
@@ -78,11 +82,10 @@ public class UserRemovedMessageHandler {
     @PreDestroy
     public void close() throws IOException {
         if (httpClient != null) {
-            LOG.info("Closing http client ...");
             httpClient.close();
+            LOG.info("HTTP client closed.");
         }
     }
-
 
     /**
      * Retrieve UserModel for the account that's being deleted, send the Set delete request using the user token, and
@@ -96,205 +99,159 @@ public class UserRemovedMessageHandler {
     public void handleUserRemoveEvent(KeycloakSession session, UserRemovedEvent deleteEvent) {
         RealmModel realm      = deleteEvent.getRealm();
         UserModel  slackUser  = session.users().getUserByUsername(this.slackUser, realm);
-        UserModel  deleteUser = deleteEvent.getUser();
 
-//        LOG.info(toJson(deleteEvent, "User account removed, trying to delete user sets ..."));
-//        getTrustedClientToken(session, deleteUser);
-        getKCClient();
-
-        // TODO this is still to be fixed, commenting out now to prevent error messages
-        areSetsDeleted = deleteUserSets(session, deleteUser);
-
-        if (areSetsDeleted) {
-            LOG.info(toJson(deleteEvent, "User sets deleted."));
+        if (getUserSetToken()){
+            setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
         }
 
-        LOG.info(toJson(deleteEvent, "Sending confirmation message to Slack"));
+        if (DEBUG) {
+            LOG.info(toJson(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
+            LOG.info(toJson(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
+        }
 
         if (null != slackWebHook && !slackWebHook.equalsIgnoreCase("")) {
-            slackHttpSendError = sendHttpMessage(formatUserRemovedMessage(
-                                                  deleteUser.getEmail(),
-                                                  true),
-                                                 deleteEvent);
+            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent);
         }
 
-        if (slackHttpSendError) {
-            LOG.error(toJson(deleteEvent, "Error occurred trying to send the message over HTTP, now trying to " +
-                                          "send it via email ..."));
+        if (!slackHttpMessageOK) {
+            if (DEBUG) LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
+            slackEmailMessageOK = sendSlackEmailMessage(session, slackUser, deleteEvent);
         }
 
-        if (DEBUG || slackHttpSendError) {
-            slackEmailSendError = sendEmailMessage(session,
-                                                   formatUserRemovedMessage(deleteUser.getEmail(),
-                                                                         false),
-                                                   slackUser,
-                                                   deleteEvent);
-        }
-
-        if (slackEmailSendError) {
-            LOG.error(toJson(deleteEvent,
-                             "!IMPORTANT! User account was removed, but failed to send confirmation message to Slack. " +
-                             "Please notify the Slack delete_user_account channel, providing details about the " +
-                             "error and the deleted user, so they can handle the issue manually."));
+        if (slackHttpMessageOK || slackEmailMessageOK) {
+            LOG.info(toJson(deleteEvent, SLACK_MSG_SENT));
         } else {
-            LOG.info(toJson(deleteEvent, "Confirmation message was sent to Slack"));
+            LOG.error(toJson(deleteEvent, HTTP_AND_EMAIL_FAILED));
         }
-
     }
 
-    // TODO fix this:  this access token can't be used for this because of
-    // 1) it doesn't have the necessary Client info (see the "create and delete userset JMeter test for how to request it)
-    // 2) it's probably too late to use a token for the user in this class because it's already being deleted
-    // so we should probably think of something else in the Set API
-    private boolean deleteUserSets(KeycloakSession session, UserModel deleteUser) {
-//        String     userToken  = getAccessToken(session);
-        HttpDelete httpDelete = new HttpDelete(SET_API_URL);
-//        httpDelete.setHeader("Authorization", "Bearer " + userToken);
+    /**
+     * Retrieves the token required to authenticate the Userset delete request and assigns that to userSetToken
+     *
+     * @return boolean: TRUE  if the token request was answered with HTTP 200 response was received and contained
+     *                        an "access_token" value
+     *                  FALSE for any other status or error condition
+     */
+    public boolean getUserSetToken() {
+
+            String responseString;
+            HttpPost     httpPost = new HttpPost(OIDTokenURL);
+            ArrayList<NameValuePair> postParameters;
+
+            postParameters = new ArrayList<>();
+            postParameters.add(new BasicNameValuePair("grant_type", GRANT_TYPE));
+            postParameters.add(new BasicNameValuePair("username", DELETE_MGR_ID));
+            postParameters.add(new BasicNameValuePair("password", DELETE_MGR_PW));
+            postParameters.add(new BasicNameValuePair("client_id", CLIENT_ID));
+            postParameters.add(new BasicNameValuePair("client_secret", CLIENT_SECRET));
+            postParameters.add(new BasicNameValuePair("scope", SCOPE));
+
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            httpPost.setHeader("Content-type", "application/x-www-form-urlencoded");
+
+            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                    LOG.error("Error sending POST request, received HTTP " +
+                              response.getStatusLine().getStatusCode() +
+                              " response");
+                    return false;
+                } else {
+                    HttpEntity entity = response.getEntity();
+                    responseString = EntityUtils.toString(entity);
+                    userSetToken = readJsonValue(responseString, "access_token");
+                    if (isNotBlank(userSetToken)){
+                        if (DEBUG) LOG.info(userSetToken);
+                        return true;
+                    } else {
+                        LOG.error("No access token found in response from Keycloak: " + responseString);
+                        return false;
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error(e);
+                return false;
+            }
+    }
+
+    /**
+     * Send User set delete request to the user set API
+     *
+     * @param deleteEvent   UserRemovedEvent containing the removed user data
+     * @param token   the trusted client token required to authorise the request
+     * @return boolean: TRUE  if a HTTP 204 response was received on the Userset Delete request
+     *                  FALSE if any other status was recieved or a IOException occurred
+     */
+    private boolean sendUserSetDeleteRequest(UserRemovedEvent deleteEvent, String token) {
+
+        UserModel  deleteUser = deleteEvent.getUser();
+        String urlParameter = "?creator=" + deleteUser.getId();
+        if (DEBUG){
+            urlParameter += "&profile=debug";
+            LOG.info(urlParameter);
+        }
+        HttpDelete httpDelete = new HttpDelete(SET_API_URL + urlParameter);
+
+        httpDelete.setHeader("Authorization", "Bearer " + token);
 
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                LOG.error("Error sending User Sets delete request: received HTTP " +
-                          response.getStatusLine().getStatusCode() + " response");
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+                LOG.info(toJson(deleteEvent,
+                                "Usersets delete request successful: received HTTP " +
+                                response.getStatusLine().getStatusCode() +
+                                " response"));
+                return true;
+            } else {
+                LOG.error(toJson(deleteEvent,
+                                 "Usersets delete request was not successful: received HTTP " +
+                                 response.getStatusLine().getStatusCode() +
+                                 " response"));
                 return false;
             }
         } catch (IOException e) {
-            LOG.error("IOException occurred while sending User Sets delete request: " + e.getMessage());
+            LOG.error(e);
+            LOG.error(toJson(deleteEvent,
+                             "IOException occurred while sending delete request by HTTP: " + e.getMessage()));
             return false;
         }
-        return true;
     }
 
-//    private String getAccessToken(KeycloakSession session) {
-//
-//        KeycloakContext context = session.getContext();
-//        RealmModel realm = context.getRealm();
-//        UserModel deleteManagerUser = session.users().getUserByUsername("keycloak_user_delete", realm);
-////        UserModel user = session.users().getUserById(realm, token.getSubject());
-////        if (user == null) {
-////            return Response.status(UNAUTHORIZED).build();
-////        }
-//
-//        AccessToken token = new AccessToken();
-//        token.subject(deleteManagerUser.getId());
-//        token.issuer(Urls.realmIssuer(context.getUri().getBaseUri(), context.getRealm().getName()));
-//        token.issuedNow();
-//        token.setScope("usersets");
-////        token.
-//        token.expiration((int) (token.getIat() + 60L)); //Lifetime of 60 seconds
-//
-//        KeyWrapper key = session.keys().getActiveKey(context.getRealm(), KeyUse.SIG, "RS256");
-//
-//        return new JWSBuilder().kid(key.getKid()).type("JWT").jsonContent(token).sign(
-//            new AsymmetricSignatureSignerContext(key));
-//    }
-
-    private void getTrustedClientToken(KeycloakSession session, UserModel deleteUser) {
-
-
-//        Keycloak keycloak = KeycloakBuilder.builder()
-//                                           .serverUrl("http://localhost:8080/auth")
-//                                           .realm("master")
-//                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-//                                           .clientId("Account2")
-//                                           .clientSecret("cTXdyvBqrCuZY07k1iRHubDlZkkqlcmC")
-//                                           .build();
-
-//        Keycloak keycloak = Keycloak.getInstance(
-//            "http://localhost:8080/auth",
-//            "master",
-//            "admin",
-//            "password",
-//            "admin-cli");
-//        RealmRepresentation realm = keycloak.realm("master").toRepresentation();
-
-
-        HttpPost     httpPost = new HttpPost(OIDTokenURL);
-        ArrayList<NameValuePair> postParameters;
-
-        postParameters = new ArrayList<>();
-        postParameters.add(new BasicNameValuePair("grant_type", "password"));
-        postParameters.add(new BasicNameValuePair("username", "fifi"));
-        postParameters.add(new BasicNameValuePair("password", "finufi"));
-        postParameters.add(new BasicNameValuePair("client_id", "test_client_userset"));
-        postParameters.add(new BasicNameValuePair("client_secret", "3dde4cdb-ee54-42f2-a198-5f38a753f5cc"));
-        postParameters.add(new BasicNameValuePair("scope", "usersets"));
-
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-//        httpPost.setHeader("Accept", "application/json");
-        httpPost.setHeader("Content-type", "application/x-www-form-urlencoded");
-
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                LOG.error("Error sending POST request, received HTTP " +
-                                 response.getStatusLine().getStatusCode() +
-                                 " response");
-
-            }
-            LOG.info(response.toString());
-            System.out.println(response.toString());
-        } catch (Exception e) {
-            LOG.error("IOException occurred while sending Slack message by HTTP: " + e.getMessage());
-
-        } finally {
-            LOG.info("Finally");
-
-        }
-    }
-
-
-    public void getKCClient() {
-        String realm = "europeana";
-        // idm-client needs to allow "Direct Access Grants: Resource Owner Password Credentials Grant"
-        String clientId = "test_client_userset";
-        String clientSecret = "3dde4cdb-ee54-42f2-a198-5f38a753f5cc";
-
-        // Client "idm-helper" needs service-account with at least "manage-users, view-clients, view-realm, view-users" roles for "realm-management"
-        Keycloak keycloak = KeycloakBuilder.builder() //
-                                           .serverUrl(AUTHSERVERURL) //
-                                           .realm(realm) //
-                                           .grantType(OAuth2Constants.CLIENT_CREDENTIALS) //
-                                           .clientId(clientId) //
-                                           .clientSecret(clientSecret).build();
-
-        List<UserRepresentation> users = keycloak.realm(realm).users().search("userset", true);
-        System.out.println("users: " + users.toString());
-        //userset
-
-    }
-
-
-    private String formatUserRemovedMessage(String email, boolean useIcon) {
+    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon) {
+        UserModel  deleteUser = deleteEvent.getUser();
         String okString    = useIcon ? OK_ICON : OK_ASCII;
         String errorString = useIcon ? ERROR_ICON : ERROR_ASCII;
         return String.format(SLACK_USER_DELETE_MESSAGEBODY,
                              LocalDate.now(),
-                             email,
+                             deleteUser.getEmail(),
                              okString,
-                             areSetsDeleted ? okString : errorString,
+                             setsDeleteOK ? okString : errorString,
                              LocalDate.now().plusDays(30));
     }
 
     /**
      * Send message to the Slack channel with a POST HTTP request
      *
-     * @param message contents of the messages
-     * @return boolean: TRUE if an error occurred, preventing the message to be sent
-     *                  FALSE if the message was sent without an error
+     * @param deleteEvent UserRemovedEvent containing the removed user data
+     * @return boolean: TRUE  if HTTP 200 was received after sending the message
+     *                  FALSE in case of any other status or an error occurring
      */
-    private boolean sendHttpMessage(String message, UserRemovedEvent deleteEvent) {
+    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent) {
+
+        String message = formatUserRemovedMessage(deleteEvent, true);
+
         StringEntity entity;
         HttpPost     httpPost = new HttpPost(slackWebHook);
 
         try {
             entity = new StringEntity(message);
         } catch (UnsupportedEncodingException e) {
-            LOG.errorf("UnsupportedEncodingException occurred while creating Slack message: {}", e.getMessage());
-            return true;
+            LOG.errorf("UnsupportedEncodingException occurred while creating Slack message", e);
+            return false;
         }
 
         httpPost.setEntity(entity);
@@ -302,7 +259,13 @@ public class UserRemovedMessageHandler {
         httpPost.setHeader("Content-type", "application/json");
 
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                LOG.info(toJson(deleteEvent,
+                                "Slack message sent successfully: received HTTP " +
+                                response.getStatusLine().getStatusCode() +
+                                " response"));
+                return true;
+            } else {
                 LOG.error(toJson(deleteEvent,
                                  "Error sending Slack message: received HTTP " +
                                  response.getStatusLine().getStatusCode() +
@@ -310,11 +273,9 @@ public class UserRemovedMessageHandler {
                 return false;
             }
         } catch (IOException e) {
-            LOG.error(toJson(deleteEvent,
-                             "IOException occurred while sending Slack message by HTTP: " + e.getMessage()));
-            return true;
+            LOG.error(e);
+            return false;
         }
-        return false;
     }
 
 
@@ -322,14 +283,16 @@ public class UserRemovedMessageHandler {
      * Sends the results of the user delete request to Slack by email
      *
      * @param session   email address of the User to delete
-     * @param message   message
-     * @param slackUser UserModel
-     * @return boolean TRUE if an error occurred, preventing the email to be sent
-     *                 FALSE if the email was sent without an error
+     * @param slackUser  Slack user in Keycloak
+     * @param deleteEvent UserRemovedEvent containing the removed user data
+     * @return boolean TRUE  if the email was sent without an error
+     *                 FALSE if an EmailException error occurred
      */
-    private boolean sendEmailMessage(KeycloakSession session, String message, UserModel slackUser,
-                                     UserRemovedEvent deleteEvent) {
+    private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUser, UserRemovedEvent deleteEvent) {
+
+        String message = formatUserRemovedMessage(deleteEvent, false);
         DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+
         try {
             LOG.info(toJson(deleteEvent,
                             "Sending email to Slack user: " + slackUser.getEmail()));
@@ -339,32 +302,32 @@ public class UserRemovedMessageHandler {
                 "test",
                 message,
                 message);
+            return true;
         } catch (EmailException e) {
             LOG.error(toJson(deleteEvent,
                              "EmailException occurred while sending Slack message by email: " + e.getMessage()));
-            return true;
+            return false;
         }
-        return false;
     }
 
-    private String toJson(UserRemovedEvent event, String msg) {
+    private String toJson(UserRemovedEvent deleteEvent, String msg) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
         obj.add("type", "USER_DELETE_EVENT");
 
-        if (event.getRealm() != null) {
-            obj.add("realmName", event.getRealm().getName());
+        if (deleteEvent.getRealm() != null) {
+            obj.add("realmName", deleteEvent.getRealm().getName());
         }
 
-        if (event.getUser() != null) {
-            if (isNotBlank(event.getUser().getId())) {
-                obj.add("userId", event.getUser().getId());
+        if (deleteEvent.getUser() != null) {
+            if (isNotBlank(deleteEvent.getUser().getId())) {
+                obj.add("userId", deleteEvent.getUser().getId());
             }
-            if (isNotBlank(event.getUser().getEmail())) {
-                obj.add("userEmail", event.getUser().getEmail());
+            if (isNotBlank(deleteEvent.getUser().getEmail())) {
+                obj.add("userEmail", deleteEvent.getUser().getEmail());
             }
-            if (isNotBlank(event.getUser().getUsername())) {
-                obj.add("userName", event.getUser().getUsername());
+            if (isNotBlank(deleteEvent.getUser().getUsername())) {
+                obj.add("userName", deleteEvent.getUser().getUsername());
             }
         }
 
@@ -377,6 +340,15 @@ public class UserRemovedMessageHandler {
 
     private boolean isNotBlank(String str) {
         return (null != str && !str.isEmpty() && !str.isBlank());
+    }
+
+    private String readJsonValue(String jsonString, String key){
+        String token;
+        JsonReader jsonReader = Json.createReader(new StringReader(jsonString));
+        JsonObject jsonObject = jsonReader.readObject();
+        token = jsonObject.getString(key);
+        jsonReader.close();
+        return token;
     }
 
 }
