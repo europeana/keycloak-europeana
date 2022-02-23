@@ -58,8 +58,8 @@ import org.keycloak.models.UserModel.UserRemovedEvent;
  */
 public class UserRemovedMessageHandler {
 
-        public static final boolean DEBUG = true;
-//    public static final boolean DEBUG = false;
+//        public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
     private final CloseableHttpClient httpClient;
@@ -166,7 +166,7 @@ public class UserRemovedMessageHandler {
                     responseString = EntityUtils.toString(entity);
                     userSetToken = readJsonValue(responseString, "access_token");
                     if (isNotBlank(userSetToken)){
-                        if (DEBUG) LOG.info(userSetToken);
+//                        if (DEBUG) LOG.info(userSetToken);
                         return true;
                     } else {
                         LOG.error("No access token found in response from Keycloak: " + responseString);
