@@ -196,7 +196,7 @@ public class UserRemovedMessageHandler {
         UserModel  deleteUser = deleteEvent.getUser();
         String setsApiRequest  = SET_API_URL + "?creator=" + deleteUser.getId();
         if (DEBUG_LOGS){
-            setsApiRequest += "&profile=debug";
+            setsApiRequest += "&profile=debug&includeErrorStack=true";
             LOG.info(setsApiRequest);
         }
         HttpDelete httpDelete = new HttpDelete(setsApiRequest);
@@ -211,10 +211,18 @@ public class UserRemovedMessageHandler {
                                 " response"));
                 return true;
             } else {
-                LOG.error(toJson(deleteEvent,
+                if (DEBUG_LOGS) {
+                    HttpEntity entity = response.getEntity();
+                    String responseBody = EntityUtils.toString(entity);
+                    LOG.error("Usersets delete request was not successful: received HTTP " +
+                              response.getStatusLine().getStatusCode() +
+                              " response. Response body: " + responseBody);
+                } else {
+                    LOG.error(toJson(deleteEvent,
                                  "Usersets delete request was not successful: received HTTP " +
                                  response.getStatusLine().getStatusCode() +
                                  " response"));
+                }
                 return false;
             }
         } catch (IOException e) {
