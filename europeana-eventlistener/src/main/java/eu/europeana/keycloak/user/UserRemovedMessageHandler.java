@@ -226,9 +226,12 @@ public class UserRemovedMessageHandler {
                 return false;
             }
         } catch (IOException e) {
-            LOG.error(e);
-            LOG.error(toJson(deleteEvent,
+            if (DEBUG_LOGS) {
+                LOG.error(e);
+            } else {
+                LOG.error(toJson(deleteEvent,
                              "IOException occurred while sending delete request by HTTP: " + e.getMessage()));
+            }
             return false;
         }
     }
