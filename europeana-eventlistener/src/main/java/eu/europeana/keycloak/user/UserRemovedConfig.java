@@ -13,6 +13,7 @@ public class UserRemovedConfig {
 
     protected static final String ERROR_ICON = ":x:";
 
+    static final boolean DEBUG_LOGS     = System.getenv("DEBUG_LOGS").equalsIgnoreCase("true");
     static final String GRANT_TYPE      = "password";
     static final String CLIENT_ID       = System.getenv("CLIENT_ID");
     static final String CLIENT_SECRET   = System.getenv("CLIENT_SECRET");

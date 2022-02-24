@@ -2,6 +2,7 @@ package eu.europeana.keycloak.user;
 
 import static eu.europeana.keycloak.user.UserRemovedConfig.CLIENT_ID;
 import static eu.europeana.keycloak.user.UserRemovedConfig.CLIENT_SECRET;
+import static eu.europeana.keycloak.user.UserRemovedConfig.DEBUG_LOGS;
 import static eu.europeana.keycloak.user.UserRemovedConfig.DELETE_MGR_ID;
 import static eu.europeana.keycloak.user.UserRemovedConfig.DELETE_MGR_PW;
 import static eu.europeana.keycloak.user.UserRemovedConfig.ERROR_ASCII;
@@ -59,7 +60,7 @@ import org.keycloak.models.UserModel.UserRemovedEvent;
 public class UserRemovedMessageHandler {
 
 //        public static final boolean DEBUG = true;
-    public static final boolean DEBUG = false;
+//    public static final boolean DEBUG = false;
 
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
     private final CloseableHttpClient httpClient;
@@ -104,7 +105,7 @@ public class UserRemovedMessageHandler {
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
         }
 
-        if (DEBUG) {
+        if (DEBUG_LOGS) {
             LOG.info(toJson(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
             LOG.info(toJson(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
         }
@@ -114,7 +115,7 @@ public class UserRemovedMessageHandler {
         }
 
         if (!slackHttpMessageOK) {
-            if (DEBUG) LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
+            if (DEBUG_LOGS) LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
             slackEmailMessageOK = sendSlackEmailMessage(session, slackUser, deleteEvent);
         }
 
@@ -136,6 +137,9 @@ public class UserRemovedMessageHandler {
 
             String responseString;
             HttpPost     httpPost = new HttpPost(OIDTokenURL);
+            if (DEBUG_LOGS){
+                LOG.info("Auth server OID url: " + OIDTokenURL);
+            }
             ArrayList<NameValuePair> postParameters;
 
             postParameters = new ArrayList<>();
@@ -166,7 +170,7 @@ public class UserRemovedMessageHandler {
                     responseString = EntityUtils.toString(entity);
                     userSetToken = readJsonValue(responseString, "access_token");
                     if (isNotBlank(userSetToken)){
-//                        if (DEBUG) LOG.info(userSetToken);
+                        if (DEBUG_LOGS) LOG.info("User set access token: " + userSetToken);
                         return true;
                     } else {
                         LOG.error("No access token found in response from Keycloak: " + responseString);
@@ -190,12 +194,12 @@ public class UserRemovedMessageHandler {
     private boolean sendUserSetDeleteRequest(UserRemovedEvent deleteEvent, String token) {
 
         UserModel  deleteUser = deleteEvent.getUser();
-        String urlParameter = "?creator=" + deleteUser.getId();
-        if (DEBUG){
-            urlParameter += "&profile=debug";
-            LOG.info(urlParameter);
+        String setsApiRequest  = SET_API_URL + "?creator=" + deleteUser.getId();
+        if (DEBUG_LOGS){
+            setsApiRequest += "&profile=debug";
+            LOG.info(setsApiRequest);
         }
-        HttpDelete httpDelete = new HttpDelete(SET_API_URL + urlParameter);
+        HttpDelete httpDelete = new HttpDelete(setsApiRequest);
 
         httpDelete.setHeader("Authorization", "Bearer " + token);
 
