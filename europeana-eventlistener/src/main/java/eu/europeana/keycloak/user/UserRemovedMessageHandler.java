@@ -59,13 +59,10 @@ import org.keycloak.models.UserModel.UserRemovedEvent;
  */
 public class UserRemovedMessageHandler {
 
-//        public static final boolean DEBUG = true;
-//    public static final boolean DEBUG = false;
-
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
     private final CloseableHttpClient httpClient;
-    private final String              slackWebHook;
-    private final String              slackUser;
+    private final String slackWebHook;
+    private final String slackUserName;
     private final String prefix;
     private boolean setsDeleteOK       = false;
     private boolean slackHttpMessageOK  = false;
@@ -73,11 +70,11 @@ public class UserRemovedMessageHandler {
 
     private String userSetToken;
 
-    public UserRemovedMessageHandler(String slackWebHook, String slackUser, Logger logger, String prefix) {
-        this.slackWebHook = slackWebHook;
-        this.slackUser    = slackUser;
-        this.prefix       = prefix;
-        httpClient        = HttpClients.createDefault();
+    public UserRemovedMessageHandler(String slackWebHook, String slackUserName, Logger logger, String prefix) {
+        this.slackWebHook  = slackWebHook;
+        this.slackUserName = slackUserName;
+        this.prefix        = prefix;
+        httpClient         = HttpClients.createDefault();
     }
 
     @PreDestroy
@@ -99,7 +96,7 @@ public class UserRemovedMessageHandler {
      */
     public void handleUserRemoveEvent(KeycloakSession session, UserRemovedEvent deleteEvent) {
         RealmModel realm      = deleteEvent.getRealm();
-        UserModel  slackUser  = session.users().getUserByUsername(this.slackUser, realm);
+        UserModel  slackUserModel  = session.users().getUserByUsername(this.slackUserName, realm);
 
         if (getUserSetToken()){
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
@@ -116,7 +113,7 @@ public class UserRemovedMessageHandler {
 
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
-            slackEmailMessageOK = sendSlackEmailMessage(session, slackUser, deleteEvent);
+            slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent);
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -298,23 +295,24 @@ public class UserRemovedMessageHandler {
      * Sends the results of the user delete request to Slack by email
      *
      * @param session   email address of the User to delete
-     * @param slackUser  Slack user in Keycloak
+     * @param slackUserModel  Slack user in Keycloak
      * @param deleteEvent UserRemovedEvent containing the removed user data
      * @return boolean TRUE  if the email was sent without an error
      *                 FALSE if an EmailException error occurred
      */
-    private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUser, UserRemovedEvent deleteEvent) {
+    private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUserModel, UserRemovedEvent deleteEvent) {
 
         String message = formatUserRemovedMessage(deleteEvent, false);
         DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+        UserModel deleteUser = deleteEvent.getUser();
 
         try {
             LOG.info(toJson(deleteEvent,
-                            "Sending email to Slack user: " + slackUser.getEmail()));
+                            "Sending email to Slack user: " + slackUserModel.getEmail()));
             senderProvider.send(
                 session.getContext().getRealm().getSmtpConfig(),
-                slackUser,
-                "test",
+                slackUserModel,
+                "User account for Keycloak user with ID: " + deleteUser.getId(),
                 message,
                 message);
             return true;
