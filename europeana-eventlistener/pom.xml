@@ -87,6 +87,31 @@
         <artifactId>maven-clean-plugin</artifactId>
       </plugin>
       <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-lang3</artifactId>
+              <version>${apache.commons.lang3.version}</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>../dependencies/apache-commons/main</outputDirectory>
+              <destFileName>commons-lang3.jar</destFileName>
+            </artifactItem>
+          </artifactItems>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <outputDirectory>../addon-jars</outputDirectory>
