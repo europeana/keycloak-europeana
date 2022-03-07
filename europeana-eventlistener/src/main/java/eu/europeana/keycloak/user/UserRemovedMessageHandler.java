@@ -40,6 +40,9 @@ import org.keycloak.models.UserModel.UserRemovedEvent;
  */
 public class UserRemovedMessageHandler {
 
+    // forget the env variable, we're going to move to Quarkus anyhow
+    private static final boolean DEBUG_LOGS = false;
+
     private static final Logger              LOG                 = Logger.getLogger(UserRemovedMessageHandler.class);
     private final        CloseableHttpClient httpClient;
     private final        String              slackWebHook;

@@ -1,7 +1,5 @@
 package eu.europeana.keycloak.user;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Created by luthien on 02/03/2022.
  */
@@ -10,8 +8,6 @@ public class UserRemovedEnvVariables {
     public static final String SLACK_WEBHOOK = System.getenv("SLACK_WEBHOOK");
     public static final String SLACK_USER    = System.getenv("SLACK_USER");
 
-
-    static final boolean DEBUG_LOGS     = StringUtils.equalsIgnoreCase("true", System.getenv("DEBUG_LOGS"));
 
     static final String GRANT_TYPE      = "password";
     static final String CLIENT_ID       = System.getenv("CLIENT_ID");
