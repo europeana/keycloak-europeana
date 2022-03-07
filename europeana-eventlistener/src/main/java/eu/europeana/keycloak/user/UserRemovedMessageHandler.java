@@ -80,7 +80,15 @@ public class UserRemovedMessageHandler {
      */
     public void handleUserRemoveEvent(KeycloakSession session, UserRemovedEvent deleteEvent) {
         RealmModel realm          = deleteEvent.getRealm();
-        UserModel  slackUserModel = session.users().getUserByUsername(this.slackUserName, realm);
+        UserModel  slackUserModel = null;
+        try{
+            slackUserModel = session.users().getUserByUsername(this.slackUserName, realm);
+        } catch (Exception e) {
+            LOG.error(toJson(deleteEvent, String.format(SLACK_USER_NOT_FOUND,
+                                                        this.slackUserName,
+                                                        this.slackUserName)));
+            throw new RuntimeException(String.format(NO_SLACK_USER_EXITING, this.slackUserName));
+        }
 
         if (getUserSetToken()) {
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
