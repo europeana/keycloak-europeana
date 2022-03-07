@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.user;
 
-import static eu.europeana.keycloak.user.UserRemovedConfig.*;
+import static eu.europeana.keycloak.user.UserRemovedMessage.*;
 import static eu.europeana.keycloak.user.UserRemovedEnvVariables.*;
 
 import java.io.IOException;
@@ -132,7 +132,7 @@ public class UserRemovedMessageHandler {
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            LOG.error(e);
             return false;
         }
 

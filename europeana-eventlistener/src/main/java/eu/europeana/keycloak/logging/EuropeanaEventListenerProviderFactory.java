@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.logging;
 
-import static eu.europeana.keycloak.user.UserRemovedConfig.LOG_PREFIX;
+import static eu.europeana.keycloak.user.UserRemovedMessage.LOG_PREFIX;
 
 import static eu.europeana.keycloak.user.UserRemovedEnvVariables.SLACK_USER;
 import static eu.europeana.keycloak.user.UserRemovedEnvVariables.SLACK_WEBHOOK;
