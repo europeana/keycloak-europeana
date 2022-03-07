@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.user;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by luthien on 02/03/2022.
