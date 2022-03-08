@@ -45,8 +45,6 @@ public class UserRemovedMessageHandler {
 
     private static final Logger              LOG                 = Logger.getLogger(UserRemovedMessageHandler.class);
     private final        CloseableHttpClient httpClient;
-    private final        String              slackWebHook;
-    private final        String              slackUserName;
     private final        String              prefix;
     private              boolean             setsDeleteOK        = false;
     private              boolean             slackHttpMessageOK  = false;
@@ -54,9 +52,7 @@ public class UserRemovedMessageHandler {
 
     private String userSetToken;
 
-    public UserRemovedMessageHandler(String slackWebHook, String slackUserName, Logger logger, String prefix) {
-        this.slackWebHook  = slackWebHook;
-        this.slackUserName = slackUserName;
+    public UserRemovedMessageHandler(String prefix) {
         this.prefix        = prefix;
         httpClient         = HttpClients.createDefault();
     }
@@ -80,33 +76,32 @@ public class UserRemovedMessageHandler {
      */
     public void handleUserRemoveEvent(KeycloakSession session, UserRemovedEvent deleteEvent) {
         RealmModel realm          = deleteEvent.getRealm();
-        UserModel  slackUserModel = null;
+        UserModel  slackUserModel;
         try{
-            slackUserModel = session.users().getUserByUsername(this.slackUserName, realm);
+            slackUserModel = session.users().getUserByUsername(SLACK_USER, realm);
         } catch (Exception e) {
             LOG.error(toJson(deleteEvent, String.format(SLACK_USER_NOT_FOUND,
-                                                        this.slackUserName,
-                                                        this.slackUserName)));
-            throw new RuntimeException(String.format(NO_SLACK_USER_EXITING, this.slackUserName));
+                                                        SLACK_USER,
+                                                        SLACK_USER)));
+            throw new RuntimeException(String.format(NO_SLACK_USER_EXITING, SLACK_USER));
         }
 
         if (getUserSetToken()) {
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
         }
 
-        if (DEBUG_LOGS) {
-            LOG.info(toJson(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
-            LOG.info(toJson(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
-        }
+        LOG.info(toJson(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
 
-        if (null != slackWebHook && !slackWebHook.equalsIgnoreCase("")) {
+
+        if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
+            // send confirmation using HTTP
             slackHttpMessageOK = sendSlackHttpMessage(deleteEvent);
         }
 
         if (!slackHttpMessageOK) {
-            if (DEBUG_LOGS) {
-                LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
-            }
+            // HTTP message didn't work
+            LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
+            // try email instead
             slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent);
         }
 
@@ -247,7 +242,7 @@ public class UserRemovedMessageHandler {
         String message = formatUserRemovedMessage(deleteEvent, true);
 
         StringEntity entity;
-        HttpPost     httpPost = new HttpPost(slackWebHook);
+        HttpPost     httpPost = new HttpPost(SLACK_WEBHOOK);
 
         try {
             entity = new StringEntity(message);

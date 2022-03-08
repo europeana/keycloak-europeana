@@ -34,12 +34,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     @Override
     public void init(Config.Scope scope) {
         logPrefix = LOG_PREFIX;
-        if (null == SLACK_WEBHOOK && null == SLACK_USER) {
-            throw new RuntimeException("Slack webhook nor user environment variables found, exiting ...");
-        } else {
-            this.userRemovedMessageHandler = new UserRemovedMessageHandler(System.getenv(SLACK_WEBHOOK),
-                                                                           System.getenv(SLACK_USER), LOG, logPrefix);
-        }
+        this.userRemovedMessageHandler = new UserRemovedMessageHandler(logPrefix);
     }
 
     @Override

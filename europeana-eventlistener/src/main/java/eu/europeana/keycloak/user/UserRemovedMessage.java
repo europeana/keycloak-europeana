@@ -53,10 +53,10 @@ public class UserRemovedMessage {
         "delete_user_account channel, providing details about the error " +
         "and the deleted user, so they can handle the issue manually.";
 
-    static final String SLACK_USER_NOT_FOUND                  = "Required Keycloak user '%s' not found. Slack messages are sent on behalf of " +
-                                                                "this user; please create a user with username '%s'.";
+    static final String SLACK_USER_NOT_FOUND                  = "Required Keycloak Slack user '%s' not found. Slack messages are sent on " +
+                                                                "behalf of this user; please make sure a user with username '%s' exists.";
 
-    static final String NO_SLACK_USER_EXITING                 = "Required Keycloak user '%s' missing. Exiting ... ";
+    static final String NO_SLACK_USER_EXITING                 = "Required Keycloak Slack user '%s' not found. Exiting ... ";
 
 
 }
