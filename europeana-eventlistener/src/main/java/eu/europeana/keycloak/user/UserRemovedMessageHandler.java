@@ -218,11 +218,11 @@ public class UserRemovedMessageHandler {
         }
     }
 
-    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon) {
+    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean formatForHTTP) {
         UserModel deleteUser  = deleteEvent.getUser();
-        String    okString    = useIcon ? OK_ICON : OK_ASCII;
-        String    errorString = useIcon ? ERROR_ICON : ERROR_ASCII;
-        return String.format(SLACK_USER_DELETE_MESSAGEBODY,
+        String    okString    = formatForHTTP ? OK_ICON : OK_ASCII;
+        String    errorString = formatForHTTP ? ERROR_ICON : ERROR_ASCII;
+        return String.format(formatForHTTP ? SLACK_USER_DELETE_MESSAGEBODY : SLACK_USER_DELETE_EMAILMESSAGE,
                              LocalDate.now(),
                              deleteUser.getEmail(),
                              okString,

@@ -14,20 +14,31 @@ public class UserRemovedMessage {
     static final String ERROR_ASCII = "✘";
 
     static final String SLACK_USER_DELETE_MESSAGEBODY         =
-        "{\"text\":\"On %s, user %s has requested to remove their " +
-        "account.\\nThis has just been done automatically for those " +
-        "systems marked with :heavy_check_mark: :\\n\\n[%s] " +
-        "Keycloak\\n[%s] The User Sets API\\n" + "[:x:] The " +
-        "recommendation engine\\n[:x:] Mailchimp\\n\\nFrom the " +
-        "remaining systems (marked with :x: above) their account " +
-        "should be removed within 30 days (before %s).\"}";
+        "{\"text\":\"On %s, user %s has requested to remove their account.\\n" +
+        "This has just been done automatically for those systems marked with :heavy_check_mark: :\\n\\n" +
+        "[%s] Keycloak\\n" +
+        "[%s] The User Sets API\\n" +
+        "[:x:] The recommendation engine\\n" +
+        "[:x:] Mailchimp\\n\\n" +
+        "From the remaining systems (marked with :x: above) their account " +
+        "should be removed within 30 days (i.e. before %s).\"}";
+
+    static final String SLACK_USER_DELETE_EMAILMESSAGE =
+        "On %s, user %s has requested to remove their account.\n\n" +
+        "This has just been done automatically for those systems marked with [✓]:\n\n" +
+        "[%s] Keycloak\n" +
+        "[%s] The User Sets Api\n" +
+        "[✘] The recommendation engine\n" +
+        "[✘] Mailchimp\n\n" +
+        "From the remaining systems (marked with [✘] above) their account " +
+        "should be removed within 30 days (i.e. before %s).\n\n\n" +
+        "(PLEASE TAKE NOTE: this email was sent using a fail-over mechanism because the regular HTTP " +
+        "request to this channel failed. Please check the logs and address the issue!)";
 
     static final String ACCESS_TOKEN                          = "User set access token: {}";
     static final String NO_ACCESS_TOKEN_FOUND                 = "No access token found in response from Keycloak: {}";
     static final String USERSET_DELETE_RESULT                 = "Usersets delete request was %ssuccesful: received HTTP %d response";
 
-    static final String USER_SETS_DELETED                     = "User sets deleted.";
-    static final String USER_SETS_NOT_DELETED                 = "No user sets deleted.";
     static final String SENDING_CONFIRM_MSG_SLACK             = "Sending confirmation message to Slack";
     static final String SLACK_MSG_SENT                        = "Confirmation message was sent to Slack";
 
@@ -44,8 +55,8 @@ public class UserRemovedMessage {
         "Response body: {}";
 
     static final String HTTP_FAILED_TRYING_EMAIL              =
-        "Error occurred trying to send the message over HTTP, now trying " +
-        "to send it via email ...";
+        "An error occurred trying to send the message over HTTP. Trying " +
+        "to send it via email now ...";
 
     static final String HTTP_AND_EMAIL_FAILED                 =
         "!IMPORTANT! User account was removed, but failed to send " +
