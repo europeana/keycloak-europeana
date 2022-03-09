@@ -32,8 +32,8 @@ ENV DB_VENDOR=postgres \
 # Copy theme from stage 0
 COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
 
-# Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) to keycloak/modules
-COPY bcrypt-dependencies keycloak/modules
+# Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) & Keycloak admin client to keycloak/modules
+COPY dependencies keycloak/modules
 
 # Copy addons to the Wildfly deployment directory
 COPY addon-jars keycloak/standalone/deployments
