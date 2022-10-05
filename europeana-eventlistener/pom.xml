@@ -4,10 +4,10 @@
   <parent>
     <groupId>eu.europeana</groupId>
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
   </parent>
   <artifactId>europeana_eventlistener</artifactId>
-  <version>1.4</version>
+  <version>1.5</version>
 
   <name>Europeana Event Listener</name>
   <description>Addon package to (1) format Keycloak events as JSON so that they can be parsed by Kibana,

@@ -6,10 +6,10 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>keycloak-cf-docker</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
     </parent>
     <artifactId>bcrypt-addon</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
