@@ -17,6 +17,7 @@
         <module>bcrypt-addon</module>
         <module>keycloak-metrics-spi</module>
         <module>europeana-eventlistener</module>
+        <module>delete-unverified-users</module>
     </modules>
 
     <name>Keycloak Docker on Cloud Foundry</name>
