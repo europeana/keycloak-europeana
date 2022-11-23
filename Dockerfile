@@ -14,7 +14,7 @@ RUN npm run build
 
 # 1. Build Keycloak
 # Check that this version matches the one in the pom.xml!
-FROM jboss/keycloak:16.1.0
+FROM jboss/keycloak:20.0.1
 
 # Set workdir to jboss home
 WORKDIR /opt/jboss/
