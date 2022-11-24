@@ -78,7 +78,7 @@ public class UserRemovedMessageHandler {
         RealmModel realm          = deleteEvent.getRealm();
         UserModel  slackUserModel;
         try{
-            slackUserModel = session.users().getUserByUsername(SLACK_USER, realm);
+            slackUserModel = session.users().getUserByUsername(realm, SLACK_USER);
         } catch (Exception e) {
             LOG.error(toJson(deleteEvent, String.format(SLACK_USER_NOT_FOUND,
                                                         SLACK_USER,

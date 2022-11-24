@@ -4,10 +4,10 @@
   <parent>
     <groupId>eu.europeana</groupId>
     <artifactId>keycloak-cf-docker</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
   </parent>
   <artifactId>delete-unverified_users</artifactId>
-  <version>1.5</version>
+  <version>1.6</version>
 
   <name>Delete Unverified Users</name>
   <description>Addon package to query Keycloak for users that have not been validated in the up to 24 hours ago, and then delete those (see EA-3198)</description>
