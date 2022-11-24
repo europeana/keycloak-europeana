@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.user;
+package eu.europeana.keycloak.usermgt;
 
 import java.util.HashMap;
 import java.util.List;

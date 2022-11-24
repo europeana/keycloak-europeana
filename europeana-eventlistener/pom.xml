@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>eu.europeana</groupId>
-    <artifactId>keycloak-cf-docker</artifactId>
+    <artifactId>keycloak-quarkus</artifactId>
     <version>1.6</version>
   </parent>
   <artifactId>europeana_eventlistener</artifactId>

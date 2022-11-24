@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.user;
+package eu.europeana.keycloak.usermgt;
 
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
