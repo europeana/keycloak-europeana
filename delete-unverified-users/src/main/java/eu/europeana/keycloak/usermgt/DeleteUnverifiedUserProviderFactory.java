@@ -12,7 +12,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
  */
 public class DeleteUnverifiedUserProviderFactory implements RealmResourceProviderFactory {
 
-    public static final String ID = "stats";
+    public static final String ID = "delete";
 
     @Override
     public String getId() {

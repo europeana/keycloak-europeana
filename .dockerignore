@@ -1,0 +1,18 @@
+### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+
+# don't include add-on source code to the image
+/bcrypt-addon/
+/currently-unused-scripts/
+/custom-scripts/
+/delete-unverified-users/
+/eventlistener/
+/k8s/
+/keycloak-metrics-spi/

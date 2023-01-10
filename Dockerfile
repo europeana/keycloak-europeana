@@ -17,7 +17,7 @@ RUN npm run build
 #FROM quay.io/keycloak/keycloak:latest as builder
 FROM quay.io/keycloak/keycloak:20.0.1 as builder
 # TODO investigate how this works later
-#ENV KC_METRICS_ENABLED=true
+# ENV KC_METRICS_ENABLED=true
 ENV KC_DB=postgres
 RUN /opt/keycloak/bin/kc.sh build
 
@@ -34,15 +34,16 @@ WORKDIR /opt/keycloak
 COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
 
 # Note: credentials are used only when initialising a new empty DB
-# TODO can these be removed?
-ENV KEYCLOAK_USER=admin
-ENV KEYCLOAK_PASSWORD=change-this-into-something-useful
-
+#ENV KEYCLOAK_USER=admin
+#ENV KEYCLOAK_PASSWORD=change-this-into-something-useful
 
 # Copy addons to Quarkus providers dir
 COPY addon-jars providers
+
 # Copy addon dependencies to Quarkus providers dir
 COPY dependencies providers
 
-# TODO investigate how this works later
-#ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
+# set entry point, comment out for local deployment
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
+# for local deployment  use this instead when running the image
+# start-dev --hostname=localhost
