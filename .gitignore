@@ -10,7 +10,6 @@
 
 ### Java spills ###
 *.class
-*.jar
 *.war
 *.ear
 
@@ -20,8 +19,4 @@
 
 ### Specific ###
 **/data/
-/bcrypt-addon/target/
-/addon-jars/bcrypt-addon.jar
-
-bcrypt-addon/src/main/java/test/
-bcrypt-addon/src/test/
+/addon-jars/*.jar

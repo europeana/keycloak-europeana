@@ -1,9 +1,15 @@
 resources:
-  - ../../base
-  - nodeport.yaml
+- ../../base
+- nodeport.yaml
 
 patchesStrategicMerge:
-  - deployment_patch.yaml
+- deployment_patch.yaml
 
 commonLabels:
-  app: keycloak
+  app: keycloak-test
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+nameSuffix: -test
+images:
+- name: europeana/keycloak
+  newTag: EA-3242_keycloak-on-k8s

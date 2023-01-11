@@ -1,9 +1,7 @@
 package eu.europeana.keycloak.logging;
 
-import static eu.europeana.keycloak.user.UserRemovedMessage.LOG_PREFIX;
-
-import static eu.europeana.keycloak.user.UserRemovedEnvVariables.SLACK_USER;
-import static eu.europeana.keycloak.user.UserRemovedEnvVariables.SLACK_WEBHOOK;
+import static eu.europeana.keycloak.user.UserRemovedConfig.JSONLOGPREFIXENVVAR;
+import static eu.europeana.keycloak.user.UserRemovedConfig.LOG_PREFIX;
 
 import eu.europeana.keycloak.user.UserRemovedMessageHandler;
 import org.jboss.logging.Logger;
@@ -33,8 +31,12 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
 
     @Override
     public void init(Config.Scope scope) {
-        logPrefix = LOG_PREFIX;
-        this.userRemovedMessageHandler = new UserRemovedMessageHandler(logPrefix);
+        if (null != System.getenv(JSONLOGPREFIXENVVAR)){
+            logPrefix = System.getenv(JSONLOGPREFIXENVVAR);
+        } else {
+            logPrefix = LOG_PREFIX;
+        }
+        this.userRemovedMessageHandler = new UserRemovedMessageHandler(LOG, logPrefix);
     }
 
     @Override
@@ -43,10 +45,9 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
             (event) -> {
                 //do something here with the UserRemovedEvent
                 //the user is available via event.getUser()
-                if (event instanceof UserModel.UserRemovedEvent) {
+                if (event instanceof UserModel.UserRemovedEvent){
                     userRemovedMessageHandler.handleUserRemoveEvent(session, (UserRemovedEvent) event);
-                    LOG.info(
-                        "User removed event happened for user: " + ((UserRemovedEvent) event).getUser().getEmail());
+                    LOG.info("User removed event happened for user: " + ((UserRemovedEvent) event).getUser().getEmail());
                 }
             });
     }
@@ -58,6 +59,6 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
 
     @Override
     public String getId() {
-        return "jsonlog_event_listener";
+        return "europeana-eventlistener";
     }
 }

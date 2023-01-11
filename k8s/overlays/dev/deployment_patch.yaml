@@ -11,57 +11,57 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              memory: "${MEMORY_REQUEST}M"
-              cpu: "${CPU_REQUEST}m"
+              memory: "450M"
+              cpu: "200m"
             limits:
-              memory: "${MEMORY_LIMIT}M"
-              cpu: "${CPU_LIMIT}m"
+              memory: "900M"
+              cpu: "500m"
           env:
             - name: KC_HTTP_ENABLED
-              value: "${KC_HTTP_ENABLED}"
+              value: "false"
             - name: KC_HOSTNAME
-              value: "${KC_HOSTNAME}"
+              value: "localhost:30000"
             - name: SCOPE
-              value: "${SCOPE}"
+              value: "usersets"
             - name: AUTH_SERVER_URL
-              value: "${AUTH_SERVER_URL}"
+              value: "http://localhost:30000/"
             - name: KC_LOG_LEVEL
-              value: "${KC_LOG_LEVEL}"
+              value: "INFO"
             - name: KC_LOG_FORMAT
-              value: "${KC_LOG_FORMAT}"
+              value: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"
             - name: DEBUG_LOGS
-              value: "${DEBUG_LOGS}"
+              value: "true"
             - name: KC_PROXY
-              value: "${KC_PROXY}"
+              value: "edge"
             - name: BCRYPT_ITERATIONS
-              value: "${BCRYPT_ITERATIONS}"
+              value: "13"
             - name: BCRYPT_PEPPER
-              value: "${BCRYPT_PEPPER}"
+              value: "KTY7Alni99sMkVH2rslK"
             - name: SLACK_WEBHOOK
-              value: "${SLACK_WEBHOOK}"
+              value: "https://hooks.slack.com/services/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"
             - name: SLACK_USER
-              value: "${SLACK_USER}"
+              value: "slackmessager"
             - name: CLIENT_ID
-              value: "${CLIENT_ID}"
+              value: "test_client_userset"
             - name: CLIENT_SECRET
-              value: "${CLIENT_SECRET}"
+              value: "3dde4cdb-ee54-42f2-a198-5f38a753f5cc"
             - name: DELETE_MGR_ID
-              value: "${DELETE_MGR_ID}"
+              value: "keycloak_user_delete"
             - name: DELETE_MGR_PW
-              value: "${DELETE_MGR_PW}"
+              value: "DDxa3L92BjvS"
             - name: KC_DB_URL_HOST
-              value: "${KC_DB_URL_HOST}"
+              value: "sl-eu-fra-2-portal.1.dblayer.com,sl-eu-fra-2-portal.2.dblayer.com"
             - name: KC_DB_URL_PORT
-              value: "${KC_DB_URL_PORT}"
+              value: "16036"
             - name: KC_DB_SCHEMA
-              value: "${KC_DB_SCHEMA}"
+              value: "test"
             - name: KC_DB_URL_DATABASE
-              value: "${KC_DB_URL_DATABASE}"
+              value: "keycloak"
             - name: KC_DB_PASSWORD
-              value: "${KC_DB_PASSWORD}"
+              value: "WKVSVATBDKSXVROH"
             - name: KC_DB_USERNAME
-              value: "${KC_DB_USERNAME}"
+              value: "admin"
             - name: SET_API_URL
-              value: "${SET_API_URL}"
+              value: "https://set-api-test.eanadev.org/set/"
             #            - name: DEBUG_PORT
             #              value: "*:8787"
