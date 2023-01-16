@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: europeana/keycloak
+          image: keycloak-europeana:2.0
           ports:
             - containerPort: 8080
           livenessProbe:
