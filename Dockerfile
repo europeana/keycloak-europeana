@@ -24,45 +24,26 @@ ENV KC_HTTP_RELATIVE_PATH=/auth
 
 # Copy addons to Quarkus providers dir
 COPY addon-jars /opt/keycloak/providers/
-
 # Copy addon dependencies to Quarkus providers dir
 COPY dependencies /opt/keycloak/providers/
-
+# create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
-
-
 
 # Copy theme from stage custom-theme
 COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
-FROM quay.io/keycloak/keycloak:20.0.3
 
-COPY keycloak-themes/custom /opt/keycloak/themes/custom
+FROM quay.io/keycloak/keycloak:20.0.3
+# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why this is needed
 COPY --from=builder /opt/keycloak/providers/ /opt/keycloak/providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 
-
-# run config
-
-FROM quay.io/keycloak/keycloak:20.0.3
-COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
-WORKDIR /opt/keycloak
-
 # comment out for local deployment
 #RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
-
 
 # Configure APM and add APM agent
 # NOT YET, we've never done this on Keycloak, and wget does not work in this image anyhow
 #ENV ELASTIC_APM_VERSION 1.34.1
 #RUN wget https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/$ELASTIC_APM_VERSION/elastic-apm-agent-$ELASTIC_APM_VERSION.jar -O /usr/local/elastic-apm-agent.jar
-
-# Copy theme from stage custom-theme
-COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
-
-# Note: credentials are used only when initialising a new empty DB
-#ENV KEYCLOAK_USER=admin
-#ENV KEYCLOAK_PASSWORD=change-this-into-something-useful
-
 
 # set entry point, comment out for local deployment
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
