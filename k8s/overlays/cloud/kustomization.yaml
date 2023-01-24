@@ -7,5 +7,5 @@ resources:
 patchesStrategicMerge:
   - deployment_patch.yaml
 
-commonLabels:
-  app: keycloak
+#commonLabels:
+#  app: keycloak

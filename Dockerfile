@@ -13,23 +13,42 @@ RUN npm install
 RUN npm run build
 
 
-# build step
+# configure, add add-ons + dependencies and build custom image
 
-FROM quay.io/keycloak/keycloak:20.0.1 as builder
+FROM quay.io/keycloak/keycloak:20.0.3 as builder
 # TODO look into metrics
-# ENV KC_METRICS_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_HEALTH_ENABLED=true
 ENV KC_DB=postgres
+ENV KC_HTTP_RELATIVE_PATH=/auth
+
+# Copy addons to Quarkus providers dir
+COPY addon-jars /opt/keycloak/providers/
+
+# Copy addon dependencies to Quarkus providers dir
+COPY dependencies /opt/keycloak/providers/
+
 RUN /opt/keycloak/bin/kc.sh build
+
+
+
+# Copy theme from stage custom-theme
+COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
+FROM quay.io/keycloak/keycloak:20.0.3
+
+COPY keycloak-themes/custom /opt/keycloak/themes/custom
+COPY --from=builder /opt/keycloak/providers/ /opt/keycloak/providers/
+COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 
 
 # run config
 
-FROM quay.io/keycloak/keycloak:20.0.1
+FROM quay.io/keycloak/keycloak:20.0.3
 COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 WORKDIR /opt/keycloak
 
 # comment out for local deployment
-RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
+#RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
 
 
 # Configure APM and add APM agent
@@ -44,11 +63,6 @@ COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
 #ENV KEYCLOAK_USER=admin
 #ENV KEYCLOAK_PASSWORD=change-this-into-something-useful
 
-# Copy addons to Quarkus providers dir
-COPY addon-jars providers
-
-# Copy addon dependencies to Quarkus providers dir
-COPY dependencies providers
 
 # set entry point, comment out for local deployment
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
