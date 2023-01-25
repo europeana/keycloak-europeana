@@ -46,6 +46,6 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 #RUN wget https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/$ELASTIC_APM_VERSION/elastic-apm-agent-$ELASTIC_APM_VERSION.jar -O /usr/local/elastic-apm-agent.jar
 
 # set entry point, comment out for local deployment
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
+#ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
 # for local deployment  use this instead when running the image
-# start-dev --hostname=localhost
+#start-dev --hostname=localhost
