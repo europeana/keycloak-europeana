@@ -33,7 +33,7 @@ RUN /opt/keycloak/bin/kc.sh build
 COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
 
 FROM quay.io/keycloak/keycloak:20.0.3
-# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why this is needed
+# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why copying providers twice is needed
 COPY --from=builder /opt/keycloak/providers/ /opt/keycloak/providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 
