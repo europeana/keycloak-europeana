@@ -12,7 +12,6 @@ spec:
     spec:
       containers:
         - name: keycloak
-          args: ["start-dev"]
           imagePullPolicy: Always
           resources:
             requests:
