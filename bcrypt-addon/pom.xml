@@ -5,18 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>eu.europeana</groupId>
-        <artifactId>keycloak-quarkus</artifactId>
-        <version>1.6</version>
+        <artifactId>keycloak-europeana</artifactId>
+        <version>2.0</version>
     </parent>
     <artifactId>bcrypt-addon</artifactId>
-    <version>1.6</version>
+    <version>2.0</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
 
     <properties>
-        <jboss.logging.version>3.4.1.Final</jboss.logging.version>
-        <commons-codec.version>1.14</commons-codec.version>
+        <jboss.logging.version>3.4.2.Final</jboss.logging.version>
+        <commons-codec.version>1.15</commons-codec.version>
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
         <favre-bytes.version>1.4.0</favre-bytes.version>
     </properties>
@@ -90,7 +90,7 @@
                             <version>${commons-codec.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../dependencies/commons-codec/main</outputDirectory>
+                            <outputDirectory>../dependencies</outputDirectory>
                             <destFileName>commons-codec.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
@@ -99,7 +99,7 @@
                             <version>${favre-bcrypt.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../dependencies/favre/main</outputDirectory>
+                            <outputDirectory>../dependencies</outputDirectory>
                             <destFileName>bcrypt.jar</destFileName>
                         </artifactItem>
                         <artifactItem>
@@ -108,7 +108,7 @@
                             <version>${favre-bytes.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../dependencies/favre/main</outputDirectory>
+                            <outputDirectory>../dependencies</outputDirectory>
                             <destFileName>bytes.jar</destFileName>
                         </artifactItem>
                     </artifactItems>

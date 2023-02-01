@@ -1,6 +1,9 @@
 [![License](https://img.shields.io/:license-Apache2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 # TODO - update this
+Below is the readme file provided by one of the examples used; I kept it for now because it contains some interesting information 
+that is hard to find otherwise, but I suppose that we could remove it after reviewing. I haven't been needing it since this module
+was published in any case (spring 2022).
 
 # Keycloak Metrics SPI
 

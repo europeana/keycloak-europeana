@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-deployment
+spec:
+  # selector.matchLabels is provided via Kustomize
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          # required to use local image
+          imagePullPolicy: Never
+          resources:
+            requests:
+              memory: "${MEMORY_REQUEST}M"
+              cpu: "${CPU_REQUEST}m"
+            limits:
+              memory: "${MEMORY_LIMIT}M"
+              cpu: "${CPU_LIMIT}m"
+          env:
+            - name: KC_HTTP_ENABLED
+              value: "${KC_HTTP_ENABLED}"
+            - name: KC_HOSTNAME
+              value: "${KC_HOSTNAME}"
+            - name: SCOPE
+              value: "${SCOPE}"
+            - name: AUTH_SERVER_URL
+              value: "${AUTH_SERVER_URL}"
+            - name: KC_LOG_LEVEL
+              value: "${KC_LOG_LEVEL}"
+            - name: KC_LOG_FORMAT
+              value: "${KC_LOG_FORMAT}"
+            - name: DEBUG_LOGS
+              value: "${DEBUG_LOGS}"
+            - name: KC_PROXY
+              value: "${KC_PROXY}"
+            - name: BCRYPT_ITERATIONS
+              value: "${BCRYPT_ITERATIONS}"
+            - name: BCRYPT_PEPPER
+              value: "${BCRYPT_PEPPER}"
+            - name: SLACK_WEBHOOK
+              value: "${SLACK_WEBHOOK}"
+            - name: SLACK_USER
+              value: "${SLACK_USER}"
+            - name: CLIENT_ID
+              value: "${CLIENT_ID}"
+            - name: CLIENT_SECRET
+              value: "${CLIENT_SECRET}"
+            - name: DELETE_MGR_ID
+              value: "${DELETE_MGR_ID}"
+            - name: DELETE_MGR_PW
+              value: "${DELETE_MGR_PW}"
+            - name: KC_DB_URL_HOST
+              value: "${KC_DB_URL_HOST}"
+            - name: KC_DB_URL_PORT
+              value: "${KC_DB_URL_PORT}"
+            - name: KC_DB_SCHEMA
+              value: "${KC_DB_SCHEMA}"
+            - name: KC_DB_URL_DATABASE
+              value: "${KC_DB_URL_DATABASE}"
+            - name: KC_DB_PASSWORD
+              value: "${KC_DB_PASSWORD}"
+            - name: KC_DB_USERNAME
+              value: "${KC_DB_USERNAME}"
+            - name: SET_API_URL
+              value: "${SET_API_URL}"
+            #            - name: DEBUG_PORT
+            #              value: "*:8787"

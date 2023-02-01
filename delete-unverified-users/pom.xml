@@ -3,11 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>eu.europeana</groupId>
-    <artifactId>keycloak-quarkus</artifactId>
-    <version>1.6</version>
+    <artifactId>keycloak-europeana</artifactId>
+    <version>2.0</version>
   </parent>
-  <artifactId>delete-unverified_users</artifactId>
-  <version>1.6</version>
+
+  <artifactId>delete-unverified-users</artifactId>
+  <version>2.0</version>
 
   <name>Delete Unverified Users</name>
   <description>Addon package to query Keycloak for users that have not been validated in the up to 24 hours ago, and then delete those (see EA-3198)</description>
