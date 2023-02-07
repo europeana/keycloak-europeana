@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserManager;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -35,6 +36,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     static {
         EMAIL_NOT_VERIFIED = new HashMap<>();
         EMAIL_NOT_VERIFIED.put(UserModel.EMAIL_VERIFIED, "false");
+        EMAIL_NOT_VERIFIED.put(UserModel.INCLUDE_SERVICE_ACCOUNT, "false");
     }
 
     // change this value to set how many hours before {SYSDATE} unverified users (i.e. not confirmed by email)
@@ -42,6 +44,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     // (e.g. when set to 24L => removes all unverified users registered before yesterday, same time)
     private final static Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
 
+    private boolean userRemoved = false;
 
     private KeycloakSession session;
 
@@ -49,10 +52,13 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private UserProvider userProvider;
 
+    private UserManager userManager;
+
     public DeleteUnverifiedUserProvider(KeycloakSession session) {
         this.session = session;
         this.realm = session.getContext().getRealm();
         this.userProvider = session.users();
+        this.userManager = new UserManager(session);
     }
 
     @Override
@@ -87,8 +93,12 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 .collect(Collectors.toList());
 
         for (UserModel user : unverifiedUsersToYesterday) {
-            nrOfDeletedUsers++;
-            LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
+            userRemoved = false;
+            userRemoved = userProvider.removeUser(realm, user);
+            if (userRemoved){
+                nrOfDeletedUsers++;
+                LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
+            }
         }
 
 //        SELECT *
@@ -120,9 +130,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             if (isNotBlank(user.getEmail())) {
                 obj.add("userEmail", user.getEmail());
             }
-            if (isNotBlank(user.getUsername())) {
+//            if (isNotBlank(user.getUsername())) {
                 obj.add("userName", user.getUsername());
-            }
+//            }
         }
 
         if (msg != null) {
