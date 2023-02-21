@@ -32,8 +32,8 @@ spec:
               value: "${KC_LOG_FORMAT}"
             - name: DEBUG_LOGS
               value: "${DEBUG_LOGS}"
-            - name: KC_PROXY
-              value: "${KC_PROXY}"
+#            - name: KC_PROXY
+#              value: "${KC_PROXY}"
             - name: BCRYPT_ITERATIONS
               value: "${BCRYPT_ITERATIONS}"
             - name: BCRYPT_PEPPER
