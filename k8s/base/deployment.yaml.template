@@ -3,6 +3,12 @@ kind: Deployment
 metadata:
   name: keycloak-deployment
 spec:
+  replicas: ${MIN_REPLICAS}
+  template:
+    metadata:
+      annotations:
+        fluentd/include: '${COLLECT_LOGS}'
+        fluentd/multiline: 'true'
   # selector.matchLabels is provided via Kustomize
   template:
     spec:
@@ -66,3 +72,10 @@ spec:
             httpGet:
               path: /auth/realms/master
               port: 8080
+          resources:
+            requests:
+              memory: "${MEMORY_REQUEST}M"
+              cpu: "${CPU_REQUEST}m"
+            limits:
+              memory: "${MEMORY_LIMIT}M"
+              cpu: "${CPU_LIMIT}m"
