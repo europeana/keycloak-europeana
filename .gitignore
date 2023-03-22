@@ -20,10 +20,8 @@
 ### Specific ###
 **/data/
 /addon-jars/*.jar
-/k8s/overlays/dev/deployment_patch.yaml
-/k8s/overlays/cloud/deployment_patch.yaml
 /k8s/overlays/cloud/hpa.yaml
 /k8s/overlays/cloud/ingress.yaml
 k8s/base/deployment.yaml
 **/setenv.sh
-
+k8s/overlays/cloud/deployment_patch.yaml
