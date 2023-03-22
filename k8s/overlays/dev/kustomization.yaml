@@ -6,10 +6,4 @@ patchesStrategicMerge:
 - deployment_patch.yaml
 
 commonLabels:
-  app: keycloak-test
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: europeana/keycloak
-  newTag: latest
-nameSuffix: -test
+  app: keycloak-dev
