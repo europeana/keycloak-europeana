@@ -68,10 +68,14 @@ spec:
             httpGet:
               path: /auth/realms/master
               port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /auth/realms/master
               port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
           resources:
             requests:
               memory: "${MEMORY_REQUEST}M"
