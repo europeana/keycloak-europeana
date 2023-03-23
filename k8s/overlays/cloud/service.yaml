@@ -9,7 +9,7 @@ spec:
       port: 80
       targetPort: 8080
 ---
-# Headless service used to get IP addresses keycloak pods
+# Headless service used to get IP addresses for keycloak pods
 apiVersion: v1
 kind: Service
 metadata:
