@@ -8,3 +8,12 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+---
+# Headless service used to get IP addresses for keycloak pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-keycloak-service
+spec:
+  clusterIP: None
+# selector provided via kustomize

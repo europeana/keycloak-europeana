@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-deployment
+spec:
+  # selector.matchLabels is provided via Kustomize
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          # required to use local image
+          imagePullPolicy: Never
+          args: ["start-dev"]
+          
