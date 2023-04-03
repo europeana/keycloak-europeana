@@ -1,13 +1,5 @@
 resources:
-- deployment.yaml
+  - deployment.yaml
 
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: europeana/keycloak
-  newTag: latest
-nameSuffix: -test
-labels:
-- includeSelectors: true
-  pairs:
-    app: keycloak-test
+commonLabels:
+  app: keycloak
