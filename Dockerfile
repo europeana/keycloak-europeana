@@ -17,21 +17,22 @@ RUN npm run build
 
 FROM quay.io/keycloak/keycloak:20.0.5 as builder
 
-
 # Copy addons to Quarkus providers dir
 COPY addon-jars /opt/keycloak/providers/
 # Copy addon dependencies to Quarkus providers dir
 COPY dependencies /opt/keycloak/providers/
+# Copy theme from stage custom-theme into builder stage
+COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
 # create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
-# Copy theme from stage custom-theme
-COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
 
 FROM quay.io/keycloak/keycloak:20.0.5
-# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why copying providers twice is needed
+# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why copying providers in such
+# a cumbersome way this is needed
 COPY --from=builder /opt/keycloak/providers/ /opt/keycloak/providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
+COPY --from=builder /opt/keycloak/themes/europeana /opt/keycloak/themes/europeana
 
 # Configure APM and add APM agent
 # NOT YET, we've never done this on Keycloak, and wget does not work in this image anyhow
