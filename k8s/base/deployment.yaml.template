@@ -66,13 +66,15 @@ spec:
             - containerPort: 8080
           livenessProbe:
             httpGet:
-              path: /auth/realms/master
+ #             path: /auth/realms/master
+              path: /realms/master
               port: 8080
             initialDelaySeconds: 120
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /auth/realms/master
+ #             path: /auth/realms/master
+              path: /realms/master
               port: 8080
             initialDelaySeconds: 120
             periodSeconds: 30
