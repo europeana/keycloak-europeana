@@ -11,15 +11,10 @@ spec:
       template:
         spec:
           containers:
-          - name: curlimage
-            image: curlimages/curl
-            imagePullPolicy: IfNotPresent
-            command:
-            - sh
-            - -c
-            args:
-            - curl $SERVICE_URL
-            env:
-            - name: SERVICE_URL
-              value:  "${KEYCLOAK_HOST}/auth/realms/europeana/stats"
-          restartPolicy: OnFailure
+            - name: cron
+              image: busybox
+              imagePullPolicy: IfNotPresent
+              command:
+                - wget
+              args:
+                - "${KEYCLOAK_HOST}/auth/realms/europeana/stats"
