@@ -71,6 +71,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     public String delete(
             @DefaultValue("1") @QueryParam("age") int minimumAge) {
 //        return removeUnverifiedUsers(minimumAge);
+
+        LOG.info(": " + toJson(null,"DeleteUnverifiedUsers endpoint called", 0));
         return toJson(null, "DeleteUnverifiedUsers endpoint called", 0);
     }
 
