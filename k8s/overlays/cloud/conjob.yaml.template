@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: keycloakuser-cleanup-job
+spec:
+  schedule: "${KEYCLOAKUSER_CLEANUP_CRON_SCHEDULE}"
+  suspend: ${SUSPEND_KEYCLOAKUSER_CLEANUP}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curlimage
+            image: curlimages/curl
+            imagePullPolicy: IfNotPresent
+            command:
+            - sh
+            - -c
+            args:
+            - curl $SERVICE_URL
+            env:
+            - name: SERVICE_URL
+              value: "172.21.8.2/auth/realms/europeana/stats"
+          restartPolicy: OnFailure
