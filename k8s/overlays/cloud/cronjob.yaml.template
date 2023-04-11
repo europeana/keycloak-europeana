@@ -17,5 +17,5 @@ spec:
               command:
                 - wget
               args:
-                - "${KEYCLOAK_HOST}/auth/realms/europeana/stats"
+                - "${KEYCLOAK_HOST}/auth/realms/europeana/delete"
           restartPolicy: Never
