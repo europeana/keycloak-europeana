@@ -18,3 +18,4 @@ spec:
                 - wget
               args:
                 - "${KEYCLOAK_HOST}/auth/realms/europeana/stats"
+          restartPolicy: Never
