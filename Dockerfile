@@ -1,40 +1,34 @@
-# 0. Clone and build theme from GitHub
-FROM node:14-alpine AS custom-theme
+# 1 get theme from GitHub
+FROM europeana/keycloak-theme:0.8.0-rc2 AS theme
 
-ARG KEYCLOAK_THEME_GIT_REF=master
-
-RUN apk add --no-cache git
-
-RUN git clone https://github.com/europeana/keycloak-theme.git
-
-WORKDIR /keycloak-theme
-RUN git checkout ${KEYCLOAK_THEME_GIT_REF}
-RUN npm install
-RUN npm run build
-
-
-# configure, add add-ons + dependencies and build custom image
-
+# 2 get intermediary Keycloak image
 FROM quay.io/keycloak/keycloak:20.0.5 as builder
+WORKDIR /opt/keycloak
 
-# Copy addons to Quarkus providers dir
-COPY addon-jars /opt/keycloak/providers/
-# Copy addon dependencies to Quarkus providers dir
-COPY dependencies /opt/keycloak/providers/
-# Copy theme from stage custom-theme into builder stage
-COPY --from=custom-theme /keycloak-theme/theme /opt/keycloak/themes/europeana
-# create intermediary build
+# 3 copy addons to Quarkus providers dir
+COPY addon-jars ./providers/
+
+# 4 copy addon dependencies to Quarkus providers dir
+COPY dependencies ./providers/
+
+# 5 copy theme
+COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
+RUN ls -al ./themes/europeana/
+
+# 6 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
-
+# 7 get another copy of Keycloak image and apply changes there again
+# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
 FROM quay.io/keycloak/keycloak:20.0.5
-# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why copying providers in such
-# a cumbersome way this is needed
-COPY --from=builder /opt/keycloak/providers/ /opt/keycloak/providers/
-COPY --from=builder /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
-COPY --from=builder /opt/keycloak/themes/europeana /opt/keycloak/themes/europeana
+WORKDIR /opt/keycloak
 
-# Configure APM and add APM agent
-# NOT YET, we've never done this on Keycloak, and wget does not work in this image anyhow
-#ENV ELASTIC_APM_VERSION 1.34.1
-#RUN wget https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/$ELASTIC_APM_VERSION/elastic-apm-agent-$ELASTIC_APM_VERSION.jar -O /usr/local/elastic-apm-agent.jar
+# 8 copy add-ons, dependencies, optimised libs and theme again to new copy
+COPY --from=builder /opt/keycloak/providers/ ./providers/
+COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
+COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
+
+# 9 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
+# fix for redirect issue.
+# CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
+

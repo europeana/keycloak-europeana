@@ -11,4 +11,3 @@ spec:
           # required to use local image
           imagePullPolicy: Never
           args: ["start-dev"]
-          
