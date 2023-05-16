@@ -4,6 +4,7 @@ FROM europeana/keycloak-theme:0.8.0 AS theme
 # 2 get intermediary Keycloak image
 FROM quay.io/keycloak/keycloak:20.0.5 as builder
 WORKDIR /opt/keycloak
+ENV KC_DB=postgres
 
 # 3 copy addons to Quarkus providers dir
 COPY addon-jars ./providers/
