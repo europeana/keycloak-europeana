@@ -14,7 +14,7 @@ spec:
             - --hostname-strict-https=false
             - --http-enabled=true
             - --optimized
-            - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
+            #- --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
             # matches headless service name in service.yaml + any kustomize suffixes
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
