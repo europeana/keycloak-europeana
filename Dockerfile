@@ -14,7 +14,6 @@ COPY dependencies ./providers/
 
 # 5 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
-RUN ls -al ./themes/europeana/
 
 # 6 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
