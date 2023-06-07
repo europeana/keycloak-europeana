@@ -9,6 +9,7 @@ import org.keycloak.representations.IDToken;
 
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * Created by luthien on 07/06/2023.
  */
@@ -49,13 +50,15 @@ public class CustomProtocolMapper extends AbstractOIDCProtocolMapper implements 
         return PROVIDER_ID;
     }
 
+    /**
+     * This adds the client public ID and client name to the token, similarly as previously done with the scripted
+     * protocol mapper (which was deprecated since Keycloak v18)
+     */
     @Override
     protected void setClaim(IDToken token, ProtocolMapperModel mappingModel,
                             UserSessionModel userSession, KeycloakSession keycloakSession,
                             ClientSessionContext clientSessionCtx) {
-        token.getOtherClaims().put("client_client_id", keycloakSession.getContext().getClient().getClientId());
         token.getOtherClaims().put("client_public_id", keycloakSession.getContext().getClient().getId());
         token.getOtherClaims().put("client_name", keycloakSession.getContext().getClient().getName());
-//        OIDCAttributeMapperHelper.mapClaim(token, mappingModel, "Whoopee");
     }
 }
