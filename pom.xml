@@ -1,65 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>eu.europeana</groupId>
-        <artifactId>europeana-parent-pom</artifactId>
-        <version>2.0</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>keycloak-europeana</artifactId>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>eu.europeana</groupId>
+    <artifactId>europeana-parent-pom</artifactId>
     <version>2.0</version>
-    <packaging>pom</packaging>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-    <modules>
-        <module>bcrypt-addon</module>
-        <module>keycloak-metrics-spi</module>
-        <module>eventlistener</module>
-        <module>delete-unverified-users</module>
-    </modules>
+  <artifactId>keycloak-europeana</artifactId>
+  <version>2.0</version>
+  <packaging>pom</packaging>
 
-    <name>Keycloak for Europeana</name>
-    <description>Keycloak customised with several add-on modules and custom encryption</description>
+  <modules>
+    <module>bcrypt-addon</module>
+    <module>keycloak-metrics-spi</module>
+    <module>eventlistener</module>
+    <module>delete-unverified-users</module>
+    <module>custom-protocol-mapper</module>
+  </modules>
 
-    <properties>
-        <!-- Check this version to match the one in the Dockerfile! -->
-        <keycloak.version>20.0.5</keycloak.version>
+  <name>Keycloak for Europeana</name>
+  <description>Keycloak customised with several add-on modules and custom encryption</description>
 
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.source>11</maven.compiler.source>
+  <properties>
+    <!-- Check this version to match the one in the Dockerfile! -->
+    <keycloak.version>20.0.5</keycloak.version>
 
-        <maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
-        <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
-        <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
-        <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
-    </properties>
+    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
 
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>${maven-clean-plugin.version}</version>
-                </plugin>
+    <maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
+    <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
+    <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+    <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
+  </properties>
 
-                <plugin>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>${maven-dependency-plugin.version}</version>
-                </plugin>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
 
-                <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>${maven-install-plugin.version}</version>
-                </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${maven-dependency-plugin.version}</version>
+        </plugin>
 
-                <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>${maven-deploy-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${maven-install-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
 </project>
