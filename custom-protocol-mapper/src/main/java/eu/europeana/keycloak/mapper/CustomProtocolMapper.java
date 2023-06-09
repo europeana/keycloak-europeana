@@ -16,7 +16,7 @@ import java.util.List;
 public class CustomProtocolMapper extends AbstractOIDCProtocolMapper implements OIDCAccessTokenMapper,
                                                                                 OIDCIDTokenMapper, UserInfoTokenMapper {
 
-    public static final String PROVIDER_ID = "custom-protocol-mapper";
+    public static final String PROVIDER_ID = "client-public-id-mapper";
 
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
