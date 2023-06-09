@@ -32,7 +32,7 @@ public class CustomProtocolMapper extends AbstractOIDCProtocolMapper implements 
 
     @Override
     public String getDisplayType() {
-        return "Custom Token Mapper";
+        return "Client Public ID Mapper";
     }
 
     @Override
