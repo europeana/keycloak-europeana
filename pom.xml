@@ -9,22 +9,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>keycloak-cf-docker</artifactId>
-    <version>1.5</version>
+    <artifactId>keycloak-europeana</artifactId>
+    <version>2.0</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>bcrypt-addon</module>
         <module>keycloak-metrics-spi</module>
-        <module>europeana-eventlistener</module>
+        <module>eventlistener</module>
+        <module>delete-unverified-users</module>
     </modules>
 
-    <name>Keycloak Docker and add-ons</name>
-    <description>Running Keycloak as a Docker image on Cloud Foundry using PostgreSQL en Europeana BCrypt module</description>
+    <name>Keycloak for Europeana</name>
+    <description>Keycloak customised with several add-on modules and custom encryption</description>
 
     <properties>
         <!-- Check this version to match the one in the Dockerfile! -->
-        <keycloak.version>16.1.0</keycloak.version>
+        <keycloak.version>20.0.5</keycloak.version>
 
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.source>11</maven.compiler.source>

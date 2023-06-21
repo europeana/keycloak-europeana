@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-deployment
+spec:
+  replicas: ${MIN_REPLICAS}
+  template:
+    metadata:
+      annotations:
+        fluentd/include: '${COLLECT_LOGS}'
+        fluentd/multiline: 'true'
+    # selector.matchLabels is provided via Kustomize
+    spec:
+      containers:
+        - name: keycloak
+          image: europeana/keycloak
+          env:
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+            - name: KC_DB_URL
+              value: "${KC_DB_URL}"
+            - name: KC_DB
+              value: "${KC_DB}"
+            - name: KC_DB_USERNAME
+              value: "${KC_DB_USERNAME}"
+            - name: KC_DB_PASSWORD
+              value: "${KC_DB_PASSWORD}"
+            - name: KC_DB_SCHEMA
+              value: "${KC_DB_SCHEMA}"
+            # HTTPS enforced at ingress
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_HOSTNAME
+              value: "${KC_HOSTNAME}"
+            - name: SCOPE
+              value: "${SCOPE}"
+            - name: AUTH_SERVER_URL
+              value: "${AUTH_SERVER_URL}"
+            - name: KC_LOG_LEVEL
+              value: "${KC_LOG_LEVEL}"
+            - name: KC_LOG_FORMAT
+              value: "${KC_LOG_FORMAT}"
+            - name: DEBUG_LOGS
+              value: "${DEBUG_LOGS}"
+            - name: BCRYPT_ITERATIONS
+              value: "${BCRYPT_ITERATIONS}"
+            - name: BCRYPT_PEPPER
+              value: "${BCRYPT_PEPPER}"
+            - name: SLACK_WEBHOOK
+              value: "${SLACK_WEBHOOK}"
+            - name: SLACK_USER
+              value: "${SLACK_USER}"
+            - name: CLIENT_ID
+              value: "${CLIENT_ID}"
+            - name: CLIENT_SECRET
+              value: "${CLIENT_SECRET}"
+            - name: DELETE_MGR_ID
+              value: "${DELETE_MGR_ID}"
+            - name: DELETE_MGR_PW
+              value: "${DELETE_MGR_PW}"
+            - name: SET_API_URL
+              value: "${SET_API_URL}"
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "${MEMORY_REQUEST}M"
+              cpu: "${CPU_REQUEST}m"
+            limits:
+              memory: "${MEMORY_LIMIT}M"
+              cpu: "${CPU_LIMIT}m"

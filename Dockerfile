@@ -1,42 +1,34 @@
-# 0. Clone and build theme from GitHub
-FROM node:14-alpine
+# 1 get theme from GitHub
+FROM europeana/keycloak-theme:0.8.1 AS theme
 
-ARG KEYCLOAK_THEME_GIT_REF=master
+# 2 get intermediary Keycloak image
+FROM quay.io/keycloak/keycloak:20.0.5 as builder
+WORKDIR /opt/keycloak
+ENV KC_DB=postgres
 
-RUN apk add --no-cache git
+# 3 copy addons to Quarkus providers dir
+COPY addon-jars ./providers/
 
-RUN git clone https://github.com/europeana/keycloak-theme.git
+# 4 copy addon dependencies to Quarkus providers dir
+COPY dependencies ./providers/
 
-WORKDIR /keycloak-theme
-RUN git checkout ${KEYCLOAK_THEME_GIT_REF}
-RUN npm install
-RUN npm run build
+# 5 copy theme
+COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-# 1. Build Keycloak
-# Check that this version matches the one in the pom.xml!
-FROM jboss/keycloak:16.1.0
+# 6 create intermediary build
+RUN /opt/keycloak/bin/kc.sh build
 
-# Set workdir to jboss home
-WORKDIR /opt/jboss/
+# 7 get another copy of Keycloak image and apply changes there again
+# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
+FROM quay.io/keycloak/keycloak:20.0.5
+WORKDIR /opt/keycloak
 
-# Set environment variables
-ENV DB_VENDOR=postgres \
-    # Note: credentials are used only when initialising a new empty DB
-    KEYCLOAK_USER=admin \
-    KEYCLOAK_PASSWORD=change-this-into-something-useful
+# 8 copy add-ons, dependencies, optimised libs and theme again to new copy
+COPY --from=builder /opt/keycloak/providers/ ./providers/
+COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
+COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
-# create user for accessing Wildfly metrics.
-# only used if EUROPEANA_JBOSS_ADMIN_PASSWORD is set (see custom-scripts/add-wildfly-mgmt-user.sh)
-# ENV EUROPEANA_JBOSS_ADMIN_USER admin
+# 9 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
+# fix for redirect issue.
+# CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
 
-# Copy theme from stage 0
-COPY --from=0 /keycloak-theme/theme /opt/jboss/keycloak/themes/europeana
-
-# Copy commons-codec, favre-crypto & -bytes (BCrypt dependencies) & Keycloak admin client to keycloak/modules
-COPY dependencies keycloak/modules
-
-# Copy addons to the Wildfly deployment directory
-COPY addon-jars keycloak/standalone/deployments
-
-# Copy log formatter script
-COPY custom-scripts/ /opt/jboss/startup-scripts/

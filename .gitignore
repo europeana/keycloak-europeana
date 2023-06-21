@@ -10,7 +10,6 @@
 
 ### Java spills ###
 *.class
-*.jar
 *.war
 *.ear
 
@@ -20,8 +19,9 @@
 
 ### Specific ###
 **/data/
-/bcrypt-addon/target/
-/addon-jars/bcrypt-addon.jar
-
-bcrypt-addon/src/main/java/test/
-bcrypt-addon/src/test/
+/addon-jars/*.jar
+/k8s/overlays/cloud/hpa.yaml
+/k8s/overlays/cloud/ingress.yaml
+k8s/base/deployment.yaml
+**/setenv.sh
+k8s/overlays/cloud/deployment_patch.yaml
