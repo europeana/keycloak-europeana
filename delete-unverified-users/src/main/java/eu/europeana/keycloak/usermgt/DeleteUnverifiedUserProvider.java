@@ -26,7 +26,7 @@ import static org.keycloak.utils.StringUtil.isNotBlank;
  */
 public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
-    private static final Logger LOG = Logger.getLogger(DeleteUnverifiedUserProvider.class);
+    private static final Logger LOG        = Logger.getLogger(DeleteUnverifiedUserProvider.class);
     private static final String LOG_PREFIX = "KEYCLOAK_EVENT:";
 
     private static final String SUCCESS_MSG = "User account deleted: email was not verified within 24 hours";
@@ -55,10 +55,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private UserManager userManager;
 
     public DeleteUnverifiedUserProvider(KeycloakSession session) {
-        this.session = session;
-        this.realm = session.getContext().getRealm();
+        this.session      = session;
+        this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
-        this.userManager = new UserManager(session);
+        this.userManager  = new UserManager(session);
     }
 
     @Override
@@ -69,52 +69,49 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(
-            @DefaultValue("1") @QueryParam("age") int minimumAge) {
-//        return removeUnverifiedUsers(minimumAge);
+        @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
+//        return removeUnverifiedUsers(minimumAgeInDays);
 
-        LOG.info(": " + toJson(null,"DeleteUnverifiedUsers endpoint called", 0));
-        return toJson(null, "DeleteUnverifiedUsers endpoint called", 0);
+        LOG.info(": " + toJson(null, "DeleteUnverifiedUsers endpoint called", getUnverifiedUsers(minimumAgeInDays).size()));
+        return toJson(null, "DeleteUnverifiedUsers endpoint called", getUnverifiedUsers(minimumAgeInDays).size());
     }
 
     @Override
     public void close() {
     }
 
+
     /**
      * This method works by retrieving a Stream of UserModels from the UserProvider filtered on the property
-     * UserModel.EMAIL_VERIFIED = "false" and is filtered further by comparing the Created timestamp to the
-     * (Sysdate - SO_MANY_HOURS_AGO) Long value defined above in milliseconds
+     * UserModel.EMAIL_VERIFIED = "false" and is filtered further by comparing the Created timestamp to the (Sysdate -
+     * SO_MANY_HOURS_AGO) Long value defined above in milliseconds
      *
      * @return String with result message (TBD)
      */
-    public String removeUnverifiedUsers(int minimumAge) {
-        int nrOfDeletedUsers = 0;
-        List<UserModel> unverifiedUsersToYesterday = userProvider.searchForUserStream(
-                realm,
-                EMAIL_NOT_VERIFIED)
-                .filter(u -> u.getCreatedTimestamp() < (System.currentTimeMillis() - (MILLIS_PER_DAY * minimumAge)))
-                .collect(Collectors.toList());
+    private String removeUnverifiedUsers(int minimumAgeInDays) {
+        int             nrOfDeletedUsers           = 0;
+        List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
             userRemoved = false;
             userRemoved = userProvider.removeUser(realm, user);
-            if (userRemoved){
+            if (userRemoved) {
                 nrOfDeletedUsers++;
                 LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
             }
         }
-
-//        SELECT *
-//                FROM keycloak20.user_entity
-//        WHERE email_verified = FALSE AND service_account_client_link IS NOT NULL
-
-//        for (UserModel user : unverifiedUsersToYesterday) {
-//            if (userProvider.removeUser(realm, user)) {
-//                nrOfDeletedUsers++;
-//                LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
-//            }
-//        }
         return toJson(null, SUCCESS_MSG, nrOfDeletedUsers);
+    }
+
+
+    private List<UserModel> getUnverifiedUsers(int minimumAgeInDays) {
+        int nrOfDeletedUsers = 0;
+        return userProvider.searchForUserStream(
+                               realm,
+                               EMAIL_NOT_VERIFIED)
+                           .filter(u -> u.getCreatedTimestamp() <
+                                        (System.currentTimeMillis() - (MILLIS_PER_DAY * minimumAgeInDays)))
+                           .collect(Collectors.toList());
     }
 
     private String toJson(UserModel user, String msg, int nrOfDeletedUsers) {
@@ -134,7 +131,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 obj.add("userEmail", user.getEmail());
             }
 //            if (isNotBlank(user.getUsername())) {
-                obj.add("userName", user.getUsername());
+            obj.add("userName", user.getUsername());
 //            }
         }
 
