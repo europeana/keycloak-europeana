@@ -72,9 +72,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
 //        return removeUnverifiedUsers(minimumAgeInDays);
         int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
-        LOG.info(": " + toJson(null,  nrOfUsersToDelete + " user(s) found the effort of validating their " +
-                                      "email address beyond their capabilities and were asked to leve the premises", nrOfUsersToDelete));
-        return toJson(null, nrOfUsersToDelete + " lazy users found", nrOfUsersToDelete);
+
+        LOG.info(": " + toJson(null,  listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete));
+        return toJson(null, listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete);
     }
 
     @Override
@@ -106,7 +106,6 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
 
     private List<UserModel> getUnverifiedUsers(int minimumAgeInDays) {
-        int nrOfDeletedUsers = 0;
         return userProvider.searchForUserStream(
                                realm,
                                EMAIL_NOT_VERIFIED)
@@ -115,7 +114,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                            .collect(Collectors.toList());
     }
 
-    private String listUnverifiedUsers(List<UserModel> lazyUsers) {
+    private String listUnverifiedUsers(int minimumAgeInDays) {
+        List<UserModel> lazyUsers = getUnverifiedUsers(minimumAgeInDays);
         StringBuilder lazyList = new StringBuilder();
         int lazyCounter = 0;
         int lazySize = lazyUsers.size();
