@@ -143,7 +143,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 lazyList.append(lazyUser.getLastName());
                 if (lazySize == (lazyCounter + 1)) {
                     lazyList.append(" and ");
-                } else {
+                } else if (lazySize < lazyCounter) {
                     lazyList.append(", ");
                 }
             }
