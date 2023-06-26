@@ -72,7 +72,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
 //        return removeUnverifiedUsers(minimumAgeInDays);
         int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
-        LOG.info(": " + toJson(null,  nrOfUsersToDelete + " lazy users found", nrOfUsersToDelete));
+        LOG.info(": " + toJson(null,  nrOfUsersToDelete + " user(s) found the effort of validating their " +
+                                      "email address beyond their capabilities and were asked to leve the premises", nrOfUsersToDelete));
         return toJson(null, nrOfUsersToDelete + " lazy users found", nrOfUsersToDelete);
     }
 
@@ -113,6 +114,46 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                                         (System.currentTimeMillis() - (MILLIS_PER_DAY * minimumAgeInDays)))
                            .collect(Collectors.toList());
     }
+
+    private String listUnverifiedUsers(List<UserModel> lazyUsers) {
+        StringBuilder lazyList = new StringBuilder();
+        int lazyCounter = 0;
+        int lazySize = lazyUsers.size();
+        if (lazySize == 0){
+            lazyList.append("Hurray, only motivated users today!");
+        } else {
+            if (lazySize == 1) {
+                lazyList.append(lazySize);
+                lazyList.append(" user ");
+            } else {
+                lazyList.append(lazySize);
+                lazyList.append(" users ");
+            }
+            lazyList.append(" found the effort of validating their email address beyond their capabilities and were " +
+                            "therefore asked to leave the premises. ");
+            if (lazySize >  1) {
+                lazyList.append("They are: ");
+            } else {
+                lazyList.append("He or she is: ");
+            }
+            for (UserModel lazyUser : lazyUsers){
+                lazyCounter ++;
+                lazyList.append(lazyUser.getFirstName().charAt(0));
+                lazyList.append(". ");
+                lazyList.append(lazyUser.getLastName());
+                if (lazySize == (lazyCounter - 1)) {
+                    lazyList.append(" and ");
+                } else {
+                    lazyList.append("; ");
+                }
+            }
+            lazyList.append(". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
+                            "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
+        }
+        return lazyList.toString();
+    }
+
+
 
     private String toJson(UserModel user, String msg, int nrOfDeletedUsers) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
