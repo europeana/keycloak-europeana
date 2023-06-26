@@ -72,8 +72,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
 //        return removeUnverifiedUsers(minimumAgeInDays);
         int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
-        LOG.info(": " + toJson(null, "DeleteUnverifiedUsers endpoint called", nrOfUsersToDelete));
-        return toJson(null, "DeleteUnverifiedUsers endpoint called", nrOfUsersToDelete);
+        LOG.info(": " + toJson(null,  nrOfUsersToDelete + " lazy users found", nrOfUsersToDelete);
+        return toJson(null, nrOfUsersToDelete + " lazy users found", nrOfUsersToDelete);
     }
 
     @Override
