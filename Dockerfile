@@ -1,5 +1,7 @@
+ARG theme_version=0.9.0
+
 # 1 get theme from GitHub
-FROM europeana/keycloak-theme:0.8.1 AS theme
+FROM europeana/keycloak-theme:${theme_version} AS theme
 
 # 2 get intermediary Keycloak image
 FROM quay.io/keycloak/keycloak:20.0.5 as builder
