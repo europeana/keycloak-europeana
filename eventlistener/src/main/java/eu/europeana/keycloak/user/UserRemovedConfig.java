@@ -21,7 +21,7 @@ public class UserRemovedConfig {
     static final String AUTH_SERVER_URL = System.getenv("AUTH_SERVER_URL");
     static final String SLACK_WEBHOOK = System.getenv("SLACK_WEBHOOK");
     static final String SLACK_USERNAME = System.getenv("SLACK_USER");
-    static final String OIDTokenURL     = AUTH_SERVER_URL + "realms/europeana/protocol/openid-connect/token";
+    static final String OIDTokenURL     = AUTH_SERVER_URL + "/realms/europeana/protocol/openid-connect/token";
 
     static final String ERROR_ASCII                   = "✘";
     static final String OK_ICON                       = ":heavy_check_mark:";
