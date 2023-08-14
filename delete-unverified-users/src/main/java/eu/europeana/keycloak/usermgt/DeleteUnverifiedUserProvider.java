@@ -30,6 +30,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private static final String LOG_PREFIX = "KEYCLOAK_EVENT:";
 
     private static final String SUCCESS_MSG = "User account deleted: email was not verified within 24 hours";
+    private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
 
     private static Map<String, String> EMAIL_NOT_VERIFIED;
 
@@ -71,10 +72,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     public String delete(
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
 //        return removeUnverifiedUsers(minimumAgeInDays);
-        int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
+//        int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
 
-        LOG.info(": " + toJson(null,  listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete));
-        return toJson(null, listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete);
+        return listUnverifiedUsers(minimumAgeInDays);
     }
 
     @Override
@@ -98,10 +98,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved) {
                 nrOfDeletedUsers++;
-                LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
+                LOG.info("UserID " + user.getId() + ", username: " + user.getUsername() + USERDEL_MSG);
             }
         }
-        return toJson(null, SUCCESS_MSG, nrOfDeletedUsers);
+        return nrOfDeletedUsers + SUCCESS_MSG;
     }
 
 
@@ -150,6 +150,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             lazyList.append(". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
                             "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
         }
+
+        LOG.info(lazyList.toString());
         return lazyList.toString();
     }
 

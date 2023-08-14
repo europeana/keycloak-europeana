@@ -3,7 +3,7 @@ ARG theme_version=0.9.0
 # 1 get theme from GitHub
 FROM europeana/keycloak-theme:${theme_version} AS theme
 
-# 2 get intermediary Keycloak image
+# 2 get base Keycloak image
 FROM quay.io/keycloak/keycloak:20.0.5 as builder
 WORKDIR /opt/keycloak
 ENV KC_DB=postgres
