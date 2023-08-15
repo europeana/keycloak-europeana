@@ -14,7 +14,8 @@ spec:
             - --hostname-strict-https=false
             - --http-enabled=true
             - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
-            # matches headless service name in service.yaml + any kustomize suffixes
+            - --log="console"
+            - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: KC_CACHE_STACK
