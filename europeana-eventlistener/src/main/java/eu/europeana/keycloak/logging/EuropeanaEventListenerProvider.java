@@ -39,112 +39,131 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
     private String formatEventLog(Event event) {
         StringBuilder eventLog = new StringBuilder();
+        boolean isNotFirst = false;
 
         if (event.getType() != null) {
             eventLog.append("type: ");
             eventLog.append(event.getType().toString());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getRealmId() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
             eventLog.append("realm: ");
             eventLog.append(event.getRealmId());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getClientId() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
             eventLog.append("clientId: ");
             eventLog.append(event.getClientId());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getUserId() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
             eventLog.append("userId: ");
             eventLog.append(event.getUserId());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getIpAddress() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
             eventLog.append("ipAddress: ");
             eventLog.append(event.getUserId());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getError() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
             eventLog.append("error: ");
             eventLog.append(event.getError());
-            eventLog.append(" ");
+            isNotFirst = true;
         }
 
         if (event.getDetails() != null) {
+            if (isNotFirst){
+                eventLog.append(", ");
+            }
+            boolean isNotFirstEither = false;
             eventLog.append("details: ");
             for (Map.Entry<String, String> e : event.getDetails().entrySet()) {
+                if (isNotFirstEither){
+                    eventLog.append(", ");
+                }
                 eventLog.append(e.getKey());
                 eventLog.append(": ");
                 eventLog.append(e.getValue());
-                eventLog.append(" ");
+                isNotFirstEither = true;
             }
         }
+        eventLog.append(" ");
         return eventLog.toString();
     }
 
 
     private String formatEventLog(AdminEvent adminEvent) {
         StringBuilder adminEventLog = new StringBuilder();
-
         adminEventLog.append("type: ADMIN_EVENT");
 
 
         if (adminEvent.getOperationType() != null) {
-            adminEventLog.append("operationType: ");
+            adminEventLog.append(", operationType: ");
             adminEventLog.append(adminEvent.getOperationType().toString());
             adminEventLog.append(" ");
         }
 
         if (adminEvent.getAuthDetails() != null) {
             if (adminEvent.getAuthDetails().getRealmId() != null) {
-                adminEventLog.append("realmId: ");
+                adminEventLog.append(", realm: ");
                 adminEventLog.append(adminEvent.getAuthDetails().getRealmId());
-                adminEventLog.append(" ");
             }
 
             if (adminEvent.getAuthDetails().getClientId() != null) {
-                adminEventLog.append("clientId: ");
+                adminEventLog.append(", clientId: ");
                 adminEventLog.append(adminEvent.getAuthDetails().getClientId());
-                adminEventLog.append(" ");
             }
 
             if (adminEvent.getAuthDetails().getUserId() != null) {
-                adminEventLog.append("userId: ");
+                adminEventLog.append(", userId: ");
                 adminEventLog.append(adminEvent.getAuthDetails().getUserId());
-                adminEventLog.append(" ");
             }
 
             if (adminEvent.getAuthDetails().getIpAddress() != null) {
-                adminEventLog.append("ipAddress: ");
+                adminEventLog.append(", ipAddress: ");
                 adminEventLog.append(adminEvent.getAuthDetails().getIpAddress());
-                adminEventLog.append(" ");
             }
         }
 
         if (adminEvent.getResourceType() != null) {
-            adminEventLog.append("resourceType: ");
+            adminEventLog.append(", resourceType: ");
             adminEventLog.append(adminEvent.getResourceType().toString());
             adminEventLog.append(" ");
         }
 
         if (adminEvent.getResourcePath() != null) {
-            adminEventLog.append("resourcePath: ");
+            adminEventLog.append(", resourcePath: ");
             adminEventLog.append(adminEvent.getResourcePath());
             adminEventLog.append(" ");
         }
 
         if (adminEvent.getError() != null) {
-            adminEventLog.append("error: ");
+            adminEventLog.append(", error: ");
             adminEventLog.append(adminEvent.getError());
-            adminEventLog.append(" ");
         }
 
+        adminEventLog.append(" ");
         return adminEventLog.toString();
     }
 

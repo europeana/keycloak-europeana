@@ -96,7 +96,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
             }
         }
-        LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
+        if (nrOfDeletedUsers > 0){
+            LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
+        } else {
+            LOG.info("No unverified users found.");
+        }
         return "Unverified user delete job finished.";
     }
 
@@ -163,38 +167,34 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         msg.append("type: UNVERIFIED_USER_DELETE");
 
         if (realm != null) {
-            msg.append("realmName: ");
+            msg.append(", realm: ");
             msg.append(realm.getName());
-            msg.append(" ");
         }
 
         if (user != null) {
             if (isNotBlank(user.getId())) {
-                msg.append("userId: ");
+                msg.append(", userId: ");
                 msg.append(user.getId());
-                msg.append(" ");
             }
             if (isNotBlank(user.getEmail())) {
-                msg.append("userEmail: ");
+                msg.append(", userEmail: ");
                 msg.append(user.getEmail());
-                msg.append(" ");
             }
-            msg.append("userName: ");
+            msg.append(", userName: ");
             msg.append(user.getUsername());
-            msg.append(" ");
         }
 
         if (message != null) {
-            msg.append("message: ");
+            msg.append(", message: ");
             msg.append(msg);
-            msg.append(" ");
         }
 
         if (nrOfDeletedUsers > 0) {
-            msg.append("Number of users deleted: ");
+            msg.append(". Number of users deleted: ");
             msg.append(nrOfDeletedUsers);
-            msg.append(" ");
         }
+
+        msg.append(" ");
         return LOG_PREFIX + msg;
     }
 

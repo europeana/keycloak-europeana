@@ -306,35 +306,31 @@ public class UserRemovedMessageHandler {
         msg.append("type: USER_DELETE_EVENT");
 
         if (deleteEvent.getRealm() != null) {
-            msg.append("realm: ");
+            msg.append(", realm: ");
             msg.append(deleteEvent.getRealm().getName());
-            msg.append(" ");
         }
 
         if (deleteEvent.getUser() != null) {
             if (isNotBlank(deleteEvent.getUser().getId())) {
-                msg.append("userId: ");
+                msg.append(", userId: ");
                 msg.append(deleteEvent.getUser().getId());
-                msg.append(" ");
             }
             if (isNotBlank(deleteEvent.getUser().getEmail())) {
-                msg.append("userEmail: ");
+                msg.append(", userEmail: ");
                 msg.append(deleteEvent.getUser().getEmail());
-                msg.append(" ");
             }
             if (isNotBlank(deleteEvent.getUser().getUsername())) {
-                msg.append("userName: ");
+                msg.append(", userName: ");
                 msg.append(deleteEvent.getUser().getUsername());
-                msg.append(" ");
             }
         }
 
         if (message != null) {
-            msg.append("message: ");
+            msg.append(", message: ");
             msg.append(msg);
-            msg.append(" ");
         }
 
+        msg.append(" ");
         return prefix + msg;
     }
 
