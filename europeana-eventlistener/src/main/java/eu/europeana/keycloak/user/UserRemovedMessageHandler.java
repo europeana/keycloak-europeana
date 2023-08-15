@@ -80,8 +80,8 @@ public class UserRemovedMessageHandler {
         }
 
         if (DEBUG_LOGS) {
-            LOG.info(toJson(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
-            LOG.info(toJson(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
+            LOG.info(formatMessage(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
+            LOG.info(formatMessage(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
         }
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
@@ -89,14 +89,14 @@ public class UserRemovedMessageHandler {
         }
 
         if (!slackHttpMessageOK) {
-            if (DEBUG_LOGS) LOG.info(toJson(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
+            if (DEBUG_LOGS) LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
             slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent);
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
-            LOG.info(toJson(deleteEvent, SLACK_MSG_SENT));
+            LOG.info(formatMessage(deleteEvent, SLACK_MSG_SENT));
         } else {
-            LOG.error(toJson(deleteEvent, HTTP_AND_EMAIL_FAILED));
+            LOG.error(formatMessage(deleteEvent, HTTP_AND_EMAIL_FAILED));
         }
     }
 
@@ -179,7 +179,7 @@ public class UserRemovedMessageHandler {
 
         try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                LOG.info(toJson(deleteEvent,
+                LOG.info(formatMessage(deleteEvent,
                                 "Usersets delete request successful: received HTTP " +
                                 response.getStatusLine().getStatusCode() +
                                 " response"));
@@ -192,7 +192,7 @@ public class UserRemovedMessageHandler {
                               response.getStatusLine().getStatusCode() +
                               " response. Response body: " + responseBody);
                 } else {
-                    LOG.error(toJson(deleteEvent,
+                    LOG.error(formatMessage(deleteEvent,
                                  "Usersets delete request was not successful: received HTTP " +
                                  response.getStatusLine().getStatusCode() +
                                  " response"));
@@ -203,7 +203,7 @@ public class UserRemovedMessageHandler {
             if (DEBUG_LOGS) {
                 LOG.error(e);
             } else {
-                LOG.error(toJson(deleteEvent,
+                LOG.error(formatMessage(deleteEvent,
                              "IOException occurred while sending delete request by HTTP: " + e.getMessage()));
             }
             return false;
@@ -249,13 +249,13 @@ public class UserRemovedMessageHandler {
 
         try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                LOG.info(toJson(deleteEvent,
+                LOG.info(formatMessage(deleteEvent,
                                 "Slack message sent successfully: received HTTP " +
                                 response.getStatusLine().getStatusCode() +
                                 " response"));
                 return true;
             } else {
-                LOG.error(toJson(deleteEvent,
+                LOG.error(formatMessage(deleteEvent,
                                  "Error sending Slack message: received HTTP " +
                                  response.getStatusLine().getStatusCode() +
                                  " response"));
@@ -284,7 +284,7 @@ public class UserRemovedMessageHandler {
         UserModel deleteUser = deleteEvent.getUser();
 
         try {
-            LOG.info(toJson(deleteEvent,
+            LOG.info(formatMessage(deleteEvent,
                             "Sending email to Slack user: " + slackUserModel.getEmail()));
             senderProvider.send(
                 session.getContext().getRealm().getSmtpConfig(),
@@ -294,38 +294,48 @@ public class UserRemovedMessageHandler {
                 message);
             return true;
         } catch (EmailException e) {
-            LOG.error(toJson(deleteEvent,
+            LOG.error(formatMessage(deleteEvent,
                              "EmailException occurred while sending Slack message by email: " + e.getMessage()));
             return false;
         }
     }
 
-    private String toJson(UserRemovedEvent deleteEvent, String msg) {
-        JsonObjectBuilder obj = Json.createObjectBuilder();
+    private String formatMessage(UserRemovedEvent deleteEvent, String message) {
+        StringBuilder msg = new StringBuilder();
 
-        obj.add("type", "USER_DELETE_EVENT");
+        msg.append("type: USER_DELETE_EVENT");
 
         if (deleteEvent.getRealm() != null) {
-            obj.add("realmName", deleteEvent.getRealm().getName());
+            msg.append("realm: ");
+            msg.append(deleteEvent.getRealm().getName());
+            msg.append(" ");
         }
 
         if (deleteEvent.getUser() != null) {
             if (isNotBlank(deleteEvent.getUser().getId())) {
-                obj.add("userId", deleteEvent.getUser().getId());
+                msg.append("userId: ");
+                msg.append(deleteEvent.getUser().getId());
+                msg.append(" ");
             }
             if (isNotBlank(deleteEvent.getUser().getEmail())) {
-                obj.add("userEmail", deleteEvent.getUser().getEmail());
+                msg.append("userEmail: ");
+                msg.append(deleteEvent.getUser().getEmail());
+                msg.append(" ");
             }
             if (isNotBlank(deleteEvent.getUser().getUsername())) {
-                obj.add("userName", deleteEvent.getUser().getUsername());
+                msg.append("userName: ");
+                msg.append(deleteEvent.getUser().getUsername());
+                msg.append(" ");
             }
         }
 
-        if (msg != null) {
-            obj.add("message", msg);
+        if (message != null) {
+            msg.append("message: ");
+            msg.append(msg);
+            msg.append(" ");
         }
 
-        return prefix + obj.build().toString();
+        return prefix + msg;
     }
 
     private boolean isNotBlank(String str) {

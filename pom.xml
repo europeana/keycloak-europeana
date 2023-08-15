@@ -17,7 +17,7 @@
   <modules>
     <module>bcrypt-addon</module>
     <module>keycloak-metrics</module>
-    <module>eventlistener</module>
+    <module>europeana-eventlistener</module>
     <module>delete-unverified-users</module>
     <module>custom-protocol-mapper</module>
   </modules>

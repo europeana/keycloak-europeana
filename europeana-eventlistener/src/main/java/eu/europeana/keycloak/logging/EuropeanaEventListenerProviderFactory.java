@@ -1,6 +1,5 @@
 package eu.europeana.keycloak.logging;
 
-import static eu.europeana.keycloak.user.UserRemovedConfig.JSONLOGPREFIXENVVAR;
 import static eu.europeana.keycloak.user.UserRemovedConfig.LOG_PREFIX;
 
 import eu.europeana.keycloak.user.UserRemovedMessageHandler;
@@ -21,22 +20,16 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     KeycloakSession session;
 
     UserRemovedMessageHandler userRemovedMessageHandler;
-    private String logPrefix;
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
         this.session = session;
-        return new EuropeanaEventListenerProvider(session, LOG, logPrefix);
+        return new EuropeanaEventListenerProvider(session, LOG, LOG_PREFIX);
     }
 
     @Override
     public void init(Config.Scope scope) {
-        if (null != System.getenv(JSONLOGPREFIXENVVAR)){
-            logPrefix = System.getenv(JSONLOGPREFIXENVVAR);
-        } else {
-            logPrefix = LOG_PREFIX;
-        }
-        this.userRemovedMessageHandler = new UserRemovedMessageHandler(LOG, logPrefix);
+        this.userRemovedMessageHandler = new UserRemovedMessageHandler(LOG, LOG_PREFIX);
     }
 
     @Override
