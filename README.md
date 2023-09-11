@@ -5,11 +5,10 @@ This project contains:
 - addon-jars, a placeholder directory for the compiled add-on jars, used in the build job and by the Dockerfile
 - source code of the add-on modules:
 - - bcrypt-addon: BCrypt custom encryption
-- - delete-unverified-users: work in progress
+- - custom-protocol-mapper: replaces deprecated scripted mapper option in the ADMIN UI
+- - delete-unverified-users: deletes unverified keycloak registrations
 - - eventlistener: catches user delete events, sends delete request to User Sets API and reports user deletion to Slack (backup) via email
 - - keycloak-metrics-spi: reports current number of users
-- currently-unused-scripts: TODO check if this can be deprecated
-- custom-scripts: contains logstash-formatting script (changes Keycloak config at startup)
 - dependencies: used by the BCrypt add-on
 - k8s: Kustomizer configuration used to create Kubernetes files for different deployments
 - Dockerfile, to build a docker image of Keycloak + add-ons that can be deployed in our Kubernetes cluster
