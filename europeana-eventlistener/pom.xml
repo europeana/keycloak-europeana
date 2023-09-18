@@ -6,12 +6,12 @@
     <artifactId>keycloak-europeana</artifactId>
     <version>2.0</version>
   </parent>
-  <artifactId>eventlistener</artifactId>
+  <artifactId>europeana-eventlistener</artifactId>
   <version>2.0</version>
 
   <name>Europeana Event Listener</name>
-  <description>Addon package to (1) format Keycloak events as JSON so that they can be parsed by Kibana,
-    (2) send a User Entity delete request to the Entity API, and (3) send email- and Slack messages following a user delete event</description>
+  <description>Addon package to tailor information in Keycloak event logs, send a User Entity delete request
+    to the Entity API, and send email- and Slack messages following a user delete event</description>
 
   <packaging>jar</packaging>
 

@@ -13,13 +13,10 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import static org.keycloak.utils.StringUtil.isNotBlank;
-//import java.time.Instant;
 
 /**
  * Created by luthien on 14/11/2022.
@@ -28,8 +25,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG        = Logger.getLogger(DeleteUnverifiedUserProvider.class);
     private static final String LOG_PREFIX = "KEYCLOAK_EVENT:";
-
-    private static final String SUCCESS_MSG = "User account deleted: email was not verified within 24 hours";
+    private static final String SUCCESS_MSG = " unverified user accounts were removed because their email addresses were not verified within ";
+    private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
 
     private static Map<String, String> EMAIL_NOT_VERIFIED;
 
@@ -66,29 +63,27 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         return this;
     }
 
+    /**
+     * Removes Users based on these criteria:
+     * - UserModel.EMAIL_VERIFIED = "false"
+     * - UserModel.INCLUDE_SERVICE_ACCOUNT = "false"
+     * - was created less than [minimumAgeInDays] day(s) ago
+     * Details about the number and IDs of deleted users are logged.
+     *
+     * @return String (completed message)
+     */
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
-//        return removeUnverifiedUsers(minimumAgeInDays);
-        int nrOfUsersToDelete = getUnverifiedUsers(minimumAgeInDays).size();
-
-        LOG.info(": " + toJson(null,  listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete));
-        return toJson(null, listUnverifiedUsers(minimumAgeInDays), nrOfUsersToDelete);
+        return removeUnverifiedUsers(minimumAgeInDays);
+//        return listUnverifiedUsers(minimumAgeInDays);
     }
 
     @Override
     public void close() {
     }
 
-
-    /**
-     * This method works by retrieving a Stream of UserModels from the UserProvider filtered on the property
-     * UserModel.EMAIL_VERIFIED = "false" and is filtered further by comparing the Created timestamp to the (Sysdate -
-     * SO_MANY_HOURS_AGO) Long value defined above in milliseconds
-     *
-     * @return String with result message (TBD)
-     */
     private String removeUnverifiedUsers(int minimumAgeInDays) {
         int             nrOfDeletedUsers           = 0;
         List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
@@ -98,13 +93,24 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved) {
                 nrOfDeletedUsers++;
-                LOG.info(": " + toJson(user, SUCCESS_MSG, nrOfDeletedUsers));
+                LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
             }
         }
-        return toJson(null, SUCCESS_MSG, nrOfDeletedUsers);
+        if (nrOfDeletedUsers > 0){
+            LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
+        } else {
+            LOG.info("No unverified users found.");
+        }
+        return "Unverified user delete job finished.";
     }
 
-
+    /**
+     * This method retrieves a List of UserModels filtered on the property (UserModel.EMAIL_VERIFIED: "false")
+     * and excludes all Service Accounts: (UserModel.INCLUDE_SERVICE_ACCOUNT, "false")
+     * and also excludes any account created less than [minimumAgeInDays] ago
+     *
+     * @return List of UserModels
+     */
     private List<UserModel> getUnverifiedUsers(int minimumAgeInDays) {
         return userProvider.searchForUserStream(
                                realm,
@@ -150,41 +156,46 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             lazyList.append(". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
                             "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
         }
+        LOG.info(lazyList.toString());
         return lazyList.toString();
     }
 
 
+    private String logMessage(UserModel user, String message, int nrOfDeletedUsers) {
+        StringBuilder msg = new StringBuilder();
 
-    private String toJson(UserModel user, String msg, int nrOfDeletedUsers) {
-        JsonObjectBuilder obj = Json.createObjectBuilder();
-
-        obj.add("type", "UNVERIFIED_USER_DELETE");
+        msg.append("type: UNVERIFIED_USER_DELETE");
 
         if (realm != null) {
-            obj.add("realmName", realm.getName());
+            msg.append(", realm: ");
+            msg.append(realm.getName());
         }
 
         if (user != null) {
             if (isNotBlank(user.getId())) {
-                obj.add("userId", user.getId());
+                msg.append(", userId: ");
+                msg.append(user.getId());
             }
             if (isNotBlank(user.getEmail())) {
-                obj.add("userEmail", user.getEmail());
+                msg.append(", userEmail: ");
+                msg.append(user.getEmail());
             }
-//            if (isNotBlank(user.getUsername())) {
-            obj.add("userName", user.getUsername());
-//            }
+            msg.append(", userName: ");
+            msg.append(user.getUsername());
         }
 
-        if (msg != null) {
-            obj.add("message", msg);
+        if (message != null) {
+            msg.append(", message: ");
+            msg.append(msg);
         }
 
         if (nrOfDeletedUsers > 0) {
-            obj.add("Number of users deleted", nrOfDeletedUsers);
+            msg.append(". Number of users deleted: ");
+            msg.append(nrOfDeletedUsers);
         }
 
-        return LOG_PREFIX + obj.build().toString();
+        msg.append(" ");
+        return LOG_PREFIX + msg;
     }
 
 }
