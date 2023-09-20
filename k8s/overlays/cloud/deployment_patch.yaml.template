@@ -25,4 +25,4 @@ spec:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "${ELASTIC_APM_SERVER}"
             - name: JAVA_OPTS
-              value: "-javaagent:/usr/local/otel-agent.jar"
+              value: "-javaagent:/usr/local/opentelemetry-javaagent.jar"

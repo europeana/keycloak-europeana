@@ -35,7 +35,7 @@ COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 ENV KC_HEALTH_ENABLED = ${apm_enabled}
 ENV KC_METRICS_ENABLED = ${apm_enabled}
 ENV OTEL_VERSION v1.30.0
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/$OTEL_VERSION/opentelemetry-javaagent.jar /usr/local/otel-agent.jar
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/$OTEL_VERSION/opentelemetry-javaagent.jar /usr/local/opentelemetry-javaagent.jar
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
