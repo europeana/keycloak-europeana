@@ -20,3 +20,9 @@ spec:
           env:
             - name: KC_CACHE_STACK
               value: "kubernetes"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=${APP_NAME},deployment.environment=${K8S_NAMESPACE}"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "${ELASTIC_APM_SERVER}"
+            - name: JAVA_OPTS
+              value: "-javaagent:/usr/local/otel-agent.jar"
