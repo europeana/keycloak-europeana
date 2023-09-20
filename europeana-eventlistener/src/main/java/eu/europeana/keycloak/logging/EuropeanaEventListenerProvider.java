@@ -79,7 +79,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
                 eventLog.append(", ");
             }
             eventLog.append("ipAddress: ");
-            eventLog.append(event.getUserId());
+            eventLog.append(event.getIpAddress());
             isNotFirst = true;
         }
 

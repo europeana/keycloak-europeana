@@ -5,6 +5,7 @@ metadata:
 spec:
   schedule: "${KEYCLOAKUSER_CLEANUP_CRON_SCHEDULE}"
   suspend: ${SUSPEND_KEYCLOAKUSER_CLEANUP}
+  startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
