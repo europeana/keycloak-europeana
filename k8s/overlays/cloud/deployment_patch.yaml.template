@@ -17,12 +17,13 @@ spec:
             - --log="console"
             - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
+            - -Dotel.resource.attributes=service.name=${APP_NAME},deployment.environment=${K8S_NAMESPACE}
+            - -Dotel.exporter.otlp.endpoint=${ELASTIC_APM_SERVER}
+            - -javaagent:/usr/local/opentelemetry-javaagent.jar
           env:
             - name: KC_CACHE_STACK
               value: "kubernetes"
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.name=${APP_NAME},deployment.environment=${K8S_NAMESPACE}"
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "${ELASTIC_APM_SERVER}"
-            - name: JAVA_OPTS
-              value: "-javaagent:/usr/local/opentelemetry-javaagent.jar"
+            - name: KC_HEALTH_ENABLED
+              value: ${apm_enabled}
+            - name: KC_METRICS_ENABLED
+              value: ${apm_enabled}

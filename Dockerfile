@@ -1,5 +1,5 @@
 ARG theme_version=0.9.1
-ARG apm_enabled=true
+ARG apm_enabled=false
 
 # 1 get theme from GitHub
 FROM europeana/keycloak-theme:${theme_version} AS theme
@@ -32,8 +32,7 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 # 9 add opentelemetry exporter (compatible with Elastic APM). See deployment_patch.yaml.template for remaining configuration.
-ENV KC_HEALTH_ENABLED = ${apm_enabled}
-ENV KC_METRICS_ENABLED = ${apm_enabled}
+
 ENV OTEL_VERSION v1.30.0
 ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/$OTEL_VERSION/opentelemetry-javaagent.jar /usr/local/opentelemetry-javaagent.jar
 
