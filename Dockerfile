@@ -31,9 +31,7 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 # 9 add opentelemetry exporter (compatible with Elastic APM). See deployment_patch.yaml.template for remaining configuration.
-# TODO make this configurable via Jenkins
-ENV OTEL_VERSION v1.30.0
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/$OTEL_VERSION/opentelemetry-javaagent.jar /opt/keycloak/lib/lib/main/opentelemetry-javaagent.jar
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar ./lib/lib/main/opentelemetry-javaagent.jar
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
