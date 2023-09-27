@@ -62,6 +62,12 @@ spec:
               value: "${DELETE_MGR_PW}"
             - name: SET_API_URL
               value: "${SET_API_URL}"
+            - name: KC_CACHE_STACK
+              value: "kubernetes"
+            - name: KC_HEALTH_ENABLED
+              value: ${apm_enabled}
+            - name: KC_METRICS_ENABLED
+              value: ${apm_enabled}
           ports:
             - containerPort: 8080
           livenessProbe:
