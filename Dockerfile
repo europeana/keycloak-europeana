@@ -31,7 +31,7 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 # 9 add opentelemetry exporter (compatible with Elastic APM). See deployment_patch.yaml.template for remaining configuration.
-ADD --chown=keycloak:keycloak https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar ./lib/lib/main/opentelemetry-javaagent.jar
+ADD --chown=1000:0 --chmod=444 https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar ./lib/lib/main/opentelemetry-javaagent.jar
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
