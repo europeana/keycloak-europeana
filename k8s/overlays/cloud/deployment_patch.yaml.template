@@ -19,7 +19,7 @@ spec:
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: JAVA_OPTS_APPEND
-              value: -javaagent:/usr/local/opentelemetry-javaagent.jar
+              value: -javaagent:/opt/keycloak/lib/lib/main/opentelemetry-javaagent.jar
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.name=${APP_NAME},deployment.environment=${K8S_NAMESPACE}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
