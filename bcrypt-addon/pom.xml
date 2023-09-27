@@ -111,6 +111,15 @@
                             <outputDirectory>../dependencies</outputDirectory>
                             <destFileName>bytes.jar</destFileName>
                         </artifactItem>
+                        <artifactItem>
+                            <groupId>io.opentelemetry.javaagent</groupId>
+                            <artifactId>opentelemetry-javaagent</artifactId>
+                            <version>${otel.javaagent.version}</version>
+                            <type>jar</type>
+                            <overWrite>true</overWrite>
+                            <outputDirectory>../ext/</outputDirectory>
+                            <destFileName>opentelemetry-javaagent.jar</destFileName>
+                        </artifactItem>
                     </artifactItems>
                 </configuration>
             </plugin>
