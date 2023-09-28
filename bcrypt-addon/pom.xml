@@ -117,7 +117,7 @@
                             <version>${otel.javaagent.version}</version>
                             <type>jar</type>
                             <overWrite>true</overWrite>
-                            <outputDirectory>../ext/</outputDirectory>
+                            <outputDirectory>../dependencies</outputDirectory>
                             <destFileName>opentelemetry-javaagent.jar</destFileName>
                         </artifactItem>
                     </artifactItems>
