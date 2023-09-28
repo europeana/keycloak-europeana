@@ -19,6 +19,7 @@
 
 ### Specific ###
 **/data/
+/dependencies/*.jar
 /addon-jars/*.jar
 /k8s/overlays/cloud/hpa.yaml
 /k8s/overlays/cloud/ingress.yaml
