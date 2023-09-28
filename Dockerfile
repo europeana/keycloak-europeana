@@ -14,29 +14,29 @@ COPY addon-jars ./providers/
 # 4 copy addon dependencies to Quarkus providers dir
 COPY dependencies ./providers/
 
-# 4 copy otel APM agent to /lib/quarkus dir
-COPY ext ./lib/quarkus/
+# 5 copy otel APM agent to Quarkus providers dir
+COPY ext ./providers/
 
-# 5 copy theme
+# 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-# 6 create intermediary build
+# 7 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
-# 7 get another copy of Keycloak image and apply changes there again
+# 8 get another copy of Keycloak image and apply changes there again
 # see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
 FROM quay.io/keycloak/keycloak:20.0.5
 WORKDIR /opt/keycloak
 
-# 8 copy add-ons, dependencies, optimised libs and theme again to new copy
+# 9 copy add-ons, dependencies, optimised libs and theme again to new copy
 COPY --from=builder /opt/keycloak/providers/ ./providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
-# 9 add opentelemetry exporter (compatible with Elastic APM). See deployment_patch.yaml.template for remaining configuration.
+# 10 add opentelemetry exporter (compatible with Elastic APM). See deployment_patch.yaml.template for remaining configuration.
 # ADD --chown=1000:0 --chmod=444 https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar ./lib/lib/main/opentelemetry-javaagent.jar
 
-# 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
+# 11 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
 # CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
 
