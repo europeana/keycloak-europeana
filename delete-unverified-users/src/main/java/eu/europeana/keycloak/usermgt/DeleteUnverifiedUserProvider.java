@@ -86,6 +86,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private String removeUnverifiedUsers(int minimumAgeInDays) {
         int             nrOfDeletedUsers           = 0;
+        int batchLength                            = 0;
         List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
@@ -93,7 +94,12 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved) {
                 nrOfDeletedUsers++;
+                batchLength++;
                 LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
+            }
+            if (batchLength > 25){
+                session.getTransactionManager().commit();
+                batchLength = 0;
             }
         }
         if (nrOfDeletedUsers > 0){
