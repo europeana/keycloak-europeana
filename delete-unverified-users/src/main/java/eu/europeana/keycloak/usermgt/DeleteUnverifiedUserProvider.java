@@ -82,7 +82,6 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     @Override
     public void close() {
-        session.close();
     }
 
     private String removeUnverifiedUsers(int minimumAgeInDays) {
@@ -90,18 +89,12 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
-
-            if (!session.getTransactionManager().isActive()) {
-                session.getTransactionManager().begin();
-            }
-
             userRemoved = false;
             userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved) {
                 nrOfDeletedUsers++;
                 LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
             }
-            session.getTransactionManager().commit();
         }
         if (nrOfDeletedUsers > 0){
             LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
