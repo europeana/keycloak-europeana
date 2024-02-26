@@ -20,6 +20,7 @@
     <module>europeana-eventlistener</module>
     <module>delete-unverified-users</module>
     <module>custom-protocol-mapper</module>
+    <module>sync-zoho-user</module>
   </modules>
 
   <name>Keycloak for Europeana</name>
