@@ -34,6 +34,7 @@ public class ZohoConnect {
 
 
 	public String ConnectToZoho() {
+		LOG.info("Connecting to ZOHO");
 		try {
 			Environment environment = EUDataCenter.PRODUCTION;
 			TokenStore  tokenStore  = new ZohoInMemoryTokenStore();
@@ -46,18 +47,22 @@ public class ZohoConnect {
 				.redirectURL(config.getZohoRedirectUrl())
 				.build();
 
+			LOG.info("Token built");
+
 			new Initializer.Builder()
 				.environment(environment)
 				.token(token)
 				.store(tokenStore)
 				.initialize();
 
+			LOG.info("Initializer built. Now calling Zoho:");
+
 			// example usage, taken from Zoho's samples
 			String moduleAPIName = "Leads";
 			return getRecords(moduleAPIName);
 		}
 		catch (Exception e) {
-			return e.getMessage();
+			return e.toString();
 		}
 	}
 

@@ -59,18 +59,17 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * Removes Users based on these criteria:
-     * - UserModel.EMAIL_VERIFIED = "false"
-     * - UserModel.INCLUDE_SERVICE_ACCOUNT = "false"
-     * - was created less than [minimumAgeInDays] day(s) ago
-     * Details about the number and IDs of deleted users are logged.
+     * Retrieves users from Zoho
      *
      * @return String (completed message)
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync() {
-        return zohoConnect.ConnectToZoho();
+        LOG.info("ZohoSynx called.");
+        String result = zohoConnect.ConnectToZoho();
+        LOG.info(result);
+        return result;
     }
 
     @Override

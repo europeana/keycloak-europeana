@@ -17,6 +17,7 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.jboss.logging.Logger;
 
 
 /**
@@ -25,8 +26,13 @@ import java.util.Map;
 public class GetRecords {
 
 
+    private static final Logger LOG        = Logger.getLogger(GetRecords.class);
+    private static final String LOG_PREFIX = "ZOHO_GET_RECORDS:";
+
+
     public static String getRecords(String moduleAPIName) throws Exception {
 
+        LOG.info("started GetRecords");
         StringBuffer     sb               = new StringBuffer("Bericht van Zoho: ");
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
 
@@ -37,6 +43,9 @@ public class GetRecords {
         headerInstance.add(GetRecordsHeader.IF_MODIFIED_SINCE, ifmodifiedsince);
         //Call getRecords method that takes moduleAPIName, paramInstance and headerInstance as parameter.
         APIResponse<ResponseHandler> response = recordOperations.getRecords(paramInstance, headerInstance);
+
+
+        LOG.info("Response from Zoho:" + response.getStatusCode());
 
         if (response != null) {
             //Get the status code from response
