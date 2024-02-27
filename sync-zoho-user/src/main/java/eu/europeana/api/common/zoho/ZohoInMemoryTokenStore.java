@@ -16,8 +16,8 @@ public class ZohoInMemoryTokenStore implements TokenStore {
 
     @Override
     public Token findToken(Token token) {
-        if (token instanceof OAuthToken oAuthToken) {
-            return tokenStore.get(oAuthToken.getUserSignature().getName());
+        if(token instanceof OAuthToken){
+            return tokenStore.get(((OAuthToken)token).getUserSignature().getName());
         }
         return null;
     }
@@ -29,8 +29,8 @@ public class ZohoInMemoryTokenStore implements TokenStore {
 
     @Override
     public void saveToken(Token token) {
-        if (token instanceof OAuthToken oAuthToken) {
-            tokenStore.put(oAuthToken.getUserSignature().getName(), oAuthToken);
+        if(token instanceof OAuthToken) {
+            tokenStore.put(((OAuthToken)token).getUserSignature().getName(), token);
         }
     }
 
