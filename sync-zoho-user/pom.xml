@@ -113,6 +113,33 @@
       <plugin>
         <artifactId>maven-deploy-plugin</artifactId>
       </plugin>
+
+
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>com.zoho.crm</groupId>
+              <artifactId>zohocrm-java-sdk-6-0</artifactId>
+              <version>${zohocrmsdk.version}</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>../dependencies</outputDirectory>
+              <destFileName>zohocrm-java-sdk-6-0-1.0.0.jar</destFileName>
+            </artifactItem>
+          </artifactItems>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
