@@ -12,7 +12,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
  */
 public class SyncZohoUserProviderFactory implements RealmResourceProviderFactory {
 
-    public static final String ID = "delete";
+    public static final String ID = "zohosync";
 
     @Override
     public String getId() {

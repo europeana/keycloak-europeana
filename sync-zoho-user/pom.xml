@@ -17,8 +17,16 @@
     <javax.version>1.1.4</javax.version>
     <jboss.logging.version>3.4.1.Final</jboss.logging.version>
     <apache.httpclient.version>4.5.13</apache.httpclient.version>
-    <api.commons.version>0.3.23-SNAPSHOT</api.commons.version>
+<!--    <api.commons.version>0.3.23-SNAPSHOT</api.commons.version>-->
+    <zohocrmsdk.version>1.0.0</zohocrmsdk.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>zohocrm-java-sdk-6-0</id>
+      <url>https://maven.zohodl.com</url>
+    </repository>
+  </repositories>
 
   <dependencies>
 
@@ -70,11 +78,20 @@
       <scope>provided</scope>
     </dependency>
 
+
+    <!-- https://artifactory.eanadev.org/artifactory/webapp/#/artifacts/browse/tree/General/ext-release-local/com/zoho/crm/zohocrmsdk-6-0/1.0.0/ -->
     <dependency>
-      <groupId>eu.europeana.api.commons</groupId>
-      <artifactId>commons-api-services</artifactId>
-      <version>${api.commons.version}</version>
+      <groupId>com.zoho.crm</groupId>
+      <artifactId>zohocrm-java-sdk-6-0</artifactId>
+      <version>${zohocrmsdk.version}</version>
     </dependency>
+
+
+<!--    <dependency>-->
+<!--      <groupId>eu.europeana.api.commons</groupId>-->
+<!--      <artifactId>commons-api-services</artifactId>-->
+<!--      <version>${api.commons.version}</version>-->
+<!--    </dependency>-->
 
   </dependencies>
 
@@ -95,6 +112,14 @@
       </plugin>
       <plugin>
         <artifactId>maven-deploy-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>16</source>
+          <target>16</target>
+        </configuration>
       </plugin>
     </plugins>
   </build>
