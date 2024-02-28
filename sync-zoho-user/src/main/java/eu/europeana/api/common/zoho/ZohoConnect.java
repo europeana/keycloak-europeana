@@ -1,19 +1,23 @@
 package eu.europeana.api.common.zoho;
 
-import static eu.europeana.api.common.zoho.GetRecords.getRecords;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.ZOHO_CLIENT_ID;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.ZOHO_CLIENT_SECRET;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.ZOHO_REDIRECT_URL;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.ZOHO_REFRESH_TOKEN;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.ZOHO_USER_NAME;
 
 import com.zoho.api.authenticator.OAuthToken;
 import com.zoho.api.authenticator.Token;
-import com.zoho.api.authenticator.store.TokenStore;
+import com.zoho.api.logger.Logger.Levels;
 import com.zoho.crm.api.Initializer;
+import com.zoho.crm.api.SDKConfig;
+import com.zoho.crm.api.UserSignature;
 import com.zoho.crm.api.dc.DataCenter.Environment;
 import com.zoho.crm.api.dc.EUDataCenter;
-
 import org.jboss.logging.Logger;
-import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.*;
 
 /**
- * Main application
+ * Class with connection to Zoho code
  *
  * @author Luthien Dulk
  * Created on 14 feb 2024
@@ -23,19 +27,23 @@ public class ZohoConnect {
 	private static final Logger LOG        = Logger.getLogger(ZohoConnect.class);
 	private static final String LOG_PREFIX = "ZOHO_CONNECT:";
 
-	// not clear if this is actually used. Delete if not.
-	private final ZohoInMemoryTokenStore  tokenStore;
+	private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
+	private static ZohoInMemoryTokenStore tokenStore;
 
-	public ZohoConnect(){
-		this.tokenStore  = new ZohoInMemoryTokenStore();
-	}
+	public ZohoConnect(){}
 
-
-	public String ConnectToZoho() {
-		LOG.info("Connecting to ZOHO");
+	public boolean initialise() throws RuntimeException {
 		try {
-			Environment environment = EUDataCenter.PRODUCTION;
-			TokenStore  tokenStore  = new ZohoInMemoryTokenStore();
+
+			com.zoho.api.logger.Logger zlogger = new com.zoho.api.logger.Logger.Builder()
+				.level(Levels.INFO)
+				.filePath("//opt//keycloak//java_sdk_log.log")
+				.build();
+
+			UserSignature userSignature = new UserSignature(ZOHO_USER_NAME);
+			LOG.info("Connecting to ZOHO");
+
+//			tokenStore  = new ZohoInMemoryTokenStore();
 
 			LOG.info("ZOHO client ID: " + ZOHO_CLIENT_ID);
 			LOG.info("ZOHO client secret: " + ZOHO_CLIENT_SECRET);
@@ -43,8 +51,8 @@ public class ZohoConnect {
 			LOG.info("ZOHO redirect URL: " + ZOHO_REDIRECT_URL);
 
 
-			Token token = new OAuthToken
-				.Builder()
+			Token token = new OAuthToken.Builder()
+				.userSignature(userSignature)
 				.clientID(ZOHO_CLIENT_ID)
 				.clientSecret(ZOHO_CLIENT_SECRET)
 				.refreshToken(ZOHO_REFRESH_TOKEN)
@@ -53,22 +61,47 @@ public class ZohoConnect {
 
 			LOG.info("Token built");
 
+			SDKConfig sdkConfig = new SDKConfig.Builder()
+				.autoRefreshFields(false)
+				.pickListValidation(true)
+				.build();
+
+			LOG.info("Sdk configd");
+
 			new Initializer.Builder()
-				.environment(environment)
 				.token(token)
 				.store(tokenStore)
 				.initialize();
 
 			LOG.info("Initializer built. Now calling Zoho:");
 
-			// example usage, taken from Zoho's samples
-			String moduleAPIName = "Leads";
-			return getRecords(moduleAPIName);
-		}
-		catch (Exception e) {
+
+			new Initializer.Builder()
+				.environment(ENVIRONMENT)
+				.token(token)
+				.store(tokenStore)
+				.SDKConfig(sdkConfig)
+				.logger(zlogger)
+				.initialize();
+
+			return true;
+
+		} catch (Exception e) {
 			e.printStackTrace();
-            return "Message: " + e.getMessage() + "; cause: " + e.getCause();
+			return false;
 		}
 	}
 
+	public boolean getOrCreateAccessToZoho() {
+		if (tokenStore != null) {
+			Token tokenById = tokenStore.findTokenById(ZOHO_USER_NAME);
+			if (tokenById != null && tokenById instanceof OAuthToken) {
+				LOG.info("Token Expires in : -" + ((OAuthToken) tokenById).getExpiresIn());
+			}
+
+		} else {
+			tokenStore = new ZohoInMemoryTokenStore();
+		}
+		return this.initialise();
+	}
 }

@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.usermgt;
 
+import static eu.europeana.api.common.zoho.GetRecords.getRecords;
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
 import java.util.HashMap;
@@ -66,10 +67,18 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync() {
-        LOG.info("ZohoSynx called.");
-        String result = zohoConnect.ConnectToZoho();
-        LOG.info(result);
-        return result;
+        LOG.info("ZohoSync called.");
+        if (zohoConnect.getOrCreateAccessToZoho()){
+            // example usage, taken from Zoho's samples
+            try {
+                return getRecords("Leads");
+            } catch (Exception e) {
+                e.printStackTrace();
+                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                return "Grutjes. ";
+            }
+        }
+        return "Ja, zeg dat wel. Grote grutt'n nog an toe!";
     }
 
     @Override
