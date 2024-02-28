@@ -39,6 +39,12 @@ public class ZohoConnect {
 			Environment environment = EUDataCenter.PRODUCTION;
 			TokenStore  tokenStore  = new ZohoInMemoryTokenStore();
 
+			LOG.info("ZOHO client ID: " + config.getZohoClientId());
+			LOG.info("ZOHO client secret: " + config.getZohoClientSecret());
+			LOG.info("ZOHO refresh token: " + config.getZohoRefreshToken());
+			LOG.info("ZOHO redirect URL: " + config.getZohoRedirectUrl());
+
+
 			Token token = new OAuthToken
 				.Builder()
 				.clientID(config.getZohoClientId())
