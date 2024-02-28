@@ -66,7 +66,8 @@ public class ZohoConnect {
 			return getRecords(moduleAPIName);
 		}
 		catch (Exception e) {
-			return e.toString();
+			e.printStackTrace();
+            return "Message: " + e.getMessage() + "; cause: " + e.getCause();
 		}
 	}
 
