@@ -66,14 +66,7 @@ public class ZohoConnect {
 				.pickListValidation(true)
 				.build();
 
-			LOG.info("Sdk configd");
-
-			new Initializer.Builder()
-				.token(token)
-				.store(tokenStore)
-				.initialize();
-
-			LOG.info("Initializer built. Now calling Zoho:");
+			LOG.info("Sdk configd, now proceeding with Building the builder");
 
 
 			new Initializer.Builder()
