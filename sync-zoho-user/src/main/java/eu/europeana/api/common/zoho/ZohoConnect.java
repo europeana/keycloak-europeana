@@ -10,6 +10,7 @@ import com.zoho.crm.api.dc.DataCenter.Environment;
 import com.zoho.crm.api.dc.EUDataCenter;
 
 import org.jboss.logging.Logger;
+import static eu.europeana.api.common.zoho.ZohoAccessConfiguration.*;
 
 /**
  * Main application
@@ -22,13 +23,10 @@ public class ZohoConnect {
 	private static final Logger LOG        = Logger.getLogger(ZohoConnect.class);
 	private static final String LOG_PREFIX = "ZOHO_CONNECT:";
 
-	private final ZohoAccessConfiguration config;
-
-	// not clear if this is actually used. Maybe delete if not.
+	// not clear if this is actually used. Delete if not.
 	private final ZohoInMemoryTokenStore  tokenStore;
 
 	public ZohoConnect(){
-		this.config = new ZohoAccessConfiguration();
 		this.tokenStore  = new ZohoInMemoryTokenStore();
 	}
 
@@ -39,18 +37,18 @@ public class ZohoConnect {
 			Environment environment = EUDataCenter.PRODUCTION;
 			TokenStore  tokenStore  = new ZohoInMemoryTokenStore();
 
-			LOG.info("ZOHO client ID: " + config.getZohoClientId());
-			LOG.info("ZOHO client secret: " + config.getZohoClientSecret());
-			LOG.info("ZOHO refresh token: " + config.getZohoRefreshToken());
-			LOG.info("ZOHO redirect URL: " + config.getZohoRedirectUrl());
+			LOG.info("ZOHO client ID: " + ZOHO_CLIENT_ID);
+			LOG.info("ZOHO client secret: " + ZOHO_CLIENT_SECRET);
+			LOG.info("ZOHO refresh token: " + ZOHO_REFRESH_TOKEN);
+			LOG.info("ZOHO redirect URL: " + ZOHO_REDIRECT_URL);
 
 
 			Token token = new OAuthToken
 				.Builder()
-				.clientID(config.getZohoClientId())
-				.clientSecret(config.getZohoClientSecret())
-				.refreshToken(config.getZohoRefreshToken())
-				.redirectURL(config.getZohoRedirectUrl())
+				.clientID(ZOHO_CLIENT_ID)
+				.clientSecret(ZOHO_CLIENT_SECRET)
+				.refreshToken(ZOHO_REFRESH_TOKEN)
+				.redirectURL(ZOHO_REDIRECT_URL)
 				.build();
 
 			LOG.info("Token built");

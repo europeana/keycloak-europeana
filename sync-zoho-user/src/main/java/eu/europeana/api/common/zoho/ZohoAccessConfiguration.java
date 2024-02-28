@@ -9,6 +9,18 @@ public class ZohoAccessConfiguration {
 
   // the configuration is set in the build job (Jenkins), eg echo "ZOHO_USER_NAME=Pietje_Puk" >>.env
 
+
+
+  static final String ZOHO_USER_NAME = System.getenv("ZOHO_USER_NAME");
+  static final String ZOHO_CLIENT_ID = System.getenv("ZOHO_CLIENT_ID");
+  static final String ZOHO_CLIENT_SECRET = System.getenv("ZOHO_CLIENT_SECRET");
+  static final String ZOHO_REFRESH_TOKEN = System.getenv("ZOHO_REFRESH_TOKEN");
+  static final String ZOHO_REDIRECT_URL = System.getenv("ZOHO_REDIRECT_URL");
+  static final String ZOHO_EU_GRANT_CODE = System.getenv("ZOHO_EU_GRANT_CODE");
+
+
+
+/*
   private String zohoUserName;
   private String zohoClientId;
   private String zohoClientSecret;
@@ -53,5 +65,7 @@ public class ZohoAccessConfiguration {
   public String getZohoRedirectUrl() {
     return zohoRedirectUrl;
   }
+
+ */
 
 }
