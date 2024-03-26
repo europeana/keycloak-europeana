@@ -135,7 +135,7 @@ public class GetRecords {
                 java.lang.reflect.Field[] fields = clas.getDeclaredFields();
                 for (java.lang.reflect.Field field : fields) {
                     //Get each value
-                    sb.append("\n").append(field.getName()).append(":").append(field.get(responseObject));
+                    sb.append("\n").append(field.getName()).append(": ").append(field.toGenericString()).append("\n");
                 }
             }
         }
