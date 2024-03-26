@@ -1,5 +1,7 @@
 resources:
   - deployment.yaml
 
-commonLabels:
-  app: keycloak
+labels:
+  - includeSelectors: true
+    pairs:
+      app: keycloak
