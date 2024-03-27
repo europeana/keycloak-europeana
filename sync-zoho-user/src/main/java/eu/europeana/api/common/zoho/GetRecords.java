@@ -49,9 +49,9 @@ public class GetRecords {
 
         if (response != null) {
             //Get the status code from response
-            sb.append("\n").append("Status Code: ").append(response.getStatusCode());
+            sb.append("Status Code: ").append(response.getStatusCode()).append("\n");
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
-                sb.append("\n").append(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
+                sb.append(response.getStatusCode() == 204 ? "No Content" : "Not Modified").append("\n");
                 return sb.toString();
             }
 
@@ -66,7 +66,7 @@ public class GetRecords {
                     List<com.zoho.crm.api.record.Record> records = responseWrapper.getData();
                     for (com.zoho.crm.api.record.Record record : records) {
                         //Get the ID of each Record
-                        sb.append("\n").append("Record ID: ").append(record.getId());
+                        sb.append("Record ID: ").append(record.getId()).append("\n");
 
 
                         //Get the ModifiedTime of each Record
@@ -77,14 +77,13 @@ public class GetRecords {
                         if (tags != null) {
                             for (Tag tag : tags) {
                                 //Get the Name of each Tag
-                                sb.append("\n").append("Record Tag Name: ").append(tag.getName());
+                                sb.append("Record Tag Name: ").append(tag.getName()).append("\n");
                                 //Get the Id of each Tag
-                                sb.append("\n").append("Record Tag ID: ").append(tag.getId());
+                                sb.append("Record Tag ID: ").append(tag.getId()).append("\n");
                             }
                         }
                         //To get particular field value
-                        sb.append("\n").append("Record Field Value: ").append(
-                            record.getKeyValue("Last_Name"));
+                        sb.append("Record Field Value: ").append(record.getKeyValue("Last_Name")).append("\n");
                     }
                     //Get the Object obtained Info instance
                     Info info = responseWrapper.getInfo();
@@ -92,20 +91,19 @@ public class GetRecords {
                     if (info != null) {
                         if (info.getPerPage() != null) {
                             //Get the PerPage of the Info
-                            sb.append("\n").append("Record Info PerPage: ").append(info.getPerPage().toString());
+                            sb.append("Record Info PerPage: ").append(info.getPerPage().toString()).append("\n");
                         }
                         if (info.getCount() != null) {
                             //Get the Count of the Info
-                            sb.append("\n").append("Record Info Count: ").append(info.getCount().toString());
+                            sb.append("Record Info Count: ").append(info.getCount().toString()).append("\n");
                         }
                         if (info.getPage() != null) {
                             //Get the Page of the Info
-                            sb.append("\n").append("Record Info Page: ").append(info.getPage().toString());
+                            sb.append("Record Info Page: ").append(info.getPage().toString()).append("\n");
                         }
                         if (info.getMoreRecords() != null) {
                             //Get the MoreRecords of the Info
-                            sb.append("\n").append("Record Info MoreRecords: ").append(
-                                info.getMoreRecords().toString());
+                            sb.append("Record Info MoreRecords: ").append(info.getMoreRecords().toString()).append("\n");;
                         }
                     }
                 }
@@ -114,17 +112,17 @@ public class GetRecords {
                     //Get the received APIException instance
                     APIException exception = (APIException) responseHandler;
                     //Get the Status
-                    sb.append("Status: ").append(exception.getStatus().getValue());
+                    sb.append("Status: ").append(exception.getStatus().getValue()).append("\n");
                     //Get the Code
-                    sb.append("Code: ").append(exception.getCode().getValue());
-                    sb.append("\nDetails: \n");
+                    sb.append("Code: ").append(exception.getCode().getValue()).append("\n");
+                    sb.append("Detail lines: \n");
                     //Get the details map
                     for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
                         //Get each value in the map
-                        sb.append("\n").append(entry.getKey()).append("Message: ").append(exception.getMessage().getValue());
+                        sb.append("Key: ").append(entry.getKey()).append(", message: ").append(exception.getMessage().getValue()).append("\n");
                     }
                     //Get the Message
-                    sb.append("\n").append("Message: ").append(exception.getMessage().getValue());
+                    sb.append("Message: ").append(exception.getMessage().getValue()).append("\n");;
                 }
             } else {//If response is not as expected
                 //Get model object from response
