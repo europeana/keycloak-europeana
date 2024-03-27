@@ -88,10 +88,17 @@ public class GetRecords {
                                 sb.append("Tag: ").append(tag.getName()).append("; ID: ").append(tag.getId()).append("\n");
                             }
                         }
-                        //To get particular field value
-                        sb.append("Name: ").append(record.getKeyValue("Contact Name")).append(", ");
-                        sb.append("institute: ").append(record.getKeyValue("Institution Name")).append(", ");
-                        sb.append("email: ").append(record.getKeyValue("Email")).append("\n");
+                        // To get all field values
+                        for (Map.Entry<String, Object> entry : record.getKeyValues().entrySet()){
+                            String keyName = entry.getKey();
+                            Object value = entry.getValue();
+                            sb.append(keyName).append(": ").append(value).append("\n");
+
+
+                        }
+//                        sb.append("Name: ").append(record.getKeyValue("First_name")).append(" ").append(record.getKeyValue("Last_name")).append(", ");
+//                        sb.append("institute: ").append(record.getKeyValue("Institution Name")).append(", ");
+//                        sb.append("email: ").append(record.getKeyValue("Email")).append("\n");
                     }
                     //Get the Object obtained Info instance
                     Info info = responseWrapper.getInfo();
