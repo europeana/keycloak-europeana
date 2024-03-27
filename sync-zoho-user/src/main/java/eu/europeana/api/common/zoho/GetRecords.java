@@ -38,7 +38,7 @@ public class GetRecords {
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
 
         ParameterMap paramInstance = new ParameterMap();
-        List<String> fieldNames = new ArrayList<>(Arrays.asList("Contact Name", "Institution Name", "Email", "Communities", "Contact_Participation"));
+        List<String> fieldNames = new ArrayList<>(Arrays.asList("Contact_Name", "Institution_Name", "Email", "Communities", "Contact_Participation"));
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, "both");
         paramInstance.add(GetRecordsParam.CONVERTED, "both");
@@ -89,8 +89,8 @@ public class GetRecords {
                             }
                         }
                         //To get particular field value
-                        sb.append("Name: ").append(record.getKeyValue("Contact_Name")).append(", ");
-                        sb.append("institute: ").append(record.getKeyValue("Institution_Name")).append(", ");
+                        sb.append("Name: ").append(record.getKeyValue("Contact Name")).append(", ");
+                        sb.append("institute: ").append(record.getKeyValue("Institution Name")).append(", ");
                         sb.append("email: ").append(record.getKeyValue("Email")).append("\n");
                     }
                     //Get the Object obtained Info instance
