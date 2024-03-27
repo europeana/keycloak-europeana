@@ -38,9 +38,16 @@ public class GetRecords {
 
         ParameterMap paramInstance = new ParameterMap();
         paramInstance.add(GetRecordsParam.APPROVED, "both");
+        paramInstance.add(GetRecordsParam.CONVERTED, "both");
+        paramInstance.add(GetRecordsParam.SORT_BY, "Email");
+        paramInstance.add(GetRecordsParam.SORT_ORDER, "desc");
+        paramInstance.add(GetRecordsParam.PAGE, 1);
+        paramInstance.add(GetRecordsParam.PER_PAGE, 1);
+        paramInstance.add(GetRecordsParam.INCLUDE_CHILD, "true");
         HeaderMap      headerInstance  = new HeaderMap();
         OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
         headerInstance.add(GetRecordsHeader.IF_MODIFIED_SINCE, ifmodifiedsince);
+        headerInstance.add(GetRecordsHeader.X_EXTERNAL, "Leads.External");
         //Call getRecords method that takes moduleAPIName, paramInstance and headerInstance as parameter.
         APIResponse<ResponseHandler> response = recordOperations.getRecords(paramInstance, headerInstance);
 
