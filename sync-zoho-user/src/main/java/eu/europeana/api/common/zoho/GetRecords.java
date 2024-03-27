@@ -14,6 +14,7 @@ import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Model;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +38,11 @@ public class GetRecords {
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
 
         ParameterMap paramInstance = new ParameterMap();
+        List<String> fieldNames = new ArrayList<>(Arrays.asList("First_Name", "Last_Name", "Company", "Email"));
+        paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, "both");
         paramInstance.add(GetRecordsParam.CONVERTED, "both");
-        paramInstance.add(GetRecordsParam.SORT_BY, "Email");
+        paramInstance.add(GetRecordsParam.SORT_BY, "First_Name");
         paramInstance.add(GetRecordsParam.SORT_ORDER, "desc");
         paramInstance.add(GetRecordsParam.PAGE, 1);
         paramInstance.add(GetRecordsParam.PER_PAGE, 1);
