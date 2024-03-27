@@ -126,7 +126,7 @@ public class GetRecords {
                     //Get the details map
                     for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
                         //Get each value in the map
-                        sb.append("Key: ").append(entry.getKey()).append(", message: ").append(exception.getMessage().getValue()).append("\n");
+                        sb.append("Key: ").append(entry.getKey()).append(", message: ").append(entry.getValue().toString()).append(", String value: ").append(entry.toString()).append("\n");
                     }
                     //Get the Message
                     sb.append("Message: ").append(exception.getMessage().getValue()).append("\n");;
