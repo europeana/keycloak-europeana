@@ -34,11 +34,11 @@ public class GetRecords {
     public static String getRecords(String moduleAPIName) throws Exception {
 
         LOG.info("started GetRecords");
-        StringBuffer     sb               = new StringBuffer("Bericht van Zoho: ");
+        StringBuffer     sb               = new StringBuffer("Output from Zoho: ");
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
 
         ParameterMap paramInstance = new ParameterMap();
-        List<String> fieldNames = new ArrayList<>(Arrays.asList("First_Name", "Last_Name", "Company", "Email"));
+        List<String> fieldNames = new ArrayList<>(Arrays.asList("Contact_Name", "Institution_Name", "Email", "Communities", "Contact_Participation"));
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, "both");
         paramInstance.add(GetRecordsParam.CONVERTED, "both");
@@ -79,21 +79,21 @@ public class GetRecords {
                         sb.append("Record ID: ").append(record.getId()).append("\n");
 
 
-                        //Get the ModifiedTime of each Record
-                        sb.append("\n").append("Record ModifiedTime: ").append(record.getModifiedTime());
                         //Get the list of Tag instance each Record
                         List<Tag> tags = record.getTag();
                         //Check if tags is not null
                         if (tags != null) {
                             for (Tag tag : tags) {
                                 //Get the Name of each Tag
-                                sb.append("Record Tag Name: ").append(tag.getName()).append("\n");
-                                //Get the Id of each Tag
-                                sb.append("Record Tag ID: ").append(tag.getId()).append("\n");
+                                sb.append("Tag: ").append(tag.getName()).append("; ID: ").append(tag.getId()).append("\n");
                             }
                         }
                         //To get particular field value
-                        sb.append("Record Field Value: ").append(record.getKeyValue("Last_Name")).append("\n");
+                        sb.append("Name: ").append(record.getKeyValue("Contact_Name")).append(", ");
+                        sb.append("institute: ").append(record.getKeyValue("Institution_Name")).append(", ");
+                        sb.append("email: ").append(record.getKeyValue("Email")).append(", ");
+                        sb.append("communities: ").append(record.getKeyValue("Communities")).append(", ");
+                        sb.append("participates in: ").append(record.getKeyValue("Contact_Participation")).append("\n");
                     }
                     //Get the Object obtained Info instance
                     Info info = responseWrapper.getInfo();
@@ -113,7 +113,7 @@ public class GetRecords {
                         }
                         if (info.getMoreRecords() != null) {
                             //Get the MoreRecords of the Info
-                            sb.append("Record Info MoreRecords: ").append(info.getMoreRecords().toString()).append("\n");;
+                            sb.append("Record Info MoreRecords: ").append(info.getMoreRecords().toString()).append("\n");
                         }
                     }
                 }
