@@ -42,10 +42,10 @@ public class GetRecords {
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, "both");
         paramInstance.add(GetRecordsParam.CONVERTED, "both");
-        paramInstance.add(GetRecordsParam.SORT_BY, "First_Name");
+        paramInstance.add(GetRecordsParam.SORT_BY, "Created_Time");
         paramInstance.add(GetRecordsParam.SORT_ORDER, "desc");
         paramInstance.add(GetRecordsParam.PAGE, 1);
-        paramInstance.add(GetRecordsParam.PER_PAGE, 1);
+        paramInstance.add(GetRecordsParam.PER_PAGE, 200);
         paramInstance.add(GetRecordsParam.INCLUDE_CHILD, "true");
         HeaderMap      headerInstance  = new HeaderMap();
         OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
