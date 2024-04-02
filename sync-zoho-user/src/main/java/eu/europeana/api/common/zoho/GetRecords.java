@@ -2,23 +2,20 @@ package eu.europeana.api.common.zoho;
 
 import com.zoho.crm.api.HeaderMap;
 import com.zoho.crm.api.ParameterMap;
-import com.zoho.crm.api.record.APIException;
-import com.zoho.crm.api.record.Info;
-import com.zoho.crm.api.record.RecordOperations;
+import com.zoho.crm.api.record.*;
 import com.zoho.crm.api.record.RecordOperations.GetRecordsHeader;
 import com.zoho.crm.api.record.RecordOperations.GetRecordsParam;
-import com.zoho.crm.api.record.ResponseHandler;
-import com.zoho.crm.api.record.ResponseWrapper;
 import com.zoho.crm.api.tags.Tag;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Model;
+import org.jboss.logging.Logger;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.jboss.logging.Logger;
 
 
 /**
