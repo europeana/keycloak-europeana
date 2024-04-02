@@ -76,8 +76,8 @@ public class GetRecords {
                     List<com.zoho.crm.api.record.Record> records = responseWrapper.getData();
                     for (com.zoho.crm.api.record.Record record : records) {
                         //Get the ID of each Record
-                        sb.append("Record ID: ").append(record.getId()).append("\n");
-
+                        sb.append("Contact ID: ").append(record.getId()).append("\n");
+                        GetRelatedRecords.getRelatedRecords("Contacts", record.getId(), "Accounts");
 
                         //Get the list of Tag instance each Record
                         List<Tag> tags = record.getTag();
