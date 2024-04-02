@@ -75,7 +75,7 @@ public class GetRecords {
                         //Get the ID of each Record
                         sb.append("Contact ID: ").append(record.getId()).append("\n");
 //                        GetRelatedRecords.getRelatedRecords("Contacts", record.getId(), "Accounts");
-                        com.zoho.crm.api.record.Record institutionRecord  = (com.zoho.crm.api.record.Record)record.getKeyValues().get("Account_Name");
+                        com.zoho.crm.api.record.Record institutionRecord  = (com.zoho.crm.api.record.Record)record.getKeyValues().get("Institution_Name");
                         if (null != institutionRecord && null != institutionRecord.getName()){
                             sb.append("Institution name: ").append(institutionRecord.getName()).append("\n");
                         }
