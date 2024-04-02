@@ -76,7 +76,9 @@ public class GetRecords {
                         sb.append("Contact ID: ").append(record.getId()).append("\n");
 //                        GetRelatedRecords.getRelatedRecords("Contacts", record.getId(), "Accounts");
                         com.zoho.crm.api.record.Record institutionRecord  = (com.zoho.crm.api.record.Record)record.getKeyValues().get("Account_Name");
-                        sb.append("Institution name: ").append(institutionRecord.getName()).append("\n"); ;  
+                        if (null != institutionRecord && null != institutionRecord.getName()){
+                            sb.append("Institution name: ").append(institutionRecord.getName()).append("\n");
+                        }
 
                         //Get the list of Tag instance each Record
                         List<Tag> tags = record.getTag();
