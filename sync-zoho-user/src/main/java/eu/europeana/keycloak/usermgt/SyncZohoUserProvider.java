@@ -66,6 +66,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             // example usage, taken from Zoho's samples
             try {
 //                return getRecords("Contacts");
+                getInstitutions("Leads");
+                getInstitutions("Contacts");
+                getInstitutions("Reports");
                 getInstitutions("Accounts");
             } catch (Exception e) {
                 e.printStackTrace();
