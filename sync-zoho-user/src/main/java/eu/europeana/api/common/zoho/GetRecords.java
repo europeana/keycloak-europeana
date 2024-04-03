@@ -31,7 +31,7 @@ public class GetRecords {
     public static String getRecords(String moduleAPIName) throws Exception {
 
         LOG.info("started GetRecords");
-        StringBuffer     sb               = new StringBuffer("Output from Zoho: ");
+        StringBuilder     sb               = new StringBuilder("Output from Zoho: ");
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
 
         ParameterMap paramInstance = new ParameterMap();
