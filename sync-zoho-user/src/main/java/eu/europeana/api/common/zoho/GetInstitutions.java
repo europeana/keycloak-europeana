@@ -46,28 +46,18 @@ public class GetInstitutions {
     public static void getInstitutions(String moduleAPIName) throws Exception {
         RecordOperations recordOperations = new RecordOperations(moduleAPIName);
         ParameterMap paramInstance = new ParameterMap();
-        paramInstance.add(GetRecordsParam.APPROVED, "both");
-        paramInstance.add(GetRecordsParam.CONVERTED, "both");
-        paramInstance.add(GetRecordsParam.CVID, "3477061087501");
-        List<String> ids = new ArrayList<String>(Arrays.asList("34770614352001"));
-        paramInstance.add(GetRecordsParam.IDS, String.join(",", ids));
-        paramInstance.add(GetRecordsParam.UID, "34770615181008");
         List<String> fieldNames = new ArrayList<String>(Arrays.asList("Company", "Email"));
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
-        paramInstance.add(GetRecordsParam.SORT_BY, "Email");
+        paramInstance.add(GetRecordsParam.APPROVED, "both");
+        paramInstance.add(GetRecordsParam.CONVERTED, "both");
+        paramInstance.add(GetRecordsParam.SORT_BY, "Created_Time");
         paramInstance.add(GetRecordsParam.SORT_ORDER, "desc");
         paramInstance.add(GetRecordsParam.PAGE, 1);
-        paramInstance.add(GetRecordsParam.PER_PAGE, 1);
-        OffsetDateTime startdatetime = OffsetDateTime.of(2019, 11, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
-        paramInstance.add(GetRecordsParam.STARTDATETIME, startdatetime);
-        OffsetDateTime enddatetime = OffsetDateTime.of(2019, 12, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
-        paramInstance.add(GetRecordsParam.ENDDATETIME, enddatetime);
-        paramInstance.add(GetRecordsParam.TERRITORY_ID, "34770613051357");
+        paramInstance.add(GetRecordsParam.PER_PAGE, 200);
         paramInstance.add(GetRecordsParam.INCLUDE_CHILD, "true");
-        HeaderMap headerInstance = new HeaderMap();
-        OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
+        HeaderMap      headerInstance  = new HeaderMap();
+        OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+01:00"));
         headerInstance.add(GetRecordsHeader.IF_MODIFIED_SINCE, ifmodifiedsince);
-        headerInstance.add(GetRecordsHeader.X_EXTERNAL, "Leads.External");
         APIResponse<ResponseHandler> response = recordOperations.getRecords(paramInstance, headerInstance);
         if (response != null)
         {

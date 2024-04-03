@@ -45,7 +45,7 @@ public class GetRecords {
         paramInstance.add(GetRecordsParam.PER_PAGE, 200);
         paramInstance.add(GetRecordsParam.INCLUDE_CHILD, "true");
         HeaderMap      headerInstance  = new HeaderMap();
-        OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
+        OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+01:00"));
         headerInstance.add(GetRecordsHeader.IF_MODIFIED_SINCE, ifmodifiedsince);
 //        headerInstance.add(GetRecordsHeader.X_EXTERNAL, "Leads.External");
         //Call getRecords method that takes moduleAPIName, paramInstance and headerInstance as parameter.
