@@ -1,4 +1,4 @@
-ARG theme_version=0.9.0
+ARG theme_version=0.9.1
 
 # 1 get theme from GitHub
 FROM europeana/keycloak-theme:${theme_version} AS theme
