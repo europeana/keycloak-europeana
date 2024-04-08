@@ -17,7 +17,7 @@
     <javax.version>1.1.4</javax.version>
     <jboss.logging.version>3.4.1.Final</jboss.logging.version>
 <!--    <api.commons.version>0.3.23-SNAPSHOT</api.commons.version>-->
-    <zohocrmsdk.version>1.0.0</zohocrmsdk.version>
+    <zohocrmsdk.version>2.0.0</zohocrmsdk.version>
     <commons-lang3.version>3.14.0</commons-lang3.version>
     <commons-logging.version>1.3.0</commons-logging.version>
     <httpclient.version>4.5.14</httpclient.version>
@@ -36,6 +36,12 @@
   </repositories>
 
   <dependencies>
+
+    <dependency>
+      <groupId>com.zoho.crm</groupId>
+      <artifactId>zohocrm-java-sdk-6-0</artifactId>
+      <version>${zohocrmsdk.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.keycloak</groupId>
@@ -138,11 +144,11 @@
 
 
     <!-- https://artifactory.eanadev.org/artifactory/webapp/#/artifacts/browse/tree/General/ext-release-local/com/zoho/crm/zohocrmsdk-6-0/1.0.0/ -->
-    <dependency>
-      <groupId>com.zoho.crm</groupId>
-      <artifactId>zohocrm-java-sdk-6-0</artifactId>
-      <version>${zohocrmsdk.version}</version>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>com.zoho.crm</groupId>-->
+<!--      <artifactId>zohocrm-java-sdk-6-0</artifactId>-->
+<!--      <version>${zohocrmsdk.version}</version>-->
+<!--    </dependency>-->
 
 
 <!--    <dependency>-->
