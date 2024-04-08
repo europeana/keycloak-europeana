@@ -3,17 +3,23 @@ package eu.europeana.keycloak.usermgt;
 import static eu.europeana.api.common.zoho.GetRecords.getRecords;
 import static eu.europeana.api.common.zoho.GetInstitutions.getInstitutions;
 
-import eu.europeana.api.common.zoho.ZohoConnect;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserManager;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
+import eu.europeana.api.common.zoho.*;
 
 /**
  * Created by luthien on 14/11/2022.
