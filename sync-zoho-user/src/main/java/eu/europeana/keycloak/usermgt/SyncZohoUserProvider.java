@@ -1,7 +1,5 @@
 package eu.europeana.keycloak.usermgt;
 
-import static eu.europeana.api.common.zoho.GetInstitutions.getInstitutions;
-
 import eu.europeana.api.common.zoho.ZohoConnect;
 import java.util.Map;
 import javax.ws.rs.DefaultValue;
@@ -9,6 +7,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+
+import eu.europeana.api.common.zoho.ZohoContacts;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -68,7 +68,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             // example usage, taken from Zoho's samples
             try {
 //                return getRecords("Contacts");
-                getInstitutions(module);
+                ZohoContacts.getContacts();
 //                getInstitutions("Contacts");
 //                getInstitutions("Reports");
 //                getInstitutions("Accounts");
