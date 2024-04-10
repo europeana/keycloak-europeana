@@ -1,4 +1,4 @@
-package eu.europeana.api.common.zoho;
+package eu.europeana.keycloak.zoho;
 
 
 import java.time.OffsetDateTime;
@@ -16,58 +16,68 @@ import com.zoho.crm.api.record.ResponseWrapper;
 import com.zoho.crm.api.record.RecordOperations.GetRecordHeader;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Model;
+import org.jboss.logging.Logger;
 
 public class ZohoInstitute {
+    private static final Logger LOG = Logger.getLogger(ZohoInstitute.class);
+    private static final String BOTH = "both";
+    private static final String RESPONSE_204 = "204 No Content";
+    private static final String RESPONSE_304 = "304 Not Modified";
+    private static final String EUROPEANA_ORG_ID = "Europeana_org_ID";
 
-    public static void getRecord(Long recordId) throws Exception {
+    private ZohoInstitute(){}
+
+    public static String getRecord(Long recordId) throws Exception {
         RecordOperations recordOperations = new RecordOperations("Accounts");
         ParameterMap paramInstance = new ParameterMap();
-        paramInstance.add(RecordOperations.GetRecordsParam.APPROVED, "both");
-        paramInstance.add(RecordOperations.GetRecordsParam.CONVERTED, "both");
+        paramInstance.add(RecordOperations.GetRecordsParam.APPROVED, BOTH);
+        paramInstance.add(RecordOperations.GetRecordsParam.CONVERTED, BOTH);
 
         HeaderMap      headerInstance  = new HeaderMap();
         OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+05:30"));
         headerInstance.add(GetRecordHeader.IF_MODIFIED_SINCE, ifmodifiedsince);
         APIResponse<ResponseHandler> response = recordOperations.getRecord(recordId, paramInstance, headerInstance);
         if (response != null) {
-            System.out.println("Status Code: " + response.getStatusCode());
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
-                System.out.println(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
-                return;
+                LOG.error("Zoho response: HTTP " + (response.getStatusCode() == 204 ? RESPONSE_204 : RESPONSE_304));
+                return null;
             }
             if (response.isExpected()) {
                 ResponseHandler responseHandler = response.getObject();
                 if (responseHandler instanceof ResponseWrapper) {
-                    ResponseWrapper responseWrapper = (ResponseWrapper) responseHandler;
-                    List<com.zoho.crm.api.record.Record> records = responseWrapper.getData();
-                    for (com.zoho.crm.api.record.Record record : records) {
-                        System.out.println("Record ID: " + record.getId());
-                        if (null != record.getKeyValue("Europeana_org_ID")){
-                            System.out.println((String) record.getKeyValue("Europeana_org_ID"));
+                    ResponseWrapper                      responseWrapper  = (ResponseWrapper) responseHandler;
+                    List<com.zoho.crm.api.record.Record> instituteRecords = responseWrapper.getData();
+                    for (com.zoho.crm.api.record.Record instituteRecord : instituteRecords) {
+                        if (null != instituteRecord.getKeyValue(EUROPEANA_ORG_ID)){
+                            return (String) instituteRecord.getKeyValue(EUROPEANA_ORG_ID);
                         } else {
-                            System.out.println("Institute has no Europeana Org ID yet");
+                            return null;
                         }
                     }
 
                 } else if (responseHandler instanceof APIException) {
                     APIException exception = (APIException) responseHandler;
-                    System.out.println("Status: " + exception.getStatus().getValue());
-                    System.out.println("Code: " + exception.getCode().getValue());
-                    System.out.println("Details: ");
+                    StringBuilder errorDetails = new StringBuilder("Zoho Exception details: /n");
+                    LOG.error("Zoho Exception status: " + exception.getStatus().getValue());
+                    LOG.error("Zoho Exception code: " + exception.getCode().getValue());
                     for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                        System.out.println(entry.getKey() + ": " + entry.getValue());
+                        errorDetails.append(entry.getKey()).append(": ").append(entry.getValue()).append("/n");
                     }
-                    System.out.println("Message: " + exception.getMessage().getValue());
+                    LOG.error(errorDetails);
+                    LOG.error("Zoho Exception message: " + exception.getMessage().getValue());
                 }
             } else {
                 Model responseObject = response.getModel();
                 Class<? extends Model> clas = responseObject.getClass();
                 java.lang.reflect.Field[] fields = clas.getDeclaredFields();
+                StringBuilder errorDetails = new StringBuilder("Unexpected response from Zoho: /n");
                 for (java.lang.reflect.Field field : fields) {
                     field.setAccessible(true);
-                    System.out.println(field.getName() + ":" + field.get(responseObject));
+                    errorDetails.append(field.getName()).append(": ").append(field.get(responseObject)).append("/n");
                 }
+                LOG.error(errorDetails);
             }
         }
+        return null;
     }
 }

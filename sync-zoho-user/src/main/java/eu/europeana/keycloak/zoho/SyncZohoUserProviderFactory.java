@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.usermgt;
+package eu.europeana.keycloak.zoho;
 
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
