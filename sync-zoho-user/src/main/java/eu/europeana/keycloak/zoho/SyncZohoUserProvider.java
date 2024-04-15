@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.jboss.logging.Logger;
@@ -55,38 +57,21 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync() {
+    public String zohoSync(
+        @DefaultValue("0") @QueryParam("mode") int mode) {
         LOG.info("ZohoSync called.");
 
         if (zohoConnect.getOrCreateAccessToZoho()){
-            ZohoContacts zohoContacts = new ZohoContacts();
+            ZohoContacts zohoContacts = new ZohoContacts(session);
             try {
-                Map<String, String> contactAffiliations = zohoContacts.getContacts("debug");
-                for (Map.Entry<String,String> contactAffiliation : contactAffiliations.entrySet()){
-                    UserModel contactPeep = userProvider.getUserByEmail(realm, contactAffiliation.getKey());
-                    if (contactPeep == null){
-                        LOG.info("Too bad, no Keycloak user for email address " + contactAffiliation.getKey());
-                    } else {
-                        if (StringUtil.isNotBlank(contactAffiliation.getValue())){
-                            LOG.info("Hey, " + getUserToUpdate(contactAffiliation.getKey()).getFirstName() + " is affiliated with " + contactAffiliation.getValue());
-                        } else {
-                            LOG.info("Too bad, " + getUserToUpdate(contactAffiliation.getKey()).getFirstName() + "'s institute does not have a Europeana org ID yet! ");
-                        }
-                    }
-                }
-                LOG.info("Done.");
-                return "Done: fetched " + contactAffiliations.size() + " contacts";
+                return zohoContacts.getContacts(mode);
             } catch (Exception e) {
                 e.printStackTrace();
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-                return "Grutjes. ";
+                return "Grote grutt'n da's niet zo koel ofniedan! ";
             }
         }
-        return "Ja, zeg dat wel. Grote grutt'n nog an toe!";
-    }
-
-    private UserModel getUserToUpdate(String email) {
-        return userProvider.getUserByEmail(realm, email);
+        return "Krek, da's allebarstes mooi zo.";
     }
 
     @Override

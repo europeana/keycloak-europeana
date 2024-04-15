@@ -22,6 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jboss.logging.Logger;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserManager;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.UserProvider;
+import org.keycloak.utils.StringUtil;
 
 /**
  * Created by luthien on 03/04/2024.
@@ -36,12 +42,41 @@ public class ZohoContacts {
     private static final String EMAIL        = "Email";
     private static final String ID           = "id";
     private static final String BOTH         = "both";
+    private static final int CONTACTSDEBUG   = 20;
+    private static final int CONTACTSPERPAGE = 200;
+    private static final int STARTPAGENR = 1;
 
 
     private final Map<String, String> contactAffiliations = new HashMap<>();
 
+    private int             page = 1;
+    private KeycloakSession session;
+    private RealmModel      realm;
+    private UserProvider    userProvider;
+    private UserManager     userManager;
 
-    public Map<String, String> getContacts(String nextPageToken) throws Exception {
+    public ZohoContacts(KeycloakSession session) {
+        this.session      = session;
+        this.realm        = session.getContext().getRealm();
+        this.userProvider = session.users();
+        this.userManager  = new UserManager(session);
+    }
+
+    // mode 0 = debug
+    public String getContacts(int mode) throws Exception {
+        if (mode == 0){
+            LOG.info("Get " + CONTACTSDEBUG + " contacts for debugging");
+            getContactPage(CONTACTSDEBUG, 1, null);
+        } else {
+            LOG.info("Get " + mode + " pages of each " + CONTACTSPERPAGE + " contacts");
+            getContactPage(CONTACTSPERPAGE, mode, null);
+        }
+        return "Done.";
+    }
+
+
+    private String getContactPage(int contactsPerPage, int pages, String nextPageToken) throws Exception {
+
         boolean          debug            = false;
         RecordOperations recordOperations = new RecordOperations("Contacts");
         ParameterMap     paramInstance    = new ParameterMap();
@@ -49,20 +84,12 @@ public class ZohoContacts {
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, BOTH);
         paramInstance.add(GetRecordsParam.CONVERTED, BOTH);
+        paramInstance.add(GetRecordsParam.PER_PAGE, contactsPerPage);
+
         if (isNotBlank(nextPageToken)) {
-            if (nextPageToken.equalsIgnoreCase(DEBUG)) {
-                LOG.info("Get 20 contacts for developing purposes");
-                debug = true;
-            } else {
-                LOG.info("Retrieving next batch of contacts");
-                paramInstance.add(GetRecordsParam.PAGE_TOKEN, nextPageToken);
-            }
+            paramInstance.add(GetRecordsParam.PAGE_TOKEN, nextPageToken);
         }
-        if (debug) {
-            paramInstance.add(GetRecordsParam.PER_PAGE, 20);
-        } else {
-            paramInstance.add(GetRecordsParam.PER_PAGE, 200);
-        }
+
         paramInstance.add(GetRecordsParam.INCLUDE_CHILD, "true");
         HeaderMap      headerInstance  = new HeaderMap();
         OffsetDateTime ifmodifiedsince = OffsetDateTime.of(2019, 05, 20, 10, 00, 01, 00, ZoneOffset.of("+01:00"));
@@ -71,7 +98,7 @@ public class ZohoContacts {
         if (response != null) {
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
                 LOG.error("Zoho response: HTTP " + (response.getStatusCode() == 204 ? RESPONSE_204 : RESPONSE_304));
-                return Collections.emptyMap();
+                return "aborting because of empty response";
             }
             StringBuilder errorDetails;
             if (response.isExpected()) {
@@ -95,15 +122,22 @@ public class ZohoContacts {
                         }
                     }
 
+                    lookupUserModel(contactAffiliations);
+                    contactAffiliations.clear();
+
                     Info    info        = responseWrapper.getInfo();
                     boolean thereIsMore = info.getMoreRecords();
-                    if (!debug && thereIsMore) {
-                        LOG.info("Retrieved 200 contacts, moving to the next batch ...");
-                        getContacts(info.getNextPageToken());
+
+                    if (!debug && thereIsMore && page < pages) {
+                        LOG.info("Retrieved " + page + " pages = " + CONTACTSPERPAGE * page + " contacts, moving to the next page ...");
+                        getContactPage(contactsPerPage, pages, info.getNextPageToken());
                     } else {
-                        LOG.info("... processed all contacts, returning to main method.");
-                        return contactAffiliations;
+                        LOG.info("... processed all " + page + " pages , returning to main method.");
+                        return "Done.";
                     }
+
+                    // increment page counter
+                    page ++;
 
                 } else if (responseHandler instanceof APIException) {
                     APIException exception = (APIException) responseHandler;
@@ -126,12 +160,35 @@ public class ZohoContacts {
                     errorDetails.append(field.getName()).append(": ").append(field.get(responseObject)).append("/n");
                 }
                 LOG.error(errorDetails);
-                return Collections.emptyMap();
+                return "Alas.";
             }
         } else {
-            return Collections.emptyMap();
+            return "Hey, good job.";
         }
-        return Collections.emptyMap();
+        return "Definitely.";
     }
+
+    private String lookupUserModel(Map<String, String> results){
+        int usersNotInKeycloak = 0;
+        int affiliated = 0;
+        int notAffiliated = 0;
+        for (Map.Entry<String,String> contactAffiliation : contactAffiliations.entrySet()){
+            if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null){
+                LOG.info("Too bad, no Keycloak user for email address " + contactAffiliation.getKey());
+                usersNotInKeycloak ++;
+            }
+            if (StringUtil.isNotBlank(contactAffiliation.getValue())){
+                LOG.info("Hey, " + contactAffiliation.getKey() + " is affiliated with " + contactAffiliation.getValue());
+                affiliated ++;
+            } else {
+                LOG.info("Too bad, " + contactAffiliation.getKey() + "'s institute does not have a Europeana org ID yet! ");
+                notAffiliated ++;
+            }
+        }
+        LOG.info("Summary for contacts page # " + page + ": of the 200 Contacts, " + results.size() + " are linked to an Institute in Zoho; of those, "
+                 + usersNotInKeycloak + " cannot be found in Keycloak and " + notAffiliated + " of linked institutes do not have a Europeana org ID.");
+        return "Done.";
+    }
+
 }
 
