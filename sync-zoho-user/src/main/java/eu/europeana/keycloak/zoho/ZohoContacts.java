@@ -78,6 +78,8 @@ public class ZohoContacts {
     private String getContactPage(int contactsPerPage, int pages, String nextPageToken) throws Exception {
 
         boolean          debug            = false;
+        int i = 1;
+        String europeanaOrgID;
         RecordOperations recordOperations = new RecordOperations("Contacts");
         ParameterMap     paramInstance    = new ParameterMap();
         List<String>     fieldNames       = new ArrayList<>(Arrays.asList(ACCOUNT_NAME, EMAIL));
@@ -106,20 +108,28 @@ public class ZohoContacts {
                 if (responseHandler instanceof ResponseWrapper) {
                     ResponseWrapper                      responseWrapper = (ResponseWrapper) responseHandler;
                     List<com.zoho.crm.api.record.Record> contactRecords  = responseWrapper.getData();
+
                     // get first 200 results and process them
                     for (com.zoho.crm.api.record.Record contactRecord : contactRecords) {
+                        // check if there is an Account (Institute) associated with this Contact
                         if (contactRecord.getKeyValue(ACCOUNT_NAME) instanceof com.zoho.crm.api.record.Record) {
+                            // get linked Institute
                             com.zoho.crm.api.record.Record accountRecord = (com.zoho.crm.api.record.Record) contactRecord.getKeyValue(
                                 ACCOUNT_NAME);
-                            ZohoInstitute.getRecord((Long) accountRecord.getKeyValue(ID));
-                            LOG.info("Institute " + accountRecord.getKeyValue("name") +
-                                     " associated with Contact with email: " + contactRecord.getKeyValue(EMAIL));
-                            contactAffiliations.put((String) contactRecord.getKeyValue(EMAIL),
-                                                    ZohoInstitute.getRecord((Long) accountRecord.getKeyValue(ID)));
+                            // get europeana org.ID from Institute (if any)
+                            europeanaOrgID = ZohoInstitute.getRecord((Long) accountRecord.getKeyValue(ID));
+                            // check if it is present: yes, add to map
+                            if (isNotBlank(europeanaOrgID)) {
+                                contactAffiliations.put((String) contactRecord.getKeyValue(EMAIL),
+                                        isNotBlank(europeanaOrgID) ? europeanaOrgID : "Institute has no org.ID");
+                            }
+                            // log message if this contact has no associated Institute
                         } else {
                             LOG.info(
-                                "No Institute associated with Contact with email: " + contactRecord.getKeyValue(EMAIL));
+                                "No Institute associated with Contact email: " + contactRecord.getKeyValue(EMAIL));
                         }
+                        LOG.info("#" + i + " of page# " + page);
+                        i++;
                     }
 
                     lookupUserModel(contactAffiliations);
@@ -170,23 +180,33 @@ public class ZohoContacts {
 
     private String lookupUserModel(Map<String, String> results){
         int usersNotInKeycloak = 0;
-        int affiliated = 0;
+        int usersInKeycloak = 0;
+        int userInKCAndAffiliated = 0;
         int notAffiliated = 0;
         for (Map.Entry<String,String> contactAffiliation : contactAffiliations.entrySet()){
             if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null){
                 LOG.info("Too bad, no Keycloak user for email address " + contactAffiliation.getKey());
                 usersNotInKeycloak ++;
-            }
-            if (StringUtil.isNotBlank(contactAffiliation.getValue())){
-                LOG.info("Hey, " + contactAffiliation.getKey() + " is affiliated with " + contactAffiliation.getValue());
-                affiliated ++;
             } else {
-                LOG.info("Too bad, " + contactAffiliation.getKey() + "'s institute does not have a Europeana org ID yet! ");
-                notAffiliated ++;
+                usersInKeycloak ++;
+                if (StringUtil.isNotBlank(contactAffiliation.getValue())){
+                    LOG.info("Hey, " + contactAffiliation.getKey() + " is affiliated with " + contactAffiliation.getValue());
+                    userInKCAndAffiliated ++;
+                }
             }
-        }
+
+            }
+//            if (StringUtil.isNotBlank(contactAffiliation.getValue())){
+//                LOG.info("Hey, " + contactAffiliation.getKey() + " is affiliated with " + contactAffiliation.getValue());
+//                affiliated ++;
+//            } else {
+//                LOG.info("Too bad, " + contactAffiliation.getKey() + "'s institute does not have a Europeana org ID yet! ");
+//                notAffiliated ++;
+//            }
+//        }
         LOG.info("Summary for contacts page # " + page + ": of the 200 Contacts, " + results.size() + " are linked to an Institute in Zoho; of those, "
-                 + usersNotInKeycloak + " cannot be found in Keycloak and " + notAffiliated + " of linked institutes do not have a Europeana org ID.");
+                 + usersNotInKeycloak + " cannot be found in Keycloak. Of the other " + usersInKeycloak + " contacts that are also in Keycloak, "
+                + userInKCAndAffiliated + " are linked to an institute which has a Europeana org ID (ie, could be synchronised).");
         return "Done.";
     }
 
