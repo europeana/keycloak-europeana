@@ -24,22 +24,23 @@ import java.util.Map;
 import org.jboss.logging.Logger;
 
 /**
- * Created by luthien on 03/04/2024.
+ * Created by luthien on 22/04/2024.
  */
-public class ZohoContacts {
+public class ZohoInstitutes {
 
-    private static final Logger LOG             = Logger.getLogger(ZohoContacts.class);
-    private static final String RESPONSE_204    = "204 No Content";
-    private static final String RESPONSE_304    = "304 Not Modified";
-    private static final String ACCOUNT_NAME    = "Account_Name";
-    private static final String EMAIL           = "Email";
-    private static final String ID              = "id";
-    private static final String BOTH            = "both";
-    private static final int    CONTACTSDEBUG   = 20;
-    private static final int    CONTACTSPERPAGE = 200;
+    private static final Logger LOG          = Logger.getLogger(ZohoInstitutes.class);
+    private static final  String RESPONSE_204 = "204 No Content";
+    private static final  String RESPONSE_304   = "304 Not Modified";
+    private static final  String INSTITUTE_NAME = "Institute_Name";
+    private static final  String EMAIL          = "Email";
+    private static final  String ID           = "id";
+    private static final  String BOTH              = "both";
+    private static final int     INSTITUTESDEBUG   = 20;
+    private static final int     INSTITUTESPERPAGE = 200;
+    private static final String EUROPEANA_ORG_ID = "Europeana_org_ID";
 
 
-    private Map<String, String> contactAffiliations = new HashMap<>();
+    private Map<String, String> instituteAffiliations = new HashMap<>();
 
     private int page = 1;
 //    private KeycloakSession session;
@@ -55,33 +56,33 @@ public class ZohoContacts {
 //    }
 
     // mode 0 = debug
-    public Map<String, String> getContacts(int from, int to) throws Exception {
+    public Map<String, String> getInstitutes(int from, int to) throws Exception {
         String pageToken = null;
         if (from == 0) {
-            LOG.info("Get " + CONTACTSDEBUG + " contacts for debugging");
-            getContactPage(CONTACTSDEBUG, 1, null);
+            LOG.info("Get " + INSTITUTESDEBUG + " institutes for debugging");
+            getInstitutesPage(INSTITUTESDEBUG, 1, null);
         } else {
-            LOG.info("Get pages " + from + " to " + to + ", each " + CONTACTSPERPAGE + " contacts");
-            pageToken = getContactPage(CONTACTSPERPAGE, from, null);
+            LOG.info("Get pages " + from + " to " + to + ", each " + INSTITUTESPERPAGE + " contacts");
+            pageToken = getInstitutesPage(INSTITUTESPERPAGE, from, null);
             for (int i = from + 1; i <= to; i++) {
-                pageToken = getContactPage(CONTACTSPERPAGE, i, pageToken);
+                pageToken = getInstitutesPage(INSTITUTESPERPAGE, i, pageToken);
                 if (isBlank(pageToken)) {
                     break;
                 }
             }
         }
-        return contactAffiliations;
+        return instituteAffiliations;
     }
 
-    private String getContactPage(int contactsPerPage, int page, String nextPageToken) throws Exception {
+    private String getInstitutesPage(int contactsPerPage, int page, String nextPageToken) throws Exception {
 
-        boolean debug   = contactsPerPage == CONTACTSDEBUG;
+        boolean debug   = contactsPerPage == INSTITUTESDEBUG;
         int     contact = 1;
         String  europeanaOrgID;
 
         RecordOperations recordOperations = new RecordOperations("Contacts");
-        ParameterMap     paramInstance    = new ParameterMap();
-        List<String>     fieldNames       = new ArrayList<>(Arrays.asList(ACCOUNT_NAME, EMAIL));
+        ParameterMap paramInstance = new ParameterMap();
+        List<String> fieldNames    = new ArrayList<>(Arrays.asList(EUROPEANA_ORG_ID, EMAIL));
         paramInstance.add(GetRecordsParam.FIELDS, String.join(",", fieldNames));
         paramInstance.add(GetRecordsParam.APPROVED, BOTH);
         paramInstance.add(GetRecordsParam.CONVERTED, BOTH);
@@ -107,32 +108,10 @@ public class ZohoContacts {
             if (response.isExpected()) {
                 ResponseHandler responseHandler = response.getObject();
                 if (responseHandler instanceof ResponseWrapper) {
-                    ResponseWrapper                      responseWrapper = (ResponseWrapper) responseHandler;
-                    List<com.zoho.crm.api.record.Record> contactRecords  = responseWrapper.getData();
+                    ResponseWrapper                      responseWrapper  = (ResponseWrapper) responseHandler;
+                    List<com.zoho.crm.api.record.Record> instituteRecords = responseWrapper.getData();
 
-                    // get 200 results and process them
-                    for (com.zoho.crm.api.record.Record contactRecord : contactRecords) {
-                        // check if there is an Account (Institute) associated with this Contact
-                        if (contactRecord.getKeyValue(ACCOUNT_NAME) instanceof com.zoho.crm.api.record.Record) {
-                            // get linked Institute
-                            com.zoho.crm.api.record.Record accountRecord = (com.zoho.crm.api.record.Record) contactRecord.getKeyValue(
-                                ACCOUNT_NAME);
-                            // get europeana org.ID from Institute (if any)
-                            europeanaOrgID = ZohoInstitute.getRecord((Long) accountRecord.getKeyValue(ID));
-                            // check if it is present: yes, add to map
-                            if (isNotBlank(europeanaOrgID)) {
-                                contactAffiliations.put((String) contactRecord.getKeyValue(EMAIL),
-                                                        isNotBlank(europeanaOrgID) ? europeanaOrgID
-                                                                                   : "Institute has no org.ID");
-                            }
-                            // log message if this contact has no associated Institute
-                        } else {
-                            LOG.info(
-                                "No Institute associated with Contact email: " + contactRecord.getKeyValue(EMAIL));
-                        }
-                        LOG.info("#" + contact + " of page# " + page);
-                        contact++;
-                    }
+
 
                     Info info = responseWrapper.getInfo();
 
@@ -157,8 +136,8 @@ public class ZohoContacts {
                     LOG.error("Zoho Exception message: " + exception.getMessage().getValue());
                 }
             } else {
-                Model                     responseObject = response.getModel();
-                Class<? extends Model>    clas           = responseObject.getClass();
+                Model                  responseObject = response.getModel();
+                Class<? extends Model> clas           = responseObject.getClass();
                 java.lang.reflect.Field[] fields         = clas.getDeclaredFields();
                 errorDetails = new StringBuilder("Unexpected response from Zoho: /n");
                 for (java.lang.reflect.Field field : fields) {
@@ -175,4 +154,3 @@ public class ZohoContacts {
     }
 
 }
-

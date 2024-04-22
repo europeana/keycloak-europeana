@@ -26,6 +26,7 @@
     <json.version>20240205</json.version>
     <mysql-connector-j.version>8.3.0</mysql-connector-j.version>
     <opencsv.version>5.9</opencsv.version>
+    <commons-io.version>2.16.1</commons-io.version>
   </properties>
 
   <repositories>
@@ -36,6 +37,12 @@
   </repositories>
 
   <dependencies>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commons-io.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.zoho.crm</groupId>

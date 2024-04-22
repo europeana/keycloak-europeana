@@ -66,7 +66,7 @@ public class ZohoConnect {
 				.pickListValidation(true)
 				.build();
 
-			LOG.info("Sdk configd, now proceeding with Building the builder");
+			LOG.info("SDK configured ...");
 
 
 			new Initializer.Builder()
@@ -76,6 +76,9 @@ public class ZohoConnect {
 				.SDKConfig(sdkConfig)
 				.logger(zlogger)
 				.initialize();
+
+
+			LOG.info("... and initialised.");
 
 			return true;
 
