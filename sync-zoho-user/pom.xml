@@ -27,6 +27,7 @@
     <mysql-connector-j.version>8.3.0</mysql-connector-j.version>
     <opencsv.version>5.9</opencsv.version>
     <commons-io.version>2.16.1</commons-io.version>
+    <commons-compress.version>1.26.1</commons-compress.version>
   </properties>
 
   <repositories>
@@ -38,11 +39,6 @@
 
   <dependencies>
 
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>${commons-io.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>com.zoho.crm</groupId>
@@ -85,6 +81,19 @@
       <scope>provided</scope>
     </dependency>
 
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commons-io.version}</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>${commons-compress.version}</version>
+    </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
     <dependency>
