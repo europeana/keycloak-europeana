@@ -7,11 +7,18 @@ import com.zoho.crm.api.bulkread.ResponseHandler;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Model;
 import com.zoho.crm.api.util.StreamWrapper;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
@@ -21,14 +28,14 @@ import org.apache.commons.io.FileUtils;
  */
 public class ZohoBulkDownload {
 
-    public static void downloadResult(Long jobId) throws Exception {
+    public String downloadResult(Long jobId) throws Exception {
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
             System.out.println("Status Code: " + response.getStatusCode());
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
                 System.out.println(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
-                return;
+                return "";
             }
             if (response.isExpected()) {
                 ResponseHandler responseHandler = response.getObject();
@@ -40,6 +47,7 @@ public class ZohoBulkDownload {
                     InputStream inputStream = streamWrapper.getStream();
                     try {
                         FileUtils.copyInputStreamToFile(inputStream, file);
+                        return unZipFile(file.getCanonicalPath());
                     } catch (Exception e) {
                         System.out.println("Balen.");
                     }
@@ -64,6 +72,60 @@ public class ZohoBulkDownload {
                 }
             }
         }
+        return "";
+    }
+
+    public static String unZipFile(String pathToZipFile) throws Exception {
+
+        Path   zipFilePath = Paths.get(pathToZipFile);
+        Path   zipDir      = zipFilePath.getParent();
+        String zipFileName = zipFilePath.toFile().getName();
+
+        //Open the file
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+
+            FileSystem                      fileSystem = FileSystems.getDefault();
+            Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+
+            //We will unzip files in this folder
+            if (!zipDir.toFile().isDirectory()
+                && !zipDir.toFile().mkdirs()) {
+                throw new IOException("failed to create directory " + zipDir);
+            }
+
+            //Iterate over zipEntries
+            while (zipEntries.hasMoreElements()) {
+                ZipEntry zipEntry = zipEntries.nextElement();
+
+                File unzippedFile = new File(zipDir.resolve(Path.of(zipEntry.getName())).toString());
+
+                //If directory then create a new directory in uncompressed folder
+                if (zipEntry.isDirectory()) {
+                    if (!unzippedFile.isDirectory() && !unzippedFile.mkdirs()) {
+                        throw new IOException("failed to create directory " + unzippedFile);
+                    }
+                }
+
+                //Else create the file
+                else {
+                    File unzippedParent = unzippedFile.getParentFile();
+                    if (!unzippedParent.isDirectory() && !unzippedParent.mkdirs()) {
+                        throw new IOException("failed to create directory " + unzippedParent);
+                    }
+
+                    try(InputStream in = zipFile.getInputStream(zipEntry)) {
+                        Files.copy(in, unzippedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        Files.deleteIfExists(zipFilePath);
+                        return unzippedFile.getCanonicalPath();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

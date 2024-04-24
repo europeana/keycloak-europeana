@@ -1,11 +1,18 @@
 package eu.europeana.keycloak.zoho;
 
 import eu.europeana.api.common.zoho.ZohoConnect;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -13,6 +20,10 @@ import org.keycloak.models.UserManager;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.utils.StringUtil;
+import com.opencsv.bean.CsvToBeanBuilder;
+
+import java.io.FileReader;
+import java.util.List;
 
 /**
  * Created by luthien on 14/11/2022.
@@ -25,11 +36,15 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private static final String FAIL_MSG = "Failure";
     private static final String USERDEL_MSG = " were synchronised";
 
-    private KeycloakSession session;
-    private RealmModel realm;
-    private UserProvider userProvider;
-    private UserManager userManager;
-    private ZohoConnect zohoConnect = new ZohoConnect();
+    private final KeycloakSession session;
+    private final RealmModel      realm;
+    private final UserProvider    userProvider;
+    private final UserManager  userManager;
+    private final ZohoConnect  zohoConnect = new ZohoConnect();
+
+    private List<Account> accounts;
+    private List<Contact> contacts;
+    HashMap<String, Institute4Hash> instituteMap = new HashMap<>();
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
@@ -51,86 +66,97 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync() {
+        public String zohoSync(
+        @DefaultValue("") @QueryParam("job") String job) throws InterruptedException {
         LOG.info("ZohoSync called.");
-        String InstituteJobID;
-
+        String accountsJob;
+        String contactsJob;
 
         if (zohoConnect.getOrCreateAccessToZoho()){
-            ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
-            ZohoBulkDownload ZzhoBulkDownload = new ZohoBulkDownload();
-            try {
-//                InstituteJobID = zohoBulkJob.ZohoBulkCreateJob("Accounts");
-//                Thread.sleep(4000);
-                ZohoBulkDownload.downloadResult(Long.valueOf("486281000003484011"));
+            if (StringUtil.isBlank(job)){
+                ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
+                try {
+                    accountsJob = zohoBulkJob.ZohoBulkCreateJob("Accounts");
+                    Thread.sleep(4000);
+                    contactsJob = zohoBulkJob.ZohoBulkCreateJob("Contacts");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                    return "Error creating bulk job.";
+                }
+                ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
+                // allow some time for the job to run
+                Thread.sleep(10000);
+                try {
+                    createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(accountsJob)));
+                    Thread.sleep(10000);
+                    createContacts(zohoBulkDownload.downloadResult(Long.valueOf(contactsJob)));
+                    if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
+                        synchroniseContacts();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                    return "Error downloading bulk job.";
+                }
 
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-                return "Zoho is messing up again.";
+            } else {
+                ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
+                try {
+                    createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(job)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                    return "Error downloading bulk job.";
+                }
             }
-
-//            ZohoContacts zohoContacts = new ZohoContacts();
-//            try {
-//                lookupUserModel(zohoContacts.getContacts(from, to), pages);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-//                return "Grote grutt'n da's niet zo koel ofniedan! ";
-//            }
         }
-        return "Krek, da's allebarstes mooi zo.";
+        return "Done.";
     }
 
+    // skip the first line containing the CSV header
+    private void createAccounts(String pathToAccountsCsv) throws Exception {
+        accounts = new CsvToBeanBuilder(new FileReader(pathToAccountsCsv))
+            .withType(Account.class)
+            .withSkipLines(1)
+            .build()
+            .parse();
+        Files.deleteIfExists(Paths.get(pathToAccountsCsv));
+    }
 
+    // skip the first line containing the CSV header
+    private void createContacts(String pathToContactsCsv) throws Exception {
+        contacts = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
+            .withType(Contact.class)
+            .withSkipLines(1)
+            .build()
+            .parse();
+        Files.deleteIfExists(Paths.get(pathToContactsCsv));
+    }
 
+    private void synchroniseContacts(){
+        for (Account account : accounts){
+            instituteMap.put(account.getID(), new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
+        }
 
+        for (Contact contact : contacts) {
+            if (StringUtils.isNotBlank(contact.getAccountID())){
+                if (instituteMap.get(contact.getAccountID()) != null){
+                    System.out.println(contact.getEmail() + " affiliated with " +
+                                       instituteMap.get(contact.getAccountID()).getAccountName() + "\n" +
+                                       instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+                }
+            }
 
-    /**
-     * Retrieves users from Zoho
-     *
-     * @return String (completed message)
-     */
-//    @GET
-//    @Produces({MediaType.APPLICATION_JSON})
-//    public String zohoSync(
-//        @DefaultValue("0") @QueryParam("from") int from,
-//        @DefaultValue("0") @QueryParam("to") int to) {
-//        LOG.info("ZohoSync called.");
-//
-//        int pages = from == 0 ? 1 : (to + 1) - from;
-//
-//        if (zohoConnect.getOrCreateAccessToZoho()){
-//            ZohoInstitutes zohoInstitutes = new ZohoInstitutes();
-//            try {
-//                zohoInstitutes.getInstitutes(from, to);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-//                return "Zoho is messing up again.";
-//            }
-//
-////            ZohoContacts zohoContacts = new ZohoContacts();
-////            try {
-////                lookupUserModel(zohoContacts.getContacts(from, to), pages);
-////            } catch (Exception e) {
-////                e.printStackTrace();
-////                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-////                return "Grote grutt'n da's niet zo koel ofniedan! ";
-////            }
-//        }
-//        return "Krek, da's allebarstes mooi zo.";
-//    }
-
-
+        }
+    }
 
     private void lookupUserModel(Map<String, String> results, int pages){
         int usersNotInKeycloak = 0;
         int usersInKeycloak = 0;
         int userInKCAndAffiliated = 0;
         int notAffiliated = 0;
-        for (Map.Entry<String,String> contactAffiliation : results.entrySet()){
+        for (Entry<String,String> contactAffiliation : results.entrySet()){
             if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null){
                 LOG.info(contactAffiliation.getKey() + " NOT in KC");
                 usersNotInKeycloak ++;
@@ -152,6 +178,24 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     @Override
     public void close() {
+    }
+
+    public class Institute4Hash {
+        private String accountName;
+        private String europeanaOrgID;
+
+        public Institute4Hash(String aName, String eID){
+            accountName = aName;
+            europeanaOrgID = eID;
+        }
+
+        public String getAccountName(){
+            return accountName;
+        }
+
+        public String getEuropeanaOrgID(){
+            return europeanaOrgID;
+        }
     }
 
 }

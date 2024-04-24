@@ -18,11 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.apache.commons.lang3.StringUtils;
+import org.keycloak.utils.StringUtil;
 
 /**
  * Created by luthien on 22/04/2024.
  */
 public class ZohoBulkJob {
+
+    private static final String CONTACTS = "Contacts";
+    private static final String ACCOUNTS = "Accounts";
 
 
     public String ZohoBulkCreateJob(String moduleAPIName) throws Exception {
@@ -33,22 +38,28 @@ public class ZohoBulkJob {
         BodyWrapper        bodyWrapper        = new BodyWrapper();
         MinifiedModule     module             = new MinifiedModule();
         module.setAPIName(moduleAPIName);
-//        CallBack callback = new CallBack();
-//        callback.setUrl("https://www.example.com/callback");
-//        callback.setMethod(new Choice<String>("post"));
-//        bodyWrapper.setCallback(callback);
 
         Query query = new Query();
         query.setModule(module);
-//		query.setCvid(347706108701l);
-//        List<String> fieldAPINames = new ArrayList<String>();
-//        fieldAPINames.add("Last_Name");
-//        query.setFields(fieldAPINames);
+        List<String> fieldAPINames = new ArrayList<String>();
+
+        if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
+//            fieldAPINames.add("Id");
+            fieldAPINames.add("First_Name");
+            fieldAPINames.add("Last_Name");
+            fieldAPINames.add("Full_Name");
+            fieldAPINames.add("Account_Name");
+            fieldAPINames.add("Email");
+        } else {
+//            fieldAPINames.add("Id");
+            fieldAPINames.add("Account_Name");
+            fieldAPINames.add("Europeana_org_ID");
+        }
+
+        query.setFields(fieldAPINames);
         query.setPage(1);
 
-
         bodyWrapper.setQuery(query);
-        // requestWrapper.setFileType(new Choice<String>("ics"));
 
         APIResponse<ActionHandler> response = bulkReadOperations.createBulkReadJob(bodyWrapper);
         if (response != null) {
