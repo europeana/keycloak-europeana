@@ -77,7 +77,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
                 try {
                     accountsJob = zohoBulkJob.ZohoBulkCreateJob("Accounts");
-                    Thread.sleep(4000);
+//                    Thread.sleep(4000);
                     contactsJob = zohoBulkJob.ZohoBulkCreateJob("Contacts");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -86,10 +86,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 }
                 ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
                 // allow some time for the job to run
-                Thread.sleep(10000);
+//                Thread.sleep(10000);
                 try {
                     createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(accountsJob)));
-                    Thread.sleep(10000);
+//                    Thread.sleep(10000);
                     createContacts(zohoBulkDownload.downloadResult(Long.valueOf(contactsJob)));
                     if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                         synchroniseContacts();

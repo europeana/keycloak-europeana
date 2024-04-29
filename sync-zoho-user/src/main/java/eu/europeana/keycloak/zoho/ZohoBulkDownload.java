@@ -3,7 +3,10 @@ package eu.europeana.keycloak.zoho;
 import com.zoho.crm.api.bulkread.APIException;
 import com.zoho.crm.api.bulkread.BulkReadOperations;
 import com.zoho.crm.api.bulkread.FileBodyWrapper;
+import com.zoho.crm.api.bulkread.JobDetail;
 import com.zoho.crm.api.bulkread.ResponseHandler;
+import com.zoho.crm.api.bulkread.ResponseWrapper;
+import com.zoho.crm.api.exception.SDKException;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Model;
 import com.zoho.crm.api.util.StreamWrapper;
@@ -16,20 +19,54 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by luthien on 22/04/2024.
  */
 public class ZohoBulkDownload {
 
+    private final static String COMPLETED = "COMPLETED";
+
     public String downloadResult(Long jobId) throws Exception {
+        String jobStatus = null;
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
+        int maxLoops = 20;
+        int loops = 0;
+        while (loops < maxLoops) {
+            APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
+            if (response != null) {
+                if (response.isExpected()) {
+                    ResponseHandler responseHandler = response.getObject();
+                    if (responseHandler instanceof ResponseWrapper){
+                        ResponseWrapper responseWrapper = (ResponseWrapper) responseHandler;
+                        List<JobDetail> jobDetails      = responseWrapper.getData();
+                        for (JobDetail jobDetail : jobDetails){
+                            if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
+                                return downloadCompleted(jobId);
+                            }
+                        }
+                    }
+
+                }
+            }
+            loops ++;
+            Thread.sleep(1000);
+        }
+        return "";
+    }
+
+    private String downloadCompleted(Long jobId) throws Exception {
+        String jobStatus = null;
+        BulkReadOperations           bulkReadOperations = new BulkReadOperations();
+
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
             System.out.println("Status Code: " + response.getStatusCode());
