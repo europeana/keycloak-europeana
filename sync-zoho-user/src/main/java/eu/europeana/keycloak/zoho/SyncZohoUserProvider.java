@@ -29,10 +29,6 @@ import org.keycloak.utils.StringUtil;
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG         = Logger.getLogger(SyncZohoUserProvider.class);
-    private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
-    private static final String SUCCESS_MSG = "Success";
-    private static final String FAIL_MSG    = "Failure";
-    private static final String USERDEL_MSG = " were synchronised";
 
     private final KeycloakSession session;
     private final RealmModel      realm;
