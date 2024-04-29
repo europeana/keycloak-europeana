@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.nio.file.Paths;
@@ -27,12 +28,14 @@ import java.util.Arrays;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.logging.Logger;
 
 /**
  * Created by luthien on 22/04/2024.
  */
 public class ZohoBulkDownload {
 
+    private static final Logger LOG = Logger.getLogger(ZohoBulkDownload.class);
     private final static String COMPLETED = "COMPLETED";
 
     public String downloadResult(Long jobId) throws Exception {
@@ -58,6 +61,7 @@ public class ZohoBulkDownload {
                 }
             }
             loops ++;
+            LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
             Thread.sleep(1000);
         }
         return "";
@@ -71,7 +75,7 @@ public class ZohoBulkDownload {
         if (response != null) {
             System.out.println("Status Code: " + response.getStatusCode());
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
-                System.out.println(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
+                LOG.error(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
                 return "";
             }
             if (response.isExpected()) {
@@ -86,27 +90,21 @@ public class ZohoBulkDownload {
                         FileUtils.copyInputStreamToFile(inputStream, file);
                         return unZipFile(file.getCanonicalPath());
                     } catch (Exception e) {
-                        System.out.println("Balen.");
+                        LOG.error("Error downloading bulk job: " + e.getMessage());
                     }
                     inputStream.close();
                 } else if (responseHandler instanceof APIException) {
                     APIException exception = (APIException) responseHandler;
-                    System.out.println("Status: " + exception.getStatus().getValue());
-                    System.out.println("Code: " + exception.getCode().getValue());
-                    System.out.println("Details: ");
-                    for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                        System.out.println(entry.getKey() + ": " + entry.getValue());
+                    LOG.error("Status: " + exception.getStatus().getValue());
+                    LOG.error("Code: " + exception.getCode().getValue());
+                    LOG.error("Details: ");
+                    for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
+                        LOG.error(entry.getKey() + ": " + entry.getValue());
                     }
-                    System.out.println("Message: " + exception.getMessage());
+                    LOG.error("Error downloading bulk job: " + exception.getMessage());
                 }
             } else {
-                Model                     responseObject = response.getModel();
-                Class<? extends Model>    clas           = responseObject.getClass();
-                java.lang.reflect.Field[] fields         = clas.getDeclaredFields();
-                for (java.lang.reflect.Field field : fields) {
-                    field.setAccessible(true);
-                    System.out.println(field.getName() + ":" + field.get(responseObject));
-                }
+                LOG.error("No usable response received");
             }
         }
         return "";
@@ -155,12 +153,12 @@ public class ZohoBulkDownload {
                         Files.deleteIfExists(zipFilePath);
                         return unzippedFile.getCanonicalPath();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOG.error("Error unzipping bulk job file:" + e.getMessage());
                     }
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error("IOException occurred:" + e.getMessage());
         }
         return null;
     }

@@ -1,9 +1,12 @@
 package eu.europeana.keycloak.zoho;
 
+import com.opencsv.bean.CsvToBeanBuilder;
 import eu.europeana.api.common.zoho.ZohoConnect;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.ws.rs.DefaultValue;
@@ -11,7 +14,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
@@ -20,27 +22,23 @@ import org.keycloak.models.UserManager;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.utils.StringUtil;
-import com.opencsv.bean.CsvToBeanBuilder;
-
-import java.io.FileReader;
-import java.util.List;
 
 /**
  * Created by luthien on 14/11/2022.
  */
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
-    private static final Logger LOG        = Logger.getLogger(SyncZohoUserProvider.class);
-    private static final String LOG_PREFIX = "KEYCLOAK_EVENT:";
+    private static final Logger LOG         = Logger.getLogger(SyncZohoUserProvider.class);
+    private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
     private static final String SUCCESS_MSG = "Success";
-    private static final String FAIL_MSG = "Failure";
+    private static final String FAIL_MSG    = "Failure";
     private static final String USERDEL_MSG = " were synchronised";
 
     private final KeycloakSession session;
     private final RealmModel      realm;
     private final UserProvider    userProvider;
-    private final UserManager  userManager;
-    private final ZohoConnect  zohoConnect = new ZohoConnect();
+    private final UserManager     userManager;
+    private final ZohoConnect     zohoConnect = new ZohoConnect();
 
     private List<Account> accounts;
     private List<Contact> contacts;
@@ -64,51 +62,37 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
      *
      * @return String (completed message)
      */
+
+
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-        public String zohoSync(
-        @DefaultValue("") @QueryParam("job") String job) throws InterruptedException {
+    public String zohoSync(
+        @DefaultValue("1") @QueryParam("days") int lastChangeDaysAgo) throws InterruptedException {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
 
-        if (zohoConnect.getOrCreateAccessToZoho()){
-            if (StringUtil.isBlank(job)){
-                ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
-                try {
-                    accountsJob = zohoBulkJob.ZohoBulkCreateJob("Accounts");
-//                    Thread.sleep(4000);
-                    contactsJob = zohoBulkJob.ZohoBulkCreateJob("Contacts");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-                    return "Error creating bulk job.";
+        if (zohoConnect.getOrCreateAccessToZoho()) {
+            ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
+            try {
+                accountsJob = zohoBulkJob.ZohoBulkCreateJob("Accounts");
+                contactsJob = zohoBulkJob.ZohoBulkCreateJob("Contacts");
+            } catch (Exception e) {
+                e.printStackTrace();
+                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                return "Error creating bulk job.";
+            }
+            ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
+            try {
+                createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(accountsJob)));
+                createContacts(zohoBulkDownload.downloadResult(Long.valueOf(contactsJob)));
+                if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
+                    synchroniseContacts();
                 }
-                ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
-                // allow some time for the job to run
-//                Thread.sleep(10000);
-                try {
-                    createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(accountsJob)));
-//                    Thread.sleep(10000);
-                    createContacts(zohoBulkDownload.downloadResult(Long.valueOf(contactsJob)));
-                    if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                        synchroniseContacts();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-                    return "Error downloading bulk job.";
-                }
-
-            } else {
-                ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
-                try {
-                    createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(job)));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
-                    return "Error downloading bulk job.";
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                return "Error downloading bulk job.";
             }
         }
         return "Done.";
@@ -134,14 +118,15 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         Files.deleteIfExists(Paths.get(pathToContactsCsv));
     }
 
-    private void synchroniseContacts(){
-        for (Account account : accounts){
-            instituteMap.put(account.getID(), new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
+    private void synchroniseContacts() {
+        for (Account account : accounts) {
+            instituteMap.put(account.getID(),
+                             new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
 
         for (Contact contact : contacts) {
-            if (StringUtils.isNotBlank(contact.getAccountID())){
-                if (instituteMap.get(contact.getAccountID()) != null){
+            if (StringUtils.isNotBlank(contact.getAccountID())) {
+                if (instituteMap.get(contact.getAccountID()) != null) {
                     System.out.println(contact.getEmail() + " affiliated with " +
                                        instituteMap.get(contact.getAccountID()).getAccountName() + "\n" +
                                        instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
@@ -151,29 +136,32 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
     }
 
-    private void lookupUserModel(Map<String, String> results, int pages){
-        int usersNotInKeycloak = 0;
-        int usersInKeycloak = 0;
+    private void lookupUserModel(Map<String, String> results, int pages) {
+        int usersNotInKeycloak    = 0;
+        int usersInKeycloak       = 0;
         int userInKCAndAffiliated = 0;
-        int notAffiliated = 0;
-        for (Entry<String,String> contactAffiliation : results.entrySet()){
-            if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null){
+        int notAffiliated         = 0;
+        for (Entry<String, String> contactAffiliation : results.entrySet()) {
+            if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null) {
                 LOG.info(contactAffiliation.getKey() + " NOT in KC");
-                usersNotInKeycloak ++;
+                usersNotInKeycloak++;
             } else {
-                usersInKeycloak ++;
-                if (StringUtil.isNotBlank(contactAffiliation.getValue())){
-                    LOG.info(contactAffiliation.getKey() + " in KC and affiliated with " + contactAffiliation.getValue());
-                    userInKCAndAffiliated ++;
+                usersInKeycloak++;
+                if (StringUtil.isNotBlank(contactAffiliation.getValue())) {
+                    LOG.info(
+                        contactAffiliation.getKey() + " in KC and affiliated with " + contactAffiliation.getValue());
+                    userInKCAndAffiliated++;
                 } else {
                     LOG.info(contactAffiliation.getKey() + " in KC but not affiliated");
-                    notAffiliated ++;
+                    notAffiliated++;
                 }
             }
 
         }
-        LOG.info("Summary: in " + pages + " pages, " + results.size() + " contacts with an Institute in Zoho: " + usersNotInKeycloak + " NOT in Keycloak "
-                 + usersInKeycloak + " in Keycloak; of those, " + userInKCAndAffiliated + " are affiliated, " + notAffiliated + "are not.");
+        LOG.info("Summary: in " + pages + " pages, " + results.size() + " contacts with an Institute in Zoho: " +
+                 usersNotInKeycloak + " NOT in Keycloak "
+                 + usersInKeycloak + " in Keycloak; of those, " + userInKCAndAffiliated + " are affiliated, " +
+                 notAffiliated + "are not.");
     }
 
     @Override
@@ -181,19 +169,20 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     public class Institute4Hash {
+
         private String accountName;
         private String europeanaOrgID;
 
-        public Institute4Hash(String aName, String eID){
-            accountName = aName;
+        public Institute4Hash(String aName, String eID) {
+            accountName    = aName;
             europeanaOrgID = eID;
         }
 
-        public String getAccountName(){
+        public String getAccountName() {
             return accountName;
         }
 
-        public String getEuropeanaOrgID(){
+        public String getEuropeanaOrgID() {
             return europeanaOrgID;
         }
     }

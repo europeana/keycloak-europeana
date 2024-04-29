@@ -13,18 +13,21 @@ import com.zoho.crm.api.modules.MinifiedModule;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.Choice;
 import com.zoho.crm.api.util.Model;
+import eu.europeana.api.common.zoho.ZohoConnect;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.logging.Logger;
 import org.keycloak.utils.StringUtil;
 
 /**
  * Created by luthien on 22/04/2024.
  */
 public class ZohoBulkJob {
+    private static final Logger LOG = Logger.getLogger(ZohoBulkJob.class);
 
     private static final String CONTACTS = "Contacts";
     private static final String ACCOUNTS = "Accounts";
@@ -33,7 +36,6 @@ public class ZohoBulkJob {
     public String ZohoBulkCreateJob(String moduleAPIName) throws Exception {
 
         String jobID = "";
-
         BulkReadOperations bulkReadOperations = new BulkReadOperations();
         BodyWrapper        bodyWrapper        = new BodyWrapper();
         MinifiedModule     module             = new MinifiedModule();
@@ -44,14 +46,12 @@ public class ZohoBulkJob {
         List<String> fieldAPINames = new ArrayList<String>();
 
         if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
-//            fieldAPINames.add("Id");
             fieldAPINames.add("First_Name");
             fieldAPINames.add("Last_Name");
             fieldAPINames.add("Full_Name");
             fieldAPINames.add("Account_Name");
             fieldAPINames.add("Email");
         } else {
-//            fieldAPINames.add("Id");
             fieldAPINames.add("Account_Name");
             fieldAPINames.add("Europeana_org_ID");
         }
@@ -63,7 +63,6 @@ public class ZohoBulkJob {
 
         APIResponse<ActionHandler> response = bulkReadOperations.createBulkReadJob(bodyWrapper);
         if (response != null) {
-            System.out.println("Status Code: " + response.getStatusCode());
             if (response.isExpected()) {
                 ActionHandler actionHandler = response.getObject();
                 if (actionHandler instanceof ActionWrapper) {
@@ -73,53 +72,40 @@ public class ZohoBulkJob {
                     for (ActionResponse actionResponse : actionResponses) {
                         if (actionResponse instanceof SuccessResponse) {
                             SuccessResponse successResponse = (SuccessResponse) actionResponse;
-                            System.out.println("Status: " + successResponse.getStatus().getValue());
-                            System.out.println("Code: " + successResponse.getCode().getValue());
-                            System.out.println("Details: ");
                             for (Entry<String, Object> entry : successResponse.getDetails().entrySet()) {
-                                System.out.println(entry.getKey() + ": " + entry.getValue());
                                 if (entry.getKey().equalsIgnoreCase("id")){
                                     jobID = entry.getValue().toString();
                                 }
                             }
-                            System.out.println("Message: " + successResponse.getMessage().getValue());
+                            LOG.info("Message: " + successResponse.getMessage().getValue());
                             return jobID;
 
                         } else if (actionResponse instanceof APIException) {
-
                             APIException exception = (APIException) actionResponse;
-                            System.out.println("Status: " + exception.getStatus().getValue());
-                            System.out.println("Code: " + exception.getCode().getValue());
-                            System.out.println("Details: ");
+                            LOG.error("Status: " + exception.getStatus().getValue());
+                            LOG.error("Code: " + exception.getCode().getValue());
+                            LOG.error("Details: ");
                             for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                                System.out.println(entry.getKey() + ": " + entry.getValue());
+                                LOG.error(entry.getKey() + ": " + entry.getValue());
                             }
-                            System.out.println("Message: " + exception.getMessage());
+                            LOG.error("Error occurred creating bulk job: " + exception.getMessage());
 
                         }
                     }
                 } else if (actionHandler instanceof APIException) {
                     APIException exception = (APIException) actionHandler;
-                    System.out.println("Status: " + exception.getStatus().getValue());
-                    System.out.println("Code: " + exception.getCode().getValue());
-                    System.out.println("Details: ");
+                    LOG.error("Status: " + exception.getStatus().getValue());
+                    LOG.error("Code: " + exception.getCode().getValue());
+                    LOG.error("Details: ");
                     for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                        System.out.println(entry.getKey() + ": " + entry.getValue());
+                        LOG.error(entry.getKey() + ": " + entry.getValue());
                     }
-                    System.out.println("Message: " + exception.getMessage());
+                    LOG.error("Error occurred creating bulk job: " + exception.getMessage());
                 }
             } else {
-                Model                  responseObject = response.getModel();
-                Class<? extends Model> clas           = responseObject.getClass();
-                Field[]                fields         = clas.getDeclaredFields();
-                for (Field field : fields) {
-                    field.setAccessible(true);
-                    System.out.println(field.getName() + ":" + field.get(responseObject));
-                }
+                LOG.error("No usable response received");
             }
         }
         return jobID;
     }
-
-
 }
