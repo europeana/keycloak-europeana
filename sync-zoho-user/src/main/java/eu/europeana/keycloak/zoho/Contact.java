@@ -1,6 +1,8 @@
 package eu.europeana.keycloak.zoho;
 
 import com.opencsv.bean.CsvBindByPosition;
+import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 
 
 /**
@@ -25,6 +27,9 @@ public class Contact {
 
     @CsvBindByPosition(position = 5)
     private String email;
+
+    @CsvBindByPosition(position = 6)
+    private String modifiedTime;
 
     public String getID() {
         return ID;
@@ -73,4 +78,14 @@ public class Contact {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public OffsetDateTime getModifiedTime(){
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
+    }
+
+    public void setModifiedTime(String modifiedTime){
+        this.modifiedTime = modifiedTime;
+    }
+
 }

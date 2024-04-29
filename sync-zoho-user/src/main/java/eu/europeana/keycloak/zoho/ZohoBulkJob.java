@@ -56,9 +56,9 @@ public class ZohoBulkJob {
             fieldAPINames.add("Europeana_org_ID");
         }
 
+        fieldAPINames.add("Modified_Time");
         query.setFields(fieldAPINames);
         query.setPage(1);
-
         bodyWrapper.setQuery(query);
 
         APIResponse<ActionHandler> response = bulkReadOperations.createBulkReadJob(bodyWrapper);

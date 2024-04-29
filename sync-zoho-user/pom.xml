@@ -16,19 +16,17 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javax.version>1.1.4</javax.version>
     <jboss.logging.version>3.4.1.Final</jboss.logging.version>
-<!--    <api.commons.version>0.3.23-SNAPSHOT</api.commons.version>-->
     <zohocrmsdk.version>2.0.0</zohocrmsdk.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpcore.version>4.4.16</httpcore.version>
     <httpmime.version>4.5.14</httpmime.version>
     <json.version>20240205</json.version>
-    <mysql-connector-j.version>8.3.0</mysql-connector-j.version>
+<!--    <mysql-connector-j.version>8.3.0</mysql-connector-j.version>-->
     <opencsv.version>5.9</opencsv.version>
     <commons-io.version>2.16.1</commons-io.version>
     <commons-compress.version>1.26.1</commons-compress.version>
     <commons-lang3.version>3.14.0</commons-lang3.version>
     <commons-logging.version>1.3.0</commons-logging.version>
-    <opencsv.version>5.9</opencsv.version>
     <commons-beanutils.version>1.9.4</commons-beanutils.version>
     <commons-text.version>1.12.0</commons-text.version>
     <commons-collections4.version>4.5.0-M1</commons-collections4.version>
@@ -168,42 +166,11 @@
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-    <dependency>
-      <groupId>com.mysql</groupId>
-      <artifactId>mysql-connector-j</artifactId>
-      <version>${mysql-connector-j.version}</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/com.opencsv/opencsv -->
-    <dependency>
-      <groupId>com.opencsv</groupId>
-      <artifactId>opencsv</artifactId>
-      <version>${opencsv.version}</version>
-    </dependency>
-
-
 <!--    <dependency>-->
-<!--      <groupId>javax.json</groupId>-->
-<!--      <artifactId>javax.json-api</artifactId>-->
-<!--      <version>${javax.version}</version>-->
-<!--      <scope>provided</scope>-->
+<!--      <groupId>com.mysql</groupId>-->
+<!--      <artifactId>mysql-connector-j</artifactId>-->
+<!--      <version>${mysql-connector-j.version}</version>-->
 <!--    </dependency>-->
-
-
-    <!-- https://artifactory.eanadev.org/artifactory/webapp/#/artifacts/browse/tree/General/ext-release-local/com/zoho/crm/zohocrmsdk-6-0/1.0.0/ -->
-<!--    <dependency>-->
-<!--      <groupId>com.zoho.crm</groupId>-->
-<!--      <artifactId>zohocrm-java-sdk-6-0</artifactId>-->
-<!--      <version>${zohocrmsdk.version}</version>-->
-<!--    </dependency>-->
-
-
-<!--    <dependency>-->
-<!--      <groupId>eu.europeana.api.commons</groupId>-->
-<!--      <artifactId>commons-api-services</artifactId>-->
-<!--      <version>${api.commons.version}</version>-->
-<!--    </dependency>-->
-
   </dependencies>
 
   <build>
@@ -327,13 +294,13 @@
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
-            <artifactItem>
-              <groupId>com.mysql</groupId>
-              <artifactId>mysql-connector-j</artifactId>
-              <version>${mysql-connector-j.version}</version>
-              <type>jar</type>
-              <overWrite>true</overWrite>
-            </artifactItem>
+<!--            <artifactItem>-->
+<!--              <groupId>com.mysql</groupId>-->
+<!--              <artifactId>mysql-connector-j</artifactId>-->
+<!--              <version>${mysql-connector-j.version}</version>-->
+<!--              <type>jar</type>-->
+<!--              <overWrite>true</overWrite>-->
+<!--            </artifactItem>-->
             <artifactItem>
               <groupId>com.opencsv</groupId>
               <artifactId>opencsv</artifactId>
