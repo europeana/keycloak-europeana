@@ -5,10 +5,10 @@ import eu.europeana.api.common.zoho.ZohoConnect;
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
@@ -19,16 +19,16 @@ import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserManager;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.utils.StringUtil;
 
 /**
  * Created by luthien on 14/11/2022.
  */
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
-    private static final Logger LOG         = Logger.getLogger(SyncZohoUserProvider.class);
+    private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
     private final KeycloakSession session;
     private final RealmModel      realm;
@@ -38,7 +38,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private List<Account> accounts;
     private List<Contact> contacts;
-    HashMap<String, Institute4Hash> instituteMap = new HashMap<>();
+    HashMap<String, Institute4Hash> instituteMap      = new HashMap<>();
+    HashMap<String, String>         affiliatedUserMap = new HashMap<>();
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
@@ -63,27 +64,28 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(
-        @DefaultValue("1") @QueryParam("days") int lastChangeDaysAgo) throws InterruptedException {
+        @DefaultValue("1") @QueryParam("days") int days) throws InterruptedException {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
-            ZohoBulkJob zohoBulkJob = new ZohoBulkJob();
+            ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
             try {
-                accountsJob = zohoBulkJob.ZohoBulkCreateJob("Accounts");
-                contactsJob = zohoBulkJob.ZohoBulkCreateJob("Contacts");
+                accountsJob = zohoBatchJob.ZohoBulkCreateJob("Accounts");
+                contactsJob = zohoBatchJob.ZohoBulkCreateJob("Contacts");
             } catch (Exception e) {
                 e.printStackTrace();
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
             }
-            ZohoBulkDownload zohoBulkDownload = new ZohoBulkDownload();
+            ZohoBatchDownload zohoBatchDownload = new ZohoBatchDownload();
             try {
-                createAccounts(zohoBulkDownload.downloadResult(Long.valueOf(accountsJob)));
-                createContacts(zohoBulkDownload.downloadResult(Long.valueOf(contactsJob)));
+                createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
+                createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                    synchroniseContacts();
+                    synchroniseContacts(days);
+                    updateKCUsers();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -114,50 +116,43 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         Files.deleteIfExists(Paths.get(pathToContactsCsv));
     }
 
-    private void synchroniseContacts() {
+    private void synchroniseContacts(int days) {
+        OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
+        String         affiliation;
         for (Account account : accounts) {
             instituteMap.put(account.getID(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
 
         for (Contact contact : contacts) {
-            if (StringUtils.isNotBlank(contact.getAccountID())) {
+            String msg = null;
+            affiliation = null;
+            if (StringUtils.isNotBlank(contact.getAccountID()) && contact.getModifiedTime().isAfter(toThisTimeAgo)) {
                 if (instituteMap.get(contact.getAccountID()) != null) {
-                    System.out.println(contact.getEmail() + " affiliated with " +
-                                       instituteMap.get(contact.getAccountID()).getAccountName() + "\n" +
-                                       instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+                    affiliation = instituteMap.get(contact.getAccountID()).getEuropeanaOrgID();
+                    if (StringUtils.isNotBlank(affiliation)) {
+                        affiliatedUserMap.put(contact.getEmail(), affiliation);
+                    }
                 }
             }
-
         }
+        LOG.info(affiliatedUserMap.size() + " contacts records with affiliated Europeana org.ID were updated in the past " + days + " days.");
     }
 
-    private void lookupUserModel(Map<String, String> results, int pages) {
-        int usersNotInKeycloak    = 0;
-        int usersInKeycloak       = 0;
-        int userInKCAndAffiliated = 0;
-        int notAffiliated         = 0;
-        for (Entry<String, String> contactAffiliation : results.entrySet()) {
-            if (userProvider.getUserByEmail(realm, contactAffiliation.getKey()) == null) {
-                LOG.info(contactAffiliation.getKey() + " NOT in KC");
-                usersNotInKeycloak++;
-            } else {
-                usersInKeycloak++;
-                if (StringUtil.isNotBlank(contactAffiliation.getValue())) {
-                    LOG.info(
-                        contactAffiliation.getKey() + " in KC and affiliated with " + contactAffiliation.getValue());
-                    userInKCAndAffiliated++;
-                } else {
-                    LOG.info(contactAffiliation.getKey() + " in KC but not affiliated");
-                    notAffiliated++;
-                }
-            }
+    private void updateKCUsers() {
+        int updated = 0;
+        LOG.info("Checking if updated contacts exist in Keycloak ...");
+        for (Map.Entry<String, String> affiliatedUser : affiliatedUserMap.entrySet()) {
 
+            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) == null) {
+            } else {
+                UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
+                user.setSingleAttribute("affiliation", affiliatedUser.getValue());
+                updated ++;
+                LOG.info(affiliatedUser.getKey() + " updated with affiliation " + affiliatedUser.getValue());
+            }
         }
-        LOG.info("Summary: in " + pages + " pages, " + results.size() + " contacts with an Institute in Zoho: " +
-                 usersNotInKeycloak + " NOT in Keycloak "
-                 + usersInKeycloak + " in Keycloak; of those, " + userInKCAndAffiliated + " are affiliated, " +
-                 notAffiliated + "are not.");
+        LOG.info(updated + " users were found in Keycloak and had their affiliation updated.");
     }
 
     @Override

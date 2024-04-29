@@ -6,28 +6,21 @@ import com.zoho.crm.api.bulkread.ActionResponse;
 import com.zoho.crm.api.bulkread.ActionWrapper;
 import com.zoho.crm.api.bulkread.BodyWrapper;
 import com.zoho.crm.api.bulkread.BulkReadOperations;
-import com.zoho.crm.api.bulkread.CallBack;
 import com.zoho.crm.api.bulkread.Query;
 import com.zoho.crm.api.bulkread.SuccessResponse;
 import com.zoho.crm.api.modules.MinifiedModule;
 import com.zoho.crm.api.util.APIResponse;
-import com.zoho.crm.api.util.Choice;
-import com.zoho.crm.api.util.Model;
-import eu.europeana.api.common.zoho.ZohoConnect;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
-import org.keycloak.utils.StringUtil;
 
 /**
  * Created by luthien on 22/04/2024.
  */
-public class ZohoBulkJob {
-    private static final Logger LOG = Logger.getLogger(ZohoBulkJob.class);
+public class ZohoBatchJob {
+    private static final Logger LOG = Logger.getLogger(ZohoBatchJob.class);
 
     private static final String CONTACTS = "Contacts";
     private static final String ACCOUNTS = "Accounts";
@@ -77,7 +70,7 @@ public class ZohoBulkJob {
                                     jobID = entry.getValue().toString();
                                 }
                             }
-                            LOG.info("Message: " + successResponse.getMessage().getValue());
+                            LOG.info(moduleAPIName + " batch download job " + successResponse.getMessage().getValue().toLowerCase());
                             return jobID;
 
                         } else if (actionResponse instanceof APIException) {

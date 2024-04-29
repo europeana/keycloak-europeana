@@ -7,8 +7,6 @@ package eu.europeana.api.common.zoho;
  */
 public class ZohoAccessConfiguration {
 
-
-
   static final String ZOHO_USER_NAME = System.getenv("ZOHO_USER_NAME");
   static final String ZOHO_CLIENT_ID = System.getenv("ZOHO_CLIENT_ID");
   static final String ZOHO_CLIENT_SECRET = System.getenv("ZOHO_CLIENT_SECRET");

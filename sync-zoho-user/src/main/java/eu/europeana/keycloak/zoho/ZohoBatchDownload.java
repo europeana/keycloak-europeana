@@ -6,13 +6,11 @@ import com.zoho.crm.api.bulkread.FileBodyWrapper;
 import com.zoho.crm.api.bulkread.JobDetail;
 import com.zoho.crm.api.bulkread.ResponseHandler;
 import com.zoho.crm.api.bulkread.ResponseWrapper;
-import com.zoho.crm.api.exception.SDKException;
 import com.zoho.crm.api.util.APIResponse;
-import com.zoho.crm.api.util.Model;
 import com.zoho.crm.api.util.StreamWrapper;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.*;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -25,7 +23,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
@@ -33,10 +30,10 @@ import org.jboss.logging.Logger;
 /**
  * Created by luthien on 22/04/2024.
  */
-public class ZohoBulkDownload {
+public class ZohoBatchDownload {
 
-    private static final Logger LOG = Logger.getLogger(ZohoBulkDownload.class);
-    private final static String COMPLETED = "COMPLETED";
+    private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
+    private static final String COMPLETED = "COMPLETED";
 
     public String downloadResult(Long jobId) throws Exception {
         String jobStatus = null;
@@ -73,7 +70,6 @@ public class ZohoBulkDownload {
 
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
-            System.out.println("Status Code: " + response.getStatusCode());
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
                 LOG.error(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
                 return "";
@@ -90,7 +86,7 @@ public class ZohoBulkDownload {
                         FileUtils.copyInputStreamToFile(inputStream, file);
                         return unZipFile(file.getCanonicalPath());
                     } catch (Exception e) {
-                        LOG.error("Error downloading bulk job: " + e.getMessage());
+                        LOG.error("Error downloading batch job: " + e.getMessage());
                     }
                     inputStream.close();
                 } else if (responseHandler instanceof APIException) {
@@ -101,7 +97,7 @@ public class ZohoBulkDownload {
                     for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
                         LOG.error(entry.getKey() + ": " + entry.getValue());
                     }
-                    LOG.error("Error downloading bulk job: " + exception.getMessage());
+                    LOG.error("Error downloading batch job: " + exception.getMessage());
                 }
             } else {
                 LOG.error("No usable response received");
@@ -153,7 +149,7 @@ public class ZohoBulkDownload {
                         Files.deleteIfExists(zipFilePath);
                         return unzippedFile.getCanonicalPath();
                     } catch (Exception e) {
-                        LOG.error("Error unzipping bulk job file:" + e.getMessage());
+                        LOG.error("Error unzipping batch job file:" + e.getMessage());
                     }
                 }
             }

@@ -25,9 +25,7 @@ import org.jboss.logging.Logger;
 public class ZohoConnect {
 
 	private static final Logger LOG        = Logger.getLogger(ZohoConnect.class);
-	private static final String LOG_PREFIX = "ZOHO_CONNECT:";
-
-	private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
+    private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
 	private static ZohoInMemoryTokenStore tokenStore;
 
 	public ZohoConnect(){}
