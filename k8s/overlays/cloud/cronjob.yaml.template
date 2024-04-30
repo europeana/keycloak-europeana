@@ -30,7 +30,7 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: keycloakuser-cleanup-job
+  name: keycloakuser-zohosync-job
 spec:
   schedule: "${KEYCLOAKUSER_ZOHOSYNC_CRON_SCHEDULE}"
   suspend: ${SUSPEND_KEYCLOAKUSER_ZOHOSYNC}
