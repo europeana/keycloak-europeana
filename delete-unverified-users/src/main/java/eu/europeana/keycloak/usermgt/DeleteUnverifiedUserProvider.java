@@ -89,9 +89,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
+
             userRemoved = false;
             userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved) {
+                session.getTransactionManager().commit();
                 nrOfDeletedUsers++;
                 LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
             }
