@@ -92,10 +92,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             UserUuidDto           userUuidDto           = new UserUuidDto(user.getId(), user.getEmail());
             UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user,
                                                                                     userUuidDto);
-            session.getTransactionManager().enlistAfterCompletion(userDeleteTransaction);
+            session.getTransactionManager().enlistPrepare(userDeleteTransaction);
             nrOfDeletedUsers++;
 
-            LOG.info("#" + nrOfDeletedUsers + " - " + user.getUsername() + "scheduled for deletion");
+            LOG.info("#" + nrOfDeletedUsers + " - " + user.getUsername() + " scheduled for deletion");
         }
         if (nrOfDeletedUsers > 0) {
             LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
