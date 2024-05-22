@@ -26,7 +26,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG         = Logger.getLogger(DeleteUnverifiedUserProvider.class);
     private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
-    private static final String SUCCESS_MSG = " unverified user accounts were removed because their email addresses were not verified within ";
+    private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
     private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
 
     private static Map<String, String> EMAIL_NOT_VERIFIED;
@@ -92,8 +92,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             UserUuidDto           userUuidDto           = new UserUuidDto(user.getId(), user.getEmail());
             UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user,
                                                                                     userUuidDto);
-            session.getTransactionManager().enlistPrepare(userDeleteTransaction);
+            session.getTransactionManager().enlistAfterCompletion(userDeleteTransaction);
             nrOfDeletedUsers++;
+
+            LOG.info("#" + nrOfDeletedUsers + " - " + user.getUsername() + "scheduled for deletion");
         }
         if (nrOfDeletedUsers > 0) {
             LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");

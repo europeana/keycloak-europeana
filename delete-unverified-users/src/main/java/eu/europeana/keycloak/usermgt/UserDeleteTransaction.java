@@ -27,17 +27,12 @@ public class UserDeleteTransaction extends AbstractKeycloakTransaction {
 
     @Override
     protected void commitImpl() {
-        LOG.info("## User delete transaction ##");
-        LOG.info("-----------------------------------------------------------");
-        LOG.info(this.userUuidDto.toString());
-        LOG.info("-----------------------------------------------------------");
-
         try {
             boolean userRemoved = userProvider.removeUser(realm, user);
             if (userRemoved){
-                LOG.info("User " + user.getUsername() + ", email " + user.getEmail() + " has been removed");
+                LOG.info(user.getUsername() + " | " + user.getEmail() + " removed");
             } else {
-                LOG.error("User" + user.getUsername() + ", email " + user.getEmail() + " could NOT be removed");
+                LOG.error(user.getUsername() + " | " + user.getEmail() + " NOT removed");
             }
         } catch (Exception e) {
             throw new RuntimeException("## User delete transaction failed! ##", e);
