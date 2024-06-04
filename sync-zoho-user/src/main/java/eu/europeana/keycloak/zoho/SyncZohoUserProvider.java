@@ -15,6 +15,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -68,6 +74,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
+        int numberOfUsersUpdatedInKeycloak=0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
@@ -85,7 +92,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
-                    updateKCUsers();
+                    numberOfUsersUpdatedInKeycloak =updateKCUsers();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -93,7 +100,40 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
+        publishStatusReport(String.format("%s accounts in Zoho where compared against %s accounts in KeyCloak where the affiliation for %s accounts was changed or established.",affiliatedUserMap.size(),affiliatedUserMap.size(),numberOfUsersUpdatedInKeycloak));
         return "Done.";
+    }
+
+    private void publishStatusReport(String messsage) {
+        //this.session.getKeycloakSessionFactory().publish(new SyncCompletionEvent());
+        sendSlackHttpMessage(messsage);
+    }
+
+
+
+    private void sendSlackHttpMessage(String message) {
+        try {
+
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            LOG.info(" SLACK WEBHOOK :  "+System.getenv("SLACK_WEBHOOK"));
+            HttpPost httpPost = new HttpPost(System.getenv("SLACK_WEBHOOK"));
+            LOG.info(" Sending message :" + message);
+            StringEntity entity = new StringEntity(message);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+//            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+//                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+//                    LOG.info(" Successfully sent slack message ! "+ response.getStatusLine().getStatusCode());
+//                }
+//            } catch (Exception e) {
+//                LOG.info("Error sending message in Slack! " +e.getMessage());
+//            }
+        }
+        catch (Exception e){
+            LOG.info("Exception occurred while sending slack http message ! " +e.getMessage());
+        }
+
     }
 
     // skip the first line containing the CSV header
@@ -121,7 +161,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         String         affiliation;
         for (Account account : accounts) {
             instituteMap.put(account.getID(),
-                             new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
+                new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
 
         for (Contact contact : contacts) {
@@ -139,7 +179,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         LOG.info(affiliatedUserMap.size() + " contacts records with affiliated Europeana org.ID were updated in the past " + days + " days.");
     }
 
-    private void updateKCUsers() {
+    private int updateKCUsers() {
         int updated = 0;
         LOG.info("Checking if updated contacts exist in Keycloak ...");
         for (Map.Entry<String, String> affiliatedUser : affiliatedUserMap.entrySet()) {
@@ -153,6 +193,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             }
         }
         LOG.info(updated + " users were found in Keycloak and had their affiliation updated.");
+        return updated;
     }
 
     @Override
