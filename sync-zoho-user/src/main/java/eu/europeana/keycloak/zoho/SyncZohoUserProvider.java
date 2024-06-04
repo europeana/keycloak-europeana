@@ -102,7 +102,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
-        publishStatusReport(String.format("%s accounts in Zoho where compared against %s accounts in KeyCloak where the affiliation for %s accounts was changed or established.",affiliatedUserMap.size(),affiliatedUserMap.size(),numberOfUsersUpdatedInKeycloak));
+        String msg=String.format("{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where the affiliation for %s accounts was changed or established.\"}",affiliatedUserMap.size(),affiliatedUserMap.size(),numberOfUsersUpdatedInKeycloak);
+        publishStatusReport(msg);
         return "Done.";
     }
 
@@ -127,10 +128,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                        LOG.info(" Successfully sent slack message !" );
                    }
                }
-               catch (Exception e){
-                   LOG.error("Exception occurred while calling slack !! " +e.getMessage());
-               }
-
            }
            catch (IOException e){
                    LOG.error("Exception occurred while sending slack message !! " +e.getMessage());
