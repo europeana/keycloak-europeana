@@ -2,6 +2,7 @@ package eu.europeana.keycloak.zoho;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import eu.europeana.api.common.zoho.ZohoConnect;
+
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -14,6 +15,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
@@ -30,23 +32,22 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
-    private final KeycloakSession session;
-    private final RealmModel      realm;
-    private final UserProvider    userProvider;
-    private final UserManager     userManager;
-    private final ZohoConnect     zohoConnect = new ZohoConnect();
+    private final RealmModel realm;
+    private final UserProvider userProvider;
+    private final ZohoConnect zohoConnect = new ZohoConnect();
 
     private List<Account> accounts;
     private List<Contact> contacts;
-    HashMap<String, Institute4Hash> instituteMap      = new HashMap<>();
-    HashMap<String, String>         affiliatedUserMap = new HashMap<>();
+    HashMap<String, Institute4Hash> instituteMap = new HashMap<>();
+    HashMap<String, String> affiliatedUserMap = new HashMap<>();
 
-
+    /**
+     * Create a RealmResourceProvider instance to process Zoho updates
+     * @param session Keycloak session
+     */
     public SyncZohoUserProvider(KeycloakSession session) {
-        this.session      = session;
-        this.realm        = session.getContext().getRealm();
+        this.realm = session.getContext().getRealm();
         this.userProvider = session.users();
-        this.userManager  = new UserManager(session);
     }
 
     @Override
@@ -56,15 +57,14 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     /**
      * Retrieves users from Zoho
-     *
+     * @param days the add-on synchronises Zoho users that were last modified in the last number of days specified by this parameter
      * @return String (completed message)
+     * @throws InterruptedException  disabled because it did not seem to be thrown after all - remove this line if it is indeed not needed
      */
-
-
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(
-        @DefaultValue("1") @QueryParam("days") int days) throws InterruptedException {
+            @DefaultValue("1") @QueryParam("days") int days) {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
@@ -99,40 +99,38 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     // skip the first line containing the CSV header
     private void createAccounts(String pathToAccountsCsv) throws Exception {
         accounts = new CsvToBeanBuilder(new FileReader(pathToAccountsCsv))
-            .withType(Account.class)
-            .withSkipLines(1)
-            .build()
-            .parse();
+                .withType(Account.class)
+                .withSkipLines(1)
+                .build()
+                .parse();
         Files.deleteIfExists(Paths.get(pathToAccountsCsv));
     }
 
     // skip the first line containing the CSV header
     private void createContacts(String pathToContactsCsv) throws Exception {
         contacts = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
-            .withType(Contact.class)
-            .withSkipLines(1)
-            .build()
-            .parse();
+                .withType(Contact.class)
+                .withSkipLines(1)
+                .build()
+                .parse();
         Files.deleteIfExists(Paths.get(pathToContactsCsv));
     }
 
     private void synchroniseContacts(int days) {
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
-        String         affiliation;
+        String affiliation;
         for (Account account : accounts) {
             instituteMap.put(account.getID(),
-                             new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
+                    new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
 
         for (Contact contact : contacts) {
-            String msg = null;
-            affiliation = null;
-            if (StringUtils.isNotBlank(contact.getAccountID()) && contact.getModifiedTime().isAfter(toThisTimeAgo)) {
-                if (instituteMap.get(contact.getAccountID()) != null) {
-                    affiliation = instituteMap.get(contact.getAccountID()).getEuropeanaOrgID();
-                    if (StringUtils.isNotBlank(affiliation)) {
-                        affiliatedUserMap.put(contact.getEmail(), affiliation);
-                    }
+            if (StringUtils.isNotBlank(contact.getAccountID())
+                    && contact.getModifiedTime().isAfter(toThisTimeAgo)
+                    && instituteMap.get(contact.getAccountID()) != null) {
+                affiliation = instituteMap.get(contact.getAccountID()).getEuropeanaOrgID();
+                if (StringUtils.isNotBlank(affiliation)) {
+                    affiliatedUserMap.put(contact.getEmail(), affiliation);
                 }
             }
         }
@@ -144,11 +142,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         LOG.info("Checking if updated contacts exist in Keycloak ...");
         for (Map.Entry<String, String> affiliatedUser : affiliatedUserMap.entrySet()) {
 
-            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) == null) {
-            } else {
+            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) != null) {
                 UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
                 user.setSingleAttribute("affiliation", affiliatedUser.getValue());
-                updated ++;
+                updated++;
                 LOG.info(affiliatedUser.getKey() + " updated with affiliation " + affiliatedUser.getValue());
             }
         }
@@ -157,15 +154,24 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     @Override
     public void close() {
+        // overriding required
     }
 
+    /**
+     * container class to allow hashing on two values
+     */
     public class Institute4Hash {
 
         private String accountName;
         private String europeanaOrgID;
 
+        /**
+         *
+         * @param aName the Account Name
+         * @param eID the Europeana org ID
+         */
         public Institute4Hash(String aName, String eID) {
-            accountName    = aName;
+            accountName = aName;
             europeanaOrgID = eID;
         }
 

@@ -24,78 +24,85 @@ import org.jboss.logging.Logger;
  */
 public class ZohoConnect {
 
-	private static final Logger LOG        = Logger.getLogger(ZohoConnect.class);
+    private static final Logger LOG = Logger.getLogger(ZohoConnect.class);
     private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
-	private static ZohoInMemoryTokenStore tokenStore;
 
-	public ZohoConnect(){}
+    private ZohoInMemoryTokenStore tokenStore;
 
-	public boolean initialise() throws RuntimeException {
-		try {
+    public ZohoConnect() {
+        // empty constructor
+    }
 
-			com.zoho.api.logger.Logger zlogger = new com.zoho.api.logger.Logger.Builder()
-				.level(Levels.INFO)
-				.filePath("//opt//keycloak//java_sdk_log.log")
-				.build();
+    /**
+     * Initialises the Zoho connection
+     * @return boolean indicating success
+     * @throws RuntimeException if the setup failed
+     */
+    public boolean initialise() throws RuntimeException {
+        try {
 
-			UserSignature userSignature = new UserSignature(ZOHO_USER_NAME);
-			LOG.info("Connecting to ZOHO");
+            com.zoho.api.logger.Logger zlogger = new com.zoho.api.logger.Logger.Builder()
+                    .level(Levels.INFO)
+                    .filePath("//opt//keycloak//java_sdk_log.log")
+                    .build();
 
-//			tokenStore  = new ZohoInMemoryTokenStore();
+            UserSignature userSignature = new UserSignature(ZOHO_USER_NAME);
+            LOG.info("Connecting to ZOHO");
 
-			LOG.info("ZOHO client ID: " + ZOHO_CLIENT_ID);
-			LOG.info("ZOHO client secret: " + ZOHO_CLIENT_SECRET);
-			LOG.info("ZOHO refresh token: " + ZOHO_REFRESH_TOKEN);
-			LOG.info("ZOHO redirect URL: " + ZOHO_REDIRECT_URL);
-
-
-			Token token = new OAuthToken.Builder()
-				.userSignature(userSignature)
-				.clientID(ZOHO_CLIENT_ID)
-				.clientSecret(ZOHO_CLIENT_SECRET)
-				.refreshToken(ZOHO_REFRESH_TOKEN)
-				.redirectURL(ZOHO_REDIRECT_URL)
-				.build();
-
-			LOG.info("Token built");
-
-			SDKConfig sdkConfig = new SDKConfig.Builder()
-				.autoRefreshFields(false)
-				.pickListValidation(true)
-				.build();
-
-			LOG.info("SDK configured ...");
+            LOG.info("ZOHO client ID: " + ZOHO_CLIENT_ID);
+            LOG.info("ZOHO client secret: " + ZOHO_CLIENT_SECRET);
+            LOG.info("ZOHO refresh token: " + ZOHO_REFRESH_TOKEN);
+            LOG.info("ZOHO redirect URL: " + ZOHO_REDIRECT_URL);
 
 
-			new Initializer.Builder()
-				.environment(ENVIRONMENT)
-				.token(token)
-				.store(tokenStore)
-				.SDKConfig(sdkConfig)
-				.logger(zlogger)
-				.initialize();
+            Token token = new OAuthToken.Builder()
+                    .userSignature(userSignature)
+                    .clientID(ZOHO_CLIENT_ID)
+                    .clientSecret(ZOHO_CLIENT_SECRET)
+                    .refreshToken(ZOHO_REFRESH_TOKEN)
+                    .redirectURL(ZOHO_REDIRECT_URL)
+                    .build();
+
+            LOG.info("Token built");
+
+            SDKConfig sdkConfig = new SDKConfig.Builder()
+                    .autoRefreshFields(false)
+                    .pickListValidation(true)
+                    .build();
+
+            LOG.info("SDK configured ...");
 
 
-			LOG.info("... and initialised.");
+            new Initializer.Builder()
+                    .environment(ENVIRONMENT)
+                    .token(token)
+                    .store(tokenStore)
+                    .SDKConfig(sdkConfig)
+                    .logger(zlogger)
+                    .initialize();
 
-			return true;
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+            LOG.info("... and initialised.");
 
-	public boolean getOrCreateAccessToZoho() {
-		if (tokenStore != null) {
-			Token tokenById = tokenStore.findTokenById(ZOHO_USER_NAME);
-			if (tokenById != null && tokenById instanceof OAuthToken) {
-				LOG.info("Token Expires in : -" + ((OAuthToken) tokenById).getExpiresIn());
-			}
+            return true;
 
-		} else {
-			tokenStore = new ZohoInMemoryTokenStore();
-		}
-		return this.initialise();
-	}
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean getOrCreateAccessToZoho() {
+        if (tokenStore != null) {
+            Token tokenById = tokenStore.findTokenById(ZOHO_USER_NAME);
+            if (tokenById instanceof OAuthToken) {
+                LOG.info("Token Expires in : -" + ((OAuthToken) tokenById).getExpiresIn());
+            }
+
+        } else {
+            tokenStore = new ZohoInMemoryTokenStore();
+        }
+        return this.initialise();
+    }
 }

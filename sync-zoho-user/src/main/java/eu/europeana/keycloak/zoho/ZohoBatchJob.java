@@ -1,15 +1,10 @@
 package eu.europeana.keycloak.zoho;
 
-import com.zoho.crm.api.bulkread.APIException;
-import com.zoho.crm.api.bulkread.ActionHandler;
-import com.zoho.crm.api.bulkread.ActionResponse;
-import com.zoho.crm.api.bulkread.ActionWrapper;
-import com.zoho.crm.api.bulkread.BodyWrapper;
-import com.zoho.crm.api.bulkread.BulkReadOperations;
-import com.zoho.crm.api.bulkread.Query;
-import com.zoho.crm.api.bulkread.SuccessResponse;
+import com.zoho.crm.api.bulkread.*;
 import com.zoho.crm.api.modules.MinifiedModule;
 import com.zoho.crm.api.util.APIResponse;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -28,7 +23,6 @@ public class ZohoBatchJob {
 
     public String ZohoBulkCreateJob(String moduleAPIName) throws Exception {
 
-        String jobID = "";
         BulkReadOperations bulkReadOperations = new BulkReadOperations();
         BodyWrapper        bodyWrapper        = new BodyWrapper();
         MinifiedModule     module             = new MinifiedModule();
@@ -48,45 +42,35 @@ public class ZohoBatchJob {
             fieldAPINames.add("Account_Name");
             fieldAPINames.add("Europeana_org_ID");
         }
-
         fieldAPINames.add("Modified_Time");
         query.setFields(fieldAPINames);
         query.setPage(1);
         bodyWrapper.setQuery(query);
-
         APIResponse<ActionHandler> response = bulkReadOperations.createBulkReadJob(bodyWrapper);
-        if (response != null) {
-            if (response.isExpected()) {
-                ActionHandler actionHandler = response.getObject();
-                if (actionHandler instanceof ActionWrapper) {
-                    ActionWrapper        actionWrapper   = (ActionWrapper) actionHandler;
-                    List<ActionResponse> actionResponses = actionWrapper.getData();
+        if (response != null && response.isExpected()) {
+            return processAction(response, moduleAPIName);
+        } else {
+            LOG.error("No usable response received");
+        }
+        return "";
+    }
 
-                    for (ActionResponse actionResponse : actionResponses) {
-                        if (actionResponse instanceof SuccessResponse) {
-                            SuccessResponse successResponse = (SuccessResponse) actionResponse;
-                            for (Entry<String, Object> entry : successResponse.getDetails().entrySet()) {
-                                if (entry.getKey().equalsIgnoreCase("id")){
-                                    jobID = entry.getValue().toString();
-                                }
-                            }
-                            LOG.info(moduleAPIName + " batch download job " + successResponse.getMessage().getValue().toLowerCase());
-                            return jobID;
-
-                        } else if (actionResponse instanceof APIException) {
-                            APIException exception = (APIException) actionResponse;
-                            LOG.error("Status: " + exception.getStatus().getValue());
-                            LOG.error("Code: " + exception.getCode().getValue());
-                            LOG.error("Details: ");
-                            for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                                LOG.error(entry.getKey() + ": " + entry.getValue());
-                            }
-                            LOG.error("Error occurred creating bulk job: " + exception.getMessage());
-
+    private String processAction(APIResponse<ActionHandler> response, String moduleAPIName) throws IOException {
+        String jobID = "";
+        ActionHandler actionHandler = response.getObject();
+        if (actionHandler instanceof ActionWrapper) {
+            for (ActionResponse actionResponse : ((ActionWrapper) actionHandler).getData()) {
+                if (actionResponse instanceof SuccessResponse) {
+                    SuccessResponse successResponse = (SuccessResponse) actionResponse;
+                    for (Entry<String, Object> entry : successResponse.getDetails().entrySet()) {
+                        if (entry.getKey().equalsIgnoreCase("id")){
+                            jobID = entry.getValue().toString();
                         }
                     }
-                } else if (actionHandler instanceof APIException) {
-                    APIException exception = (APIException) actionHandler;
+                    LOG.info(moduleAPIName + " batch download job " + successResponse.getMessage().getValue().toLowerCase());
+                    return jobID;
+                } else if (actionResponse instanceof APIException) {
+                    APIException exception = (APIException) actionResponse;
                     LOG.error("Status: " + exception.getStatus().getValue());
                     LOG.error("Code: " + exception.getCode().getValue());
                     LOG.error("Details: ");
@@ -95,10 +79,18 @@ public class ZohoBatchJob {
                     }
                     LOG.error("Error occurred creating bulk job: " + exception.getMessage());
                 }
-            } else {
-                LOG.error("No usable response received");
             }
+        } else if (actionHandler instanceof APIException) {
+            APIException exception = (APIException) actionHandler;
+            LOG.error("Status: " + exception.getStatus().getValue());
+            LOG.error("Code: " + exception.getCode().getValue());
+            LOG.error("Details: ");
+            for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
+                LOG.error(entry.getKey() + ": " + entry.getValue());
+            }
+            LOG.error("Error occurred creating bulk job: " + exception.getMessage());
         }
-        return jobID;
+        return "";
     }
+
 }
