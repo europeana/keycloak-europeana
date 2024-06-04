@@ -3,6 +3,8 @@ package eu.europeana.keycloak.zoho;
 import com.opencsv.bean.CsvToBeanBuilder;
 import eu.europeana.api.common.zoho.ZohoConnect;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -106,33 +108,31 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private void publishStatusReport(String messsage) {
         //this.session.getKeycloakSessionFactory().publish(new SyncCompletionEvent());
-        sendSlackHttpMessage(messsage);
+        sendSlackMessageToConfiguredChannel(messsage);
     }
 
 
 
-    private void sendSlackHttpMessage(String message) {
-        try {
+    private void sendSlackMessageToConfiguredChannel(String message){
+           try {
+               HttpPost httpPost = new HttpPost(System.getenv("SLACK_WEBHOOK"));
+               StringEntity entity = new StringEntity(message);
+               httpPost.setEntity(entity);
+               httpPost.setHeader("Accept", "application/json");
+               httpPost.setHeader("Content-type", "application/json");
+               try (CloseableHttpClient httpClient = HttpClients.createDefault();
+                   CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                   if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                       LOG.info(" Successfully sent slack message ! " + response.getStatusLine()
+                           .getStatusCode());
+                   }
+               }
+           }
+           catch (IOException e){
+                   LOG.error("Exception occurred while sending slack message !! " +e.getMessage());
+           }
 
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            LOG.info(" SLACK WEBHOOK :  "+System.getenv("SLACK_WEBHOOK"));
-            HttpPost httpPost = new HttpPost(System.getenv("SLACK_WEBHOOK"));
-            LOG.info(" Sending message :" + message);
-            StringEntity entity = new StringEntity(message);
-            httpPost.setEntity(entity);
-            httpPost.setHeader("Accept", "application/json");
-            httpPost.setHeader("Content-type", "application/json");
-//            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-//                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-//                    LOG.info(" Successfully sent slack message ! "+ response.getStatusLine().getStatusCode());
-//                }
-//            } catch (Exception e) {
-//                LOG.info("Error sending message in Slack! " +e.getMessage());
-//            }
-        }
-        catch (Exception e){
-            LOG.info("Exception occurred while sending slack http message ! " +e.getMessage());
-        }
+
 
     }
 
