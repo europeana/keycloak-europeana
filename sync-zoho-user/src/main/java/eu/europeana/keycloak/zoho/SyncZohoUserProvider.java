@@ -122,18 +122,19 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                httpPost.setHeader("Content-type", "application/json");
                try (CloseableHttpClient httpClient = HttpClients.createDefault();
                    CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                   LOG.info("Received status " + response.getStatusLine().getStatusCode() + " while calling slack!!");
                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                       LOG.info(" Successfully sent slack message ! " + response.getStatusLine()
-                           .getStatusCode());
+                       LOG.info(" Successfully sent slack message !" );
                    }
                }
+               catch (Exception e){
+                   LOG.error("Exception occurred while calling slack !! " +e.getMessage());
+               }
+
            }
            catch (IOException e){
                    LOG.error("Exception occurred while sending slack message !! " +e.getMessage());
            }
-
-
-
     }
 
     // skip the first line containing the CSV header
