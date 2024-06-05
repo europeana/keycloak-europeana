@@ -24,6 +24,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
+import org.keycloak.email.DefaultEmailSenderProvider;
+import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserManager;
@@ -110,8 +112,23 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private void publishStatusReport(String messsage) {
         //this.session.getKeycloakSessionFactory().publish(new SyncCompletionEvent());
         sendSlackMessageToConfiguredChannel(messsage);
+        sendEmailToConfiguredSlackChannel(messsage);
     }
 
+    private void sendEmailToConfiguredSlackChannel(String message) {
+        try {
+            DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+            senderProvider.send(
+                realm.getSmtpConfig(),
+                "u0f3q1f4b5c8i4a6@europeana.slack.com",
+                "Sync completed Successfully",
+                 message, null
+            );
+            LOG.info("Successfully sent Email message to slack channel #api-exceptions !");
+        } catch (EmailException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     private void sendSlackMessageToConfiguredChannel(String message){
