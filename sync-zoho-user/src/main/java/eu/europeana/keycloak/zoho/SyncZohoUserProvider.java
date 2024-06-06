@@ -47,7 +47,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private List<Account> accounts;
     private List<Contact> contacts;
     HashMap<String, Institute4Hash> instituteMap      = new HashMap<>();
-    HashMap<String, String>         affiliatedUserMap = new HashMap<>();
+    HashMap<String, String> modifiedUserMap = new HashMap<>();
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
@@ -109,7 +109,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         return String.format(SYNC_REPORT_STATUS_MESSAGE,
             contacts.size(),
             userProvider.getUsersCount(realm),
-            affiliatedUserMap.size(),
+            modifiedUserMap.size(),
             numberOfUsersUpdatedInKeycloak);
     }
 
@@ -169,23 +169,24 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 //When zoho Modified Contact is associated to the Organization
                 if (StringUtils.isNotBlank(contact.getAccountID()) &&
                     instituteMap.get(contact.getAccountID()) != null) {
-                    affiliatedUserMap.put(contact.getEmail(), instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+                    modifiedUserMap.put(contact.getEmail(), instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
                 }
                 //When zoho Modified contact is  not associated to organization anymore
                 else if(StringUtils.isBlank(contact.getAccountID())){
-                    affiliatedUserMap.put(contact.getEmail(), null);
+                    modifiedUserMap.put(contact.getEmail(), null);
                 }
             }
         }
-        LOG.info(affiliatedUserMap.size() + " contacts records were updated in zoho in the past " + days + " days.");
+        LOG.info(
+            modifiedUserMap.size() + " contacts records were updated in zoho in the past " + days + " days.");
     }
 
     private int updateKCUsers() {
         int updated = 0;
         LOG.info("Checking if updated contacts exist in Keycloak ...");
-        for (Map.Entry<String, String> affiliatedUser : affiliatedUserMap.entrySet()) {
-            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) != null) {
-                UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
+        for (Map.Entry<String, String> affiliatedUser : modifiedUserMap.entrySet()) {
+            UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
+            if (user != null) {
                 String zohoOrgId = affiliatedUser.getValue();
                 //In case zoho orgID does not match with existing affiliation in keycloak then update the keycloak affiliation
                 String affiliationValue = user.getFirstAttribute("affiliation");
@@ -195,10 +196,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 if(isToUpdateAffiliation) {
                     user.setSingleAttribute("affiliation", zohoOrgId);
                     updated++;
-                    LOG.info(affiliatedUser.getKey() + " updated with affiliation " + zohoOrgId);
+                    LOG.info(affiliatedUser.getKey() + " affiliation updated from : " +affiliationValue+ " to "+ zohoOrgId);
                 }
-                else{
-                    LOG.info(affiliatedUser.getKey() + " is not updated . Zoho Org ID : " + zohoOrgId + " KeyCloak Affiliation value : " + affiliationValue);
+                else {
+                    LOG.info(affiliatedUser.getKey() + " will not be  updated");
                 }
 
             }
