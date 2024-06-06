@@ -4,7 +4,6 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import eu.europeana.api.common.zoho.ZohoConnect;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -24,8 +23,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
-import org.keycloak.email.DefaultEmailSenderProvider;
-import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserManager;
@@ -39,6 +36,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
+    public static final String SYNC_REPORT_STATUS_MESSAGE = "%s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.";
 
     private final KeycloakSession session;
     private final RealmModel      realm;
@@ -73,8 +71,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync(
-        @DefaultValue("1") @QueryParam("days") int days) throws InterruptedException {
+    public String zohoSync( @DefaultValue("1") @QueryParam("days") int days)  {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
@@ -104,32 +101,22 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
-        String msg=String.format("{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where the affiliation for %s accounts was changed or established.\"}",affiliatedUserMap.size(),affiliatedUserMap.size(),numberOfUsersUpdatedInKeycloak);
-        publishStatusReport(msg);
+        publishStatusReport(generateStatusReportMessage(numberOfUsersUpdatedInKeycloak));
         return "Done.";
     }
 
+    private String generateStatusReportMessage(int numberOfUsersUpdatedInKeycloak) {
+        return String.format(SYNC_REPORT_STATUS_MESSAGE,
+            contacts.size(),
+            userProvider.getUsersCount(realm),
+            affiliatedUserMap.size(),
+            numberOfUsersUpdatedInKeycloak);
+    }
+
     private void publishStatusReport(String messsage) {
-        //this.session.getKeycloakSessionFactory().publish(new SyncCompletionEvent());
-        sendSlackMessageToConfiguredChannel(messsage);
-        sendEmailToConfiguredSlackChannel(messsage);
+        LOG.info("Sending Slack Message : "+ messsage);
+       // sendSlackMessageToConfiguredChannel(messsage);
     }
-
-    private void sendEmailToConfiguredSlackChannel(String message) {
-        try {
-            DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
-            senderProvider.send(
-                realm.getSmtpConfig(),
-                "u0f3q1f4b5c8i4a6@europeana.slack.com",
-                "Sync completed Successfully",
-                 message, null
-            );
-            LOG.info("Successfully sent Email message to slack channel #api-exceptions !");
-        } catch (EmailException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     private void sendSlackMessageToConfiguredChannel(String message){
            try {
@@ -173,38 +160,47 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private void synchroniseContacts(int days) {
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
-        String         affiliation;
         for (Account account : accounts) {
             instituteMap.put(account.getID(),
                 new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
-
         for (Contact contact : contacts) {
-            String msg = null;
-            affiliation = null;
-            if (StringUtils.isNotBlank(contact.getAccountID()) && contact.getModifiedTime().isAfter(toThisTimeAgo)) {
-                if (instituteMap.get(contact.getAccountID()) != null) {
-                    affiliation = instituteMap.get(contact.getAccountID()).getEuropeanaOrgID();
-                    if (StringUtils.isNotBlank(affiliation)) {
-                        affiliatedUserMap.put(contact.getEmail(), affiliation);
-                    }
+            if(contact.getModifiedTime().isAfter(toThisTimeAgo)){
+                //When zoho Modified Contact is associated to the Organization
+                if (StringUtils.isNotBlank(contact.getAccountID()) &&
+                    instituteMap.get(contact.getAccountID()) != null) {
+                    affiliatedUserMap.put(contact.getEmail(), instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+                }
+                //When zoho Modified contact is  not associated to organization anymore
+                else if(StringUtils.isBlank(contact.getAccountID())){
+                    affiliatedUserMap.put(contact.getEmail(), null);
                 }
             }
         }
-        LOG.info(affiliatedUserMap.size() + " contacts records with affiliated Europeana org.ID were updated in the past " + days + " days.");
+        LOG.info(affiliatedUserMap.size() + " contacts records were updated in zoho in the past " + days + " days.");
     }
 
     private int updateKCUsers() {
         int updated = 0;
         LOG.info("Checking if updated contacts exist in Keycloak ...");
         for (Map.Entry<String, String> affiliatedUser : affiliatedUserMap.entrySet()) {
-
-            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) == null) {
-            } else {
+            if (userProvider.getUserByEmail(realm, affiliatedUser.getKey()) != null) {
                 UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
-                user.setSingleAttribute("affiliation", affiliatedUser.getValue());
-                updated ++;
-                LOG.info(affiliatedUser.getKey() + " updated with affiliation " + affiliatedUser.getValue());
+                String zohoOrgId = affiliatedUser.getValue();
+                //In case zoho orgID does not match with existing affiliation in keycloak then update the keycloak affiliation
+                String affiliationValue = user.getFirstAttribute("affiliation");
+                boolean isToUpdateAffiliation = (StringUtils.isNotBlank(zohoOrgId) ? !zohoOrgId.equals(
+                    affiliationValue): StringUtils.isNotBlank(affiliationValue));
+
+                if(isToUpdateAffiliation) {
+                    user.setSingleAttribute("affiliation", zohoOrgId);
+                    updated++;
+                    LOG.info(affiliatedUser.getKey() + " updated with affiliation " + zohoOrgId);
+                }
+                else{
+                    LOG.info(affiliatedUser.getKey() + " is not updated . Zoho Org ID : " + zohoOrgId + " KeyCloak Affiliation value : " + affiliationValue);
+                }
+
             }
         }
         LOG.info(updated + " users were found in Keycloak and had their affiliation updated.");
@@ -213,6 +209,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     @Override
     public void close() {
+        // No action required
     }
 
     public class Institute4Hash {
