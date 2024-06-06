@@ -50,6 +50,8 @@ spec:
               value: "${BCRYPT_PEPPER}"
             - name: SLACK_WEBHOOK
               value: "${SLACK_WEBHOOK}"
+            - name: SLACK_WEBHOOK_API_AUTOMATION
+              value: "${SLACK_WEBHOOK_API_AUTOMATION}"
             - name: SLACK_USER
               value: "${SLACK_USER}"
             - name: CLIENT_ID
