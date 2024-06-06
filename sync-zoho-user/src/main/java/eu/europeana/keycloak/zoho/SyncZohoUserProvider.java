@@ -33,10 +33,11 @@ import org.keycloak.services.resource.RealmResourceProvider;
 /**
  * Created by luthien on 14/11/2022.
  */
-public class SyncZohoUserProvider implements RealmResourceProvider {
+ public class SyncZohoUserProvider implements RealmResourceProvider {
 
-    private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
-    public static final String SYNC_REPORT_STATUS_MESSAGE = "%s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.";
+    private static  final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
+
+    public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.\"}";
 
     private final KeycloakSession session;
     private final RealmModel      realm;
@@ -113,23 +114,29 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             numberOfUsersUpdatedInKeycloak);
     }
 
-    private void publishStatusReport(String messsage) {
-        LOG.info("Sending Slack Message : "+ messsage);
-       // sendSlackMessageToConfiguredChannel(messsage);
+    private void publishStatusReport(String message) {
+        LOG.info("Sending Slack Message : "+ message);
+        sendSlackMessageToConfiguredChannel(message);
     }
 
     private void sendSlackMessageToConfiguredChannel(String message){
            try {
-               HttpPost httpPost = new HttpPost(System.getenv("SLACK_WEBHOOK"));
+               String slackWebhookApiAutomation = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
+               if (StringUtils.isBlank(slackWebhookApiAutomation)) {
+                   LOG.error("Slack webhook not configured !! Status report will not be published over slack !!  ");
+                   return;
+               }
+               HttpPost httpPost = new HttpPost(slackWebhookApiAutomation);
                StringEntity entity = new StringEntity(message);
                httpPost.setEntity(entity);
                httpPost.setHeader("Accept", "application/json");
                httpPost.setHeader("Content-type", "application/json");
                try (CloseableHttpClient httpClient = HttpClients.createDefault();
                    CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                   LOG.info("Received status " + response.getStatusLine().getStatusCode() + " while calling slack!!");
+                   LOG.info("Received status " + response.getStatusLine().getStatusCode()
+                       + " while calling slack!!");
                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                       LOG.info(" Successfully sent slack message !" );
+                       LOG.info(" Successfully sent slack message !");
                    }
                }
            }
