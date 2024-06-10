@@ -12,7 +12,7 @@ spec:
             - /opt/keycloak/bin/kc.sh
             - start
 #            - --config-file=quarkus.conf
-            - --hostname-strict-https=false
+#            - --hostname-strict-https=false
             - --http-enabled=true
             - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
             - --log=console
