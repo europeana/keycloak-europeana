@@ -15,7 +15,7 @@ spec:
             - --hostname-strict-https=false
             - --http-enabled=true
             - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
-            - --log="console"
+            - --log=console
             - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
