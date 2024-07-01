@@ -36,5 +36,4 @@ COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
-# CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
-
+CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true", "--hostname-strict-https=false", "--http-enabled=true", "--log='console'", "--log-console-format='%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"]
