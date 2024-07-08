@@ -33,9 +33,9 @@ import org.keycloak.services.resource.RealmResourceProvider;
 /**
  * Created by luthien on 14/11/2022.
  */
- public class SyncZohoUserProvider implements RealmResourceProvider {
+public class SyncZohoUserProvider implements RealmResourceProvider {
 
-    private static  final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
+    private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
     public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.\"}";
 
@@ -47,8 +47,8 @@ import org.keycloak.services.resource.RealmResourceProvider;
 
     private List<Account> accounts;
     private List<Contact> contacts;
-    HashMap<String, Institute4Hash> instituteMap      = new HashMap<>();
-    HashMap<String, String> modifiedUserMap = new HashMap<>();
+    HashMap<String, Institute4Hash> instituteMap    = new HashMap<>();
+    HashMap<String, String>         modifiedUserMap = new HashMap<>();
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
@@ -72,11 +72,11 @@ import org.keycloak.services.resource.RealmResourceProvider;
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync( @DefaultValue("1") @QueryParam("days") int days)  {
+    public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
         LOG.info("ZohoSync called.");
         String accountsJob;
         String contactsJob;
-        int numberOfUsersUpdatedInKeycloak=0;
+        int    nrUpdatedUsers = 0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
@@ -94,7 +94,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
-                    numberOfUsersUpdatedInKeycloak =updateKCUsers();
+                    nrUpdatedUsers = updateKCUsers();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -102,47 +102,42 @@ import org.keycloak.services.resource.RealmResourceProvider;
                 return "Error downloading bulk job.";
             }
         }
-        publishStatusReport(generateStatusReportMessage(numberOfUsersUpdatedInKeycloak));
+        publishStatusReport(generateStatusReport(nrUpdatedUsers));
         return "Done.";
     }
 
-    private String generateStatusReportMessage(int numberOfUsersUpdatedInKeycloak) {
+    private String generateStatusReport(int nrUpdatedUsers) {
         return String.format(SYNC_REPORT_STATUS_MESSAGE,
-            contacts.size(),
-            userProvider.getUsersCount(realm),
-            modifiedUserMap.size(),
-            numberOfUsersUpdatedInKeycloak);
+                             contacts.size(),
+                             userProvider.getUsersCount(realm),
+                             modifiedUserMap.size(),
+                             nrUpdatedUsers);
     }
 
     private void publishStatusReport(String message) {
-        LOG.info("Sending Slack Message : "+ message);
-        sendSlackMessageToConfiguredChannel(message);
-    }
-
-    private void sendSlackMessageToConfiguredChannel(String message){
-           try {
-               String slackWebhookApiAutomation = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
-               if (StringUtils.isBlank(slackWebhookApiAutomation)) {
-                   LOG.error("Slack webhook not configured !! Status report will not be published over slack !!  ");
-                   return;
-               }
-               HttpPost httpPost = new HttpPost(slackWebhookApiAutomation);
-               StringEntity entity = new StringEntity(message);
-               httpPost.setEntity(entity);
-               httpPost.setHeader("Accept", "application/json");
-               httpPost.setHeader("Content-type", "application/json");
-               try (CloseableHttpClient httpClient = HttpClients.createDefault();
-                   CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                   LOG.info("Received status " + response.getStatusLine().getStatusCode()
-                       + " while calling slack!!");
-                   if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                       LOG.info(" Successfully sent slack message !");
-                   }
-               }
-           }
-           catch (IOException e){
-                   LOG.error("Exception occurred while sending slack message !! " +e.getMessage());
-           }
+        LOG.info("Sending Slack Message : " + message);
+        try {
+            String slackWebhookApiAutomation = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
+            if (StringUtils.isBlank(slackWebhookApiAutomation)) {
+                LOG.error("Slack webhook not configured, status report will not be published over Slack.");
+                return;
+            }
+            HttpPost     httpPost = new HttpPost(slackWebhookApiAutomation);
+            StringEntity entity   = new StringEntity(message);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+            try (CloseableHttpClient httpClient = HttpClients.createDefault();
+                 CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                LOG.info("Received status " + response.getStatusLine().getStatusCode()
+                         + " while calling slack!");
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    LOG.info(" Successfully sent slack message !");
+                }
+            }
+        } catch (IOException e) {
+            LOG.error("Exception occurred while sending slack message !! " + e.getMessage());
+        }
     }
 
     // skip the first line containing the CSV header
@@ -169,23 +164,24 @@ import org.keycloak.services.resource.RealmResourceProvider;
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
         for (Account account : accounts) {
             instituteMap.put(account.getID(),
-                new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
+                             new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
         for (Contact contact : contacts) {
-            if(contact.getModifiedTime().isAfter(toThisTimeAgo)){
+            if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
                 //When zoho Modified Contact is associated to the Organization
                 if (StringUtils.isNotBlank(contact.getAccountID()) &&
                     instituteMap.get(contact.getAccountID()) != null) {
-                    modifiedUserMap.put(contact.getEmail(), instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+                    modifiedUserMap.put(contact.getEmail(),
+                                        instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
                 }
                 //When zoho Modified contact is  not associated to organization anymore
-                else if(StringUtils.isBlank(contact.getAccountID())){
+                else if (StringUtils.isBlank(contact.getAccountID())) {
                     modifiedUserMap.put(contact.getEmail(), null);
                 }
             }
         }
         LOG.info(
-            modifiedUserMap.size() + " contacts records were updated in zoho in the past " + days + " days.");
+            modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
     }
 
     private int updateKCUsers() {
@@ -198,15 +194,15 @@ import org.keycloak.services.resource.RealmResourceProvider;
                 //In case zoho orgID does not match with existing affiliation in keycloak then update the keycloak affiliation
                 String affiliationValue = user.getFirstAttribute("affiliation");
                 boolean isToUpdateAffiliation = (StringUtils.isNotBlank(zohoOrgId) ? !zohoOrgId.equals(
-                    affiliationValue): StringUtils.isNotBlank(affiliationValue));
+                    affiliationValue) : StringUtils.isNotBlank(affiliationValue));
 
-                if(isToUpdateAffiliation) {
+                if (isToUpdateAffiliation) {
                     user.setSingleAttribute("affiliation", zohoOrgId);
                     updated++;
-                    LOG.info(affiliatedUser.getKey() + " affiliation updated from : " +affiliationValue+ " to "+ zohoOrgId);
-                }
-                else {
-                    LOG.info(affiliatedUser.getKey() + " will not be  updated");
+                    LOG.info(affiliatedUser.getKey() + " affiliation updated from : " + affiliationValue + " to " +
+                             zohoOrgId);
+                } else {
+                    LOG.info(affiliatedUser.getKey() + " will not be updated");
                 }
 
             }
