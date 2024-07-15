@@ -76,11 +76,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     public String delete(
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
         return removeUnverifiedUsers(minimumAgeInDays);
-//        return listUnverifiedUsers(minimumAgeInDays);
     }
 
     @Override
     public void close() {
+        //
     }
 
     private String removeUnverifiedUsers(int minimumAgeInDays) {
