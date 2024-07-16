@@ -25,3 +25,32 @@ spec:
               args:
                 - "${KEYCLOAK_HOST}/auth/realms/europeana/delete"
           restartPolicy: Never
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: keycloakuser-zohosync-job
+spec:
+  schedule: "${KEYCLOAKUSER_ZOHOSYNC_CRON_SCHEDULE}"
+  suspend: ${SUSPEND_KEYCLOAKUSER_ZOHOSYNC}
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          annotations:
+            fluentd/include: '${COLLECT_LOGS}'
+            fluentd/multiline: 'true'
+        spec:
+          containers:
+            - name: cron
+              image: busybox
+              imagePullPolicy: IfNotPresent
+              command:
+                - wget
+              args:
+                - "${KEYCLOAK_HOST}/auth/realms/europeana/zohosync"
+          restartPolicy: Never

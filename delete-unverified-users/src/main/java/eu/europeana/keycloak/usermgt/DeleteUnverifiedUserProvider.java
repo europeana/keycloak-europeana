@@ -1,10 +1,16 @@
 package eu.europeana.keycloak.usermgt;
 
+import static org.keycloak.utils.StringUtil.isNotBlank;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -13,19 +19,14 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-
-import static org.keycloak.utils.StringUtil.isNotBlank;
-
 /**
  * Created by luthien on 14/11/2022.
  */
 public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
-    private static final Logger LOG        = Logger.getLogger(DeleteUnverifiedUserProvider.class);
-    private static final String LOG_PREFIX = "KEYCLOAK_EVENT:";
-    private static final String SUCCESS_MSG = " unverified user accounts were removed because their email addresses were not verified within ";
+    private static final Logger LOG         = Logger.getLogger(DeleteUnverifiedUserProvider.class);
+    private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
+    private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
     private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
 
     private static Map<String, String> EMAIL_NOT_VERIFIED;
@@ -64,11 +65,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * Removes Users based on these criteria:
-     * - UserModel.EMAIL_VERIFIED = "false"
-     * - UserModel.INCLUDE_SERVICE_ACCOUNT = "false"
-     * - was created less than [minimumAgeInDays] day(s) ago
-     * Details about the number and IDs of deleted users are logged.
+     * Removes Users based on these criteria: - UserModel.EMAIL_VERIFIED = "false" - UserModel.INCLUDE_SERVICE_ACCOUNT =
+     * "false" - was created less than [minimumAgeInDays] day(s) ago Details about the number and IDs of deleted users
+     * are logged.
      *
      * @return String (completed message)
      */
@@ -77,11 +76,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     public String delete(
         @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
         return removeUnverifiedUsers(minimumAgeInDays);
-//        return listUnverifiedUsers(minimumAgeInDays);
     }
 
     @Override
     public void close() {
+        //
     }
 
     private String removeUnverifiedUsers(int minimumAgeInDays) {
@@ -89,14 +88,16 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
-            userRemoved = false;
-            userRemoved = userProvider.removeUser(realm, user);
-            if (userRemoved) {
-                nrOfDeletedUsers++;
-                LOG.info(logMessage(user, USERDEL_MSG, nrOfDeletedUsers));
-            }
+
+            UserUuidDto           userUuidDto           = new UserUuidDto(user.getId(), user.getEmail());
+            UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user,
+                                                                                    userUuidDto);
+            session.getTransactionManager().enlistPrepare(userDeleteTransaction);
+            nrOfDeletedUsers++;
+
+            LOG.info("#" + nrOfDeletedUsers + " - " + user.getUsername() + " scheduled for deletion");
         }
-        if (nrOfDeletedUsers > 0){
+        if (nrOfDeletedUsers > 0) {
             LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
         } else {
             LOG.info("No unverified users found.");
@@ -105,9 +106,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * This method retrieves a List of UserModels filtered on the property (UserModel.EMAIL_VERIFIED: "false")
-     * and excludes all Service Accounts: (UserModel.INCLUDE_SERVICE_ACCOUNT, "false")
-     * and also excludes any account created less than [minimumAgeInDays] ago
+     * This method retrieves a List of UserModels filtered on the property (UserModel.EMAIL_VERIFIED: "false") and
+     * excludes all Service Accounts: (UserModel.INCLUDE_SERVICE_ACCOUNT, "false") and also excludes any account created
+     * less than [minimumAgeInDays] ago
      *
      * @return List of UserModels
      */
@@ -121,11 +122,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     }
 
     private String listUnverifiedUsers(int minimumAgeInDays) {
-        List<UserModel> lazyUsers = getUnverifiedUsers(minimumAgeInDays);
-        StringBuilder lazyList = new StringBuilder();
-        int lazyCounter = 0;
-        int lazySize = lazyUsers.size();
-        if (lazySize == 0){
+        List<UserModel> lazyUsers   = getUnverifiedUsers(minimumAgeInDays);
+        StringBuilder   lazyList    = new StringBuilder();
+        int             lazyCounter = 0;
+        int             lazySize    = lazyUsers.size();
+        if (lazySize == 0) {
             lazyList.append("Hurray, only motivated users today!");
         } else {
             if (lazySize == 1) {
@@ -137,13 +138,13 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             }
             lazyList.append(" found the effort of validating their email address beyond their capabilities and were " +
                             "therefore asked to leave the premises. ");
-            if (lazySize >  1) {
+            if (lazySize > 1) {
                 lazyList.append("They are: ");
             } else {
                 lazyList.append("He or she is: ");
             }
-            for (UserModel lazyUser : lazyUsers){
-                lazyCounter ++;
+            for (UserModel lazyUser : lazyUsers) {
+                lazyCounter++;
                 lazyList.append(lazyUser.getFirstName().charAt(0));
                 lazyList.append(". ");
                 lazyList.append(lazyUser.getLastName());
@@ -153,8 +154,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                     lazyList.append(", ");
                 }
             }
-            lazyList.append(". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
-                            "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
+            lazyList.append(
+                ". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
+                "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
         }
         LOG.info(lazyList.toString());
         return lazyList.toString();
