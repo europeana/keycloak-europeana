@@ -50,8 +50,12 @@ spec:
               value: "${BCRYPT_PEPPER}"
             - name: SLACK_WEBHOOK
               value: "${SLACK_WEBHOOK}"
+            #This webhook is used for sending messages to slack channel #api_automation for zoho sync job
             - name: SLACK_WEBHOOK_API_AUTOMATION
               value: "${SLACK_WEBHOOK_API_AUTOMATION}"
+            #This webhook is used for sending messages to slack channel #api_automation for deleting unverified accounts
+            - name: SLACK_WEBHOOK_DELETE_UNVERIFIED_USERS
+              value: "${SLACK_WEBHOOK_DELETE_UNVERIFIED_USERS}"
             - name: SLACK_USER
               value: "${SLACK_USER}"
             - name: CLIENT_ID
