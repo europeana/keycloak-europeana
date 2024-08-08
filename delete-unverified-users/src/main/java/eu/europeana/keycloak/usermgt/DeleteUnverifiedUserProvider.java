@@ -36,6 +36,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
     private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
     private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
+    private static final String DELETION_REPORT_MESSAGE  = "{\"text\":\" %s unverified accounts were deleted.\"}";
 
     private static Map<String, String> EMAIL_NOT_VERIFIED;
 
@@ -110,7 +111,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         } else {
             LOG.info("No unverified users found.");
         }
-        publishStatusReport(nrOfDeletedUsers + " unverified accounts were deleted");
+        publishStatusReport(String.format(DELETION_REPORT_MESSAGE,nrOfDeletedUsers));
         return "Unverified user delete job finished.";
     }
 
