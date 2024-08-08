@@ -2,6 +2,8 @@ package eu.europeana.keycloak.usermgt;
 
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
+import com.apicatalog.jsonld.StringUtils;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -102,6 +110,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         } else {
             LOG.info("No unverified users found.");
         }
+        publishStatusReport(nrOfDeletedUsers + " unverified accounts were deleted");
         return "Unverified user delete job finished.";
     }
 
@@ -198,6 +207,38 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
         msg.append(" ");
         return LOG_PREFIX + msg;
+    }
+
+
+    /**
+     * Sends the message to configured slack channel.
+     * Currently the messages are sent to
+     * @param message -
+     */
+    private void publishStatusReport(String message) {
+        LOG.info("Sending Slack Message : " + message);
+        try {
+            String slackWebhookApiAutomation = System.getenv("SLACK_WEBHOOK_DELETE_UNVERIFIED_USERS");
+            if (StringUtils.isBlank(slackWebhookApiAutomation)) {
+                LOG.error("Slack webhook not configured, status report will not be published over Slack.");
+                return;
+            }
+            HttpPost httpPost = new HttpPost(slackWebhookApiAutomation);
+            StringEntity entity   = new StringEntity(message);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+            try (CloseableHttpClient httpClient = HttpClients.createDefault();
+                CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                LOG.info("Received status " + response.getStatusLine().getStatusCode()
+                    + " while calling slack!");
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    LOG.info(" Successfully sent slack message !");
+                }
+            }
+        } catch (IOException e) {
+            LOG.error("Exception occurred while sending slack message !! " + e.getMessage());
+        }
     }
 
 }
