@@ -2,7 +2,7 @@ package eu.europeana.keycloak.usermgt;
 
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
-import com.apicatalog.jsonld.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
