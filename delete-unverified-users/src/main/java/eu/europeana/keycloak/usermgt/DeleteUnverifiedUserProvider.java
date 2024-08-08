@@ -111,7 +111,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         } else {
             LOG.info("No unverified users found.");
         }
-        publishStatusReport(String.format(DELETION_REPORT_MESSAGE,nrOfDeletedUsers));
+      //  publishStatusReport(String.format(DELETION_REPORT_MESSAGE,nrOfDeletedUsers));
         return "Unverified user delete job finished.";
     }
 
