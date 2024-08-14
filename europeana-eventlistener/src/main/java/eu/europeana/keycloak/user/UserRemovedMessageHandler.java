@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import javax.annotation.PreDestroy;
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -284,15 +283,21 @@ public class UserRemovedMessageHandler {
         UserModel deleteUser = deleteEvent.getUser();
 
         try {
-            LOG.info(formatMessage(deleteEvent,
-                            "Sending email to Slack user: " + slackUserModel.getEmail()));
-            senderProvider.send(
-                session.getContext().getRealm().getSmtpConfig(),
-                slackUserModel,
-                "User account for Keycloak user with ID: " + deleteUser.getId(),
-                message,
-                message);
+            if(slackUserModel!=null) {
+                LOG.info(formatMessage(deleteEvent,
+                    "Sending email to Slack user: " + slackUserModel.getEmail()));
+                senderProvider.send(
+                    session.getContext().getRealm().getSmtpConfig(),
+                    slackUserModel,
+                    "User account for Keycloak user with ID: " + deleteUser.getId(),
+                    message,
+                    message);
+
             return true;
+            }
+            LOG.info(formatMessage(deleteEvent,
+                "Sending email to Slack user failed for : " + deleteUser.getId()));
+            return false;
         } catch (EmailException e) {
             LOG.error(formatMessage(deleteEvent,
                              "EmailException occurred while sending Slack message by email: " + e.getMessage()));
