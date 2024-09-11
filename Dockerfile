@@ -15,7 +15,7 @@ COPY addon-jars ./providers/
 COPY dependencies ./providers/
 
 # 5 copy quarkus configuration with custom jdbc settings
-COPY config ./conf/
+#COPY config ./conf/
 
 # 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
@@ -30,7 +30,7 @@ WORKDIR /opt/keycloak
 
 # 9 copy add-ons, dependencies, optimised libs and theme again to new copy
 COPY --from=builder /opt/keycloak/providers/ ./providers/
-COPY --from=builder /opt/keycloak/conf/ ./conf/
+#COPY --from=builder /opt/keycloak/conf/ ./conf/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 

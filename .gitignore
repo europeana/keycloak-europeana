@@ -26,3 +26,4 @@ k8s/base/deployment.yaml
 **/setenv.sh
 k8s/overlays/cloud/deployment_patch.yaml
 /.java-version
+/DockerfileLocal
