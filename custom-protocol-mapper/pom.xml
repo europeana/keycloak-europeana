@@ -20,11 +20,19 @@
 
 
   <properties>
+    <snakeyaml.version>2.3</snakeyaml.version>
     <!-- non-dependencies -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>
+
+    <!-- fix the critical dependency of the older transitive dependency in Keycloak-services v23.0.7 -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.keycloak</groupId>
@@ -37,7 +45,13 @@
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
       <version>${keycloak.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.yaml</groupId>
+          <artifactId>snakeyaml</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
