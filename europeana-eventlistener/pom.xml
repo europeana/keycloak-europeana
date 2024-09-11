@@ -16,6 +16,7 @@
   <packaging>jar</packaging>
 
   <properties>
+    <keycloak-services.version>24.0.5</keycloak-services.version>
     <jakarta.version>4.0.0</jakarta.version>
     <javax.version>1.1.4</javax.version>
     <jboss.logging.version>3.5.3.Final</jboss.logging.version>
@@ -41,7 +42,7 @@
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
-      <version>${keycloak.version}</version>
+      <version>${keycloak-services.version}</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>

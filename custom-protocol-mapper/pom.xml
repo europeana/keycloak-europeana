@@ -20,6 +20,7 @@
 
 
   <properties>
+    <keycloak-services.version>24.0.5</keycloak-services.version>
     <snakeyaml.version>2.3</snakeyaml.version>
     <!-- non-dependencies -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,7 +45,7 @@
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
-      <version>${keycloak.version}</version>
+      <version>${keycloak-services.version}</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
