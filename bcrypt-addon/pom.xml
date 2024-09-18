@@ -6,10 +6,10 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>keycloak-europeana</artifactId>
-        <version>2.1</version>
+        <version>2.2</version>
     </parent>
     <artifactId>bcrypt-addon</artifactId>
-    <version>2.1</version>
+    <version>2.2</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
