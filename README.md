@@ -18,7 +18,7 @@ This project contains:
 
 Keep in mind that the versions of Keycloak specified in the root pom.xml and in the Dockerfile need to match!
 
-- current keycloak version is **20.0.1**
+- current keycloak version is **23.0.7**
 
 ### Build the Docker image in Jenkins; provide the configuration; run the image in Kubernetes
 TBD

@@ -28,10 +28,10 @@
 
   <properties>
     <!-- Check this version to match the one in the Dockerfile! -->
-    <keycloak.version>20.0.5</keycloak.version>
+    <keycloak.version>23.0.7</keycloak.version>
 
-    <maven.compiler.target>11</maven.compiler.target>
-    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
 
     <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
@@ -65,21 +65,21 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <!-- This will be active when running the verify or install goal
+           To skip (e.g. during debugging) use 'mvn clean package')-->
       <plugin>
-        <!-- This will be active when running the verify or install goal
-             To skip (e.g. during debugging) use 'mvn clean package')-->
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
-        <version>10.0.2</version>
+        <version>10.0.3</version>
         <configuration>
           <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>
           <!-- see EA-3505 why we host the known exploited vulnerabilties file ourselves -->
           <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>
-          <failBuildOnCVSS>8</failBuildOnCVSS>
           <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-<!--          <suppressionFiles>-->
-<!--            <suppressionFile>owasp-suppress.xml</suppressionFile>-->
-<!--          </suppressionFiles>-->
+          <failBuildOnCVSS>9</failBuildOnCVSS>
+          <suppressionFiles>
+            <suppressionFile>owasp-suppress.xml</suppressionFile>
+          </suppressionFiles>
         </configuration>
         <executions>
           <execution>

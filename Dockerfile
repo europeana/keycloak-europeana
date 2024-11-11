@@ -4,7 +4,7 @@ ARG theme_version=0.11.1
 FROM europeana/keycloak-theme:${theme_version} AS theme
 
 # 2 get base Keycloak image
-FROM quay.io/keycloak/keycloak:20.0.5 as builder
+FROM quay.io/keycloak/keycloak:23.0.7 as builder
 WORKDIR /opt/keycloak
 ENV KC_DB=postgres
 
@@ -15,7 +15,7 @@ COPY addon-jars ./providers/
 COPY dependencies ./providers/
 
 # 5 copy quarkus configuration with custom jdbc settings
-COPY config ./conf/
+#COPY config ./conf/
 
 # 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
@@ -25,12 +25,12 @@ RUN /opt/keycloak/bin/kc.sh build
 
 # 8 get another copy of Keycloak image and apply changes there again
 # see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
-FROM quay.io/keycloak/keycloak:20.0.5
+FROM quay.io/keycloak/keycloak:23.0.7
 WORKDIR /opt/keycloak
 
 # 9 copy add-ons, dependencies, optimised libs and theme again to new copy
 COPY --from=builder /opt/keycloak/providers/ ./providers/
-COPY --from=builder /opt/keycloak/conf/ ./conf/
+#COPY --from=builder /opt/keycloak/conf/ ./conf/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 

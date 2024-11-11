@@ -13,8 +13,9 @@
   <artifactId>sync-zoho-user</artifactId>
 
   <properties>
+    <snakeyaml.version>2.3</snakeyaml.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <javax.version>1.1.4</javax.version>
+    <jakarta.version>4.0.0</jakarta.version>
     <jboss.logging.version>3.4.1.Final</jboss.logging.version>
     <zohocrmsdk.version>2.0.0</zohocrmsdk.version>
     <httpclient.version>4.5.14</httpclient.version>
@@ -41,6 +42,20 @@
 
   <dependencies>
 
+    <!-- fix the critical dependency of the older transitive dependency in Keycloak-services v23.0.7 -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api -->
+    <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+      <version>${jakarta.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
@@ -64,7 +79,13 @@
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
       <version>${keycloak.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.yaml</groupId>
+          <artifactId>snakeyaml</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
