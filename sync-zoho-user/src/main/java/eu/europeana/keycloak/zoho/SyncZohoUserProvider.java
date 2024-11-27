@@ -84,7 +84,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 accountsJob = zohoBatchJob.ZohoBulkCreateJob("Accounts");
                 contactsJob = zohoBatchJob.ZohoBulkCreateJob("Contacts");
             } catch (Exception e) {
-                e.printStackTrace();
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
             }
@@ -97,7 +96,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     nrUpdatedUsers = updateKCUsers();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error downloading bulk job.";
             }
