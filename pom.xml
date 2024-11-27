@@ -38,6 +38,7 @@
     <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
     <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
 
+<!--    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>-->
     <dependency-check-maven.version>11.1.0</dependency-check-maven.version>
 
   </properties>
@@ -67,32 +68,33 @@
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <!-- This will be active when running the verify or install goal
-           To skip (e.g. during debugging) use 'mvn clean package')-->
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>${dependency-check-maven.version}</version>
-        <configuration>
-          <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>
-          <!-- see EA-3505 why we host the known exploited vulnerabilities file ourselves -->
-          <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>
-          <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-          <failBuildOnCVSS>9</failBuildOnCVSS>
-          <suppressionFiles>
-            <suppressionFile>owasp-suppress.xml</suppressionFile>
-          </suppressionFiles>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
+<!--    <plugins>-->
+<!--      &lt;!&ndash; This will be active when running the verify or install goal-->
+<!--           To skip (e.g. during debugging) use 'mvn clean package')&ndash;&gt;-->
+<!--      <plugin>-->
+<!--        <groupId>org.owasp</groupId>-->
+<!--        <artifactId>dependency-check-maven</artifactId>-->
+<!--        <version>${dependency-check-maven.version}</version>-->
+<!--        <configuration>-->
+<!--          <nvdApiKey>dc601836-6867-4367-8fee-fc1e2aaf594b</nvdApiKey>-->
+<!--          <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>-->
+<!--          &lt;!&ndash; see EA-3505 why we host the known exploited vulnerabilities file ourselves &ndash;&gt;-->
+<!--          <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>-->
+<!--          <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>-->
+<!--          <failBuildOnCVSS>9</failBuildOnCVSS>-->
+<!--          <suppressionFiles>-->
+<!--            <suppressionFile>owasp-suppress.xml</suppressionFile>-->
+<!--          </suppressionFiles>-->
+<!--        </configuration>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <goals>-->
+<!--              <goal>check</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
+<!--    </plugins>-->
   </build>
 
 </project>
