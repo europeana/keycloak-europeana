@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.metrics;
 
+import jakarta.ws.rs.Path;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -8,11 +9,13 @@ import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.ext.Provider;
 import java.time.Instant;
 
 /**
- * globl
+ * Simple user count endpoint
  */
+@Provider
 public class UserCountProvider implements RealmResourceProvider {
 
     private KeycloakSession session;
@@ -26,6 +29,7 @@ public class UserCountProvider implements RealmResourceProvider {
         return this;
     }
 
+    @Path("")
     @GET
     @Produces("text/plain; charset=utf-8")
     public String get() {

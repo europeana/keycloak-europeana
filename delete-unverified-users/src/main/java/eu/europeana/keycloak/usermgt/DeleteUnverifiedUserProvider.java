@@ -2,6 +2,7 @@ package eu.europeana.keycloak.usermgt;
 
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
+import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -30,6 +32,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
 /**
  * Created by luthien on 14/11/2022.
  */
+@Provider
 public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG         = Logger.getLogger(DeleteUnverifiedUserProvider.class);
@@ -80,6 +83,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
      *
      * @return String (completed message)
      */
+    @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(

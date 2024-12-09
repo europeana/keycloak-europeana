@@ -2,6 +2,8 @@ package eu.europeana.keycloak.zoho;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import eu.europeana.api.common.zoho.ZohoConnect;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ext.Provider;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +35,8 @@ import org.keycloak.services.resource.RealmResourceProvider;
 /**
  * Created by luthien on 14/11/2022.
  */
+
+@Provider
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
@@ -70,6 +74,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
      */
 
 
+    @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
