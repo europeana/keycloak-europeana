@@ -4,7 +4,7 @@ ARG theme_version=0.12
 FROM europeana/keycloak-theme:${theme_version} AS theme
 
 # 2 get base Keycloak image
-FROM quay.io/keycloak/keycloak:23.0.7 as builder
+FROM quay.io/keycloak/keycloak:26.0.6 as builder
 WORKDIR /opt/keycloak
 ENV KC_DB=postgres
 
@@ -25,7 +25,7 @@ RUN /opt/keycloak/bin/kc.sh build
 
 # 8 get another copy of Keycloak image and apply changes there again
 # see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
-FROM quay.io/keycloak/keycloak:23.0.7
+FROM quay.io/keycloak/keycloak:26.0.6
 WORKDIR /opt/keycloak
 
 # 9 copy add-ons, dependencies, optimised libs and theme again to new copy
