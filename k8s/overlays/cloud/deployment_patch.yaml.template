@@ -11,7 +11,7 @@ spec:
           command:
             - /opt/keycloak/bin/kc.sh
             - start
-            - --hostname-strict-https=false
+            - --proxy-headers=xforwarded
             - --http-enabled=true
             - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
             - --log=console
