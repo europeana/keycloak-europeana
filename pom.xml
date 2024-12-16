@@ -28,7 +28,7 @@
 
     <properties>
         <!-- Check this version to match the one in the Dockerfile! -->
-        <keycloak.version>26.0.6</keycloak.version>
+        <keycloak.version>26.0.7</keycloak.version>
 
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.source>21</maven.compiler.source>
