@@ -21,7 +21,7 @@
         <module>delete-unverified-users</module>
         <module>custom-protocol-mapper</module>
         <module>sync-zoho-user</module>
-        <module>postgresql_sessions</module>
+        <module>apikey-client</module>
     </modules>
 
     <name>Keycloak for Europeana</name>
