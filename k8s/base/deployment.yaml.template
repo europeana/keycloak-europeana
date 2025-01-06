@@ -30,8 +30,8 @@ spec:
             # HTTPS enforced at ingress
             - name: KC_HTTP_ENABLED
               value: "true"
-            - name: KC_PROXY
-              value: "edge"
+#            - name: KC_PROXY
+#              value: "edge"
             - name: KC_HOSTNAME
               value: "${KC_HOSTNAME}"
             - name: SCOPE
