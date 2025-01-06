@@ -114,3 +114,20 @@ FROM test_v25.offline_client_session cs
 JOIN test_v25.client c ON cs.client_id = c.id
 LEFT OUTER JOIN test_v25.offline_user_session us ON cs.user_session_id = us.user_session_id
 LEFT OUTER JOIN test_v25.user_entity u ON u.id = us.user_id
+
+
+CREATE TABLE testv24.session_history (
+                                         id varchar(36) NOT NULL,
+                                         user_id varchar(36) NULL,
+                                         client_id varchar(36) NULL,
+                                         ip_address varchar(255) NULL,
+                                         realm_id varchar(255) NULL,
+                                         created_timestamp int8 NULL,
+                                         updated_timestamp int8 NULL,
+                                         session_id varchar(36) NULL,
+                                         CONSTRAINT session_history_pk PRIMARY KEY (id)
+);
+CREATE INDEX idx_session_history_user ON testv24.session_history USING btree (user_id);
+CREATE INDEX idx_session_history_client ON testv24.session_history USING btree (client_id);
+CREATE INDEX idx_session_history_ip ON testv24.session_history USING btree (ip_address);
+CREATE INDEX idx_session_history ON testv24.session_history USING btree (user_id, client_id, ip_address);
