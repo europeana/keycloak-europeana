@@ -1,6 +1,5 @@
 package eu.europeana.keycloak.logging;
 
-import jakarta.ws.rs.ext.Provider;
 import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -10,7 +9,6 @@ import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.KeycloakSession;
 
-@Provider
 public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
 
