@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.password;
 
+import jakarta.ws.rs.ext.Provider;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies;
 import org.apache.commons.codec.binary.Base64;
@@ -16,6 +17,8 @@ import java.util.regex.Pattern;
  * Created by luthien on 27/05/2020.
  * used the implementation of Leroy Guillaume: https://github.com/leroyguillaume/keycloak-bcrypt
  */
+
+@Provider
 public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
     private static final int     HARDCODEDNROFITERATIONS = 13;
