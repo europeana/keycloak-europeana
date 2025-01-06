@@ -1,6 +1,6 @@
-package eu.europeana.keycloak.apikeyclient;
+package eu.europeana.keycloak.sessions;
 
-import eu.europeana.keycloak.apikeyclient.session.SessionHistory;
+import eu.europeana.keycloak.sessions.entity.SessionHistory;
 import java.util.Arrays;
 import java.util.List;
 import org.keycloak.connections.jpa.entityprovider.JpaEntityProvider;

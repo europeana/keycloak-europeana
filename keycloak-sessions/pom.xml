@@ -9,7 +9,7 @@
     <version>2.1</version>
   </parent>
 
-  <artifactId>apikey-client</artifactId>
+  <artifactId>keycloak-sessions</artifactId>
   <version>2.1</version>
 
   <name>ApikeyClient</name>
@@ -38,17 +38,20 @@
     <apache.httpclient.version>4.5.14</apache.httpclient.version>
   </properties>
 
-
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-dependencies-server-all</artifactId>
+        <version>${keycloak.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
 
   <dependencies>
-    <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-dependencies-server-all</artifactId>
-      <version>${keycloak.version}</version>
-      <scope>import</scope>
-      <type>pom</type>
-    </dependency>
 
     <dependency>
       <groupId>org.keycloak</groupId>
@@ -115,28 +118,25 @@
 
   </dependencies>
 
+
+
   <build>
-    <finalName>${project.groupId}.${project.artifactId}-v${project.version}</finalName>
+    <finalName>keycloak-sessions-spi</finalName>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
+        <artifactId>maven-clean-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>17</source> <!-- Use a supported Java version -->
-          <target>17</target> <!-- Use a supported Java version -->
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.3.2</version>
         <configuration>
-          <finalName>keycloak.customentity-v1.0.1</finalName>
+          <outputDirectory>../addon-jars</outputDirectory>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

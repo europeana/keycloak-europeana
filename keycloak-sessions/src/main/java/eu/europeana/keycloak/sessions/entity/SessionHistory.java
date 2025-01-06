@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.apikeyclient.session;
+package eu.europeana.keycloak.sessions.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
