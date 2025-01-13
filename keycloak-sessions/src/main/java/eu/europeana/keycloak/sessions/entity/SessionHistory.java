@@ -26,25 +26,28 @@ public class SessionHistory {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private String userId;
 
-    @Column(name = "ip_address", nullable = false)
-    private String ipAddress;
-
-    @Column(name = "client_id", nullable = false)
+    @Column(name = "client_id")
     private String clientId;
 
-    @Column(name = "realm_id", nullable = false)
+    @Column(name = "ip_address")
+    private String ipAddress;
+
+    @Column(name = "realm_id")
     private String realmId;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_timestamp", updatable = false)
+    private int createdAt;
 
     @CreationTimestamp
-    @Column(name = "updated_at", nullable = false, updatable = false)
-    private LocalDateTime lastUpdatedAt;
+    @Column(name = "updated_timestamp", updatable = false)
+    private int lastUpdatedAt;
+
+    @Column(name = "session_id")
+    private String sessionId;
 
     @Override
     public final boolean equals(Object o) {

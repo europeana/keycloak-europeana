@@ -16,12 +16,12 @@ public class SessionHistoryProvider  implements JpaEntityProvider {
 
     @Override
     public List<Class<?>> getEntities() {
-        return Arrays.<Class<?>>asList(entities);
+        return Arrays.asList(entities);
     }
 
     @Override
     public String getChangelogLocation() {
-        return "META-INF/jpa-europeana-changelog-0.0.1.xml";
+        return "META-INF/session_changelog.sql";
     }
 
     @Override
