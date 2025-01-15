@@ -5,8 +5,8 @@ import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.ext.Provider;
