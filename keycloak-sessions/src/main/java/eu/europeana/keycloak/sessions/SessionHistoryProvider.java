@@ -21,7 +21,7 @@ public class SessionHistoryProvider  implements JpaEntityProvider {
 
     @Override
     public String getChangelogLocation() {
-        return "META-INF/session_changelog.sql";
+        return "META-INF/sessionchangelog.sql";
     }
 
     @Override
