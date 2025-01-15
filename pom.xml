@@ -21,6 +21,7 @@
     <module>delete-unverified-users</module>
     <module>custom-protocol-mapper</module>
     <module>sync-zoho-user</module>
+    <module>register-with-captcha</module>
   </modules>
 
   <name>Keycloak for Europeana</name>
