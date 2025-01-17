@@ -7,7 +7,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.RandomUtils;
@@ -79,16 +78,14 @@ public class RegistrationService {
   }
 
   private String createApiKey() {
-      LOG.info("Gerating new API key !!");
+      LOG.info("Generating new API key !!");
       String id ;
       ClientProvider clientProvider = session.clients();
-      List<String> clientIdList = clientProvider.getClientsStream(realm).map(ClientModel::getClientId).toList();
-      LOG.info("Client ID List :" + clientIdList);
       PassGenerator pg = new PassGenerator();
       do {
         id = pg.generate(RandomUtils.nextInt(8, 13));
         LOG.info("Generated Key " + id );
-      } while (clientIdList.contains(id));
+      } while (clientProvider.getClientById(realm,id) != null);
       LOG.info("Created new API key : "+ id );
     return id;
 
