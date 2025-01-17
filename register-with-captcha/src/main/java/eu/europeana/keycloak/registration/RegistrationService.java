@@ -79,12 +79,15 @@ public class RegistrationService {
   }
 
   private String createApiKey() {
+      LOG.info("Gerating new API key !!");
       String id ;
       ClientProvider clientProvider = session.clients();
       List<String> clientIdList = clientProvider.getClientsStream(realm).map(ClientModel::getClientId).toList();
+      LOG.info("Client ID List :" + clientIdList);
       PassGenerator pg = new PassGenerator();
       do {
         id = pg.generate(RandomUtils.nextInt(8, 13));
+        LOG.info("Generated Key " + id );
       } while (clientIdList.contains(id));
       LOG.info("Created new API key : "+ id );
     return id;
