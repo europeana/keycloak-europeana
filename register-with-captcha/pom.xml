@@ -8,13 +8,14 @@
     <artifactId>keycloak-europeana</artifactId>
     <version>2.1</version>
   </parent>
-
-  <groupId>org.example</groupId>
   <artifactId>register-with-captcha</artifactId>
+  <version>2.1</version>
+
+  <name>Register with captcha</name>
+  <description>Addon package to Register the api-key for the given user</description>
+  <packaging>jar</packaging>
 
   <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jakarta.version>4.0.0</jakarta.version>
     <jboss.logging.version>3.5.3.Final</jboss.logging.version>
@@ -56,6 +57,23 @@
       <artifactId>keycloak-server-spi-private</artifactId>
       <version>${keycloak.version}</version>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-services</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.yaml</groupId>
+          <artifactId>snakeyaml</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-multipart-provider</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
   </dependencies>
