@@ -6,8 +6,6 @@ import org.keycloak.services.resource.RealmResourceProvider;
 
 public class RegisterApiKeyProvider implements RealmResourceProvider {
   private final KeycloakSession session;
-  private static final Logger LOG = Logger.getLogger(RegisterApiKeyProvider.class);
-
   public RegisterApiKeyProvider(KeycloakSession session) {
     this.session = session;
   }
