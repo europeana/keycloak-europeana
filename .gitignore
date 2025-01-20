@@ -2,6 +2,8 @@
 # Compiled class file
 *.class
 **/target/
+.idea/**
+*.iml
 
 # Log file
 *.log
@@ -35,4 +37,5 @@ k8s/base/deployment.yaml
 # Other gunk
 /DockerfileLocal
 /.java-version
-/keycloak-sessions/src/main/resources/META-INF/experiments-BK.sql
+
+.idea/compiler.xml

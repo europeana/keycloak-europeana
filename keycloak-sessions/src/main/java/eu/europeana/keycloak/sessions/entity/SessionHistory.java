@@ -65,7 +65,4 @@ public class SessionHistory {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 
-//    @Column(name = "user_id", nullable = false, columnDefinition = "integer default 0")
-//    private String userId;
-
 }
