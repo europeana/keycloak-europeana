@@ -1,6 +1,6 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.provider;
 
-import org.jboss.logging.Logger;
+import eu.europeana.keycloak.registration.service.RegistrationService;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
 

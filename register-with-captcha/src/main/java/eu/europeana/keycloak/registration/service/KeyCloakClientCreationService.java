@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.service;
 
 import eu.europeana.keycloak.registration.exception.ClientCreationException;
 import org.jboss.logging.Logger;

@@ -1,10 +1,12 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.service;
 
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_MISSING;
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_PATTERN;
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_VERIFICATION_FAILED;
 
+import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
 import eu.europeana.keycloak.registration.exception.CaptchaException;
+import eu.europeana.keycloak.registration.util.PassGenerator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;

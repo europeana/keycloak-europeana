@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.service;
 
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.secret;
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.verificationUrlHost;
@@ -20,10 +20,11 @@ import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+/* This service is same as capcha manager From apikey*/
 public class CaptchaManager {
     private static final Logger LOG = Logger.getLogger(CaptchaManager.class);
 
-    private CloseableHttpClient httpClient;
+    private final CloseableHttpClient httpClient;
 
     public CaptchaManager() {
         httpClient = HttpClients.createDefault();
@@ -32,7 +33,7 @@ public class CaptchaManager {
     /**
      * Verify Captcha token by sending request to the verification URL. Response is a JSON with
      * a field "success" indicating true or false. When it's false "error-codes" field contains
-     * reason of failure.     *
+     * reason of failure.
      * @param captchaToken Token to be verified.
      * @return true when verification successful, false when there was problem with verification response
      */
@@ -78,7 +79,7 @@ public class CaptchaManager {
      *
      * @param captchaToken token to be used as the parameter.
      * @return URI for the request
-     * @throws URISyntaxException
+     * @throws URISyntaxException -
      */
     private URI getVerificationURI(String captchaToken) throws URISyntaxException {
         URIBuilder builder = new URIBuilder();

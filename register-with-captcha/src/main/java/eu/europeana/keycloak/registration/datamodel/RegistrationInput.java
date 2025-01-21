@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.datamodel;
 
 public class RegistrationInput {
   private String email;

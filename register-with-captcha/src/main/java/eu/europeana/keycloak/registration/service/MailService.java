@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.service;
 
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
@@ -12,7 +12,7 @@ public class MailService {
   private static final String SEPARATOR = "===========================%n";
   private static final String APIKEY_USAGE = "The API key can be used for regular API request, see https://pro.europeana.eu/resources/apis/intro#access";
 
-  private static final String MESSAGEFOOTER =
+  private static final String MESSAGE_FOOTER =
       "%n%n" +
           "Please keep a safe record of these key(s) and do not share them with third parties or expose it in user " +
           "interfaces or in markup, as the API key(s) are confidential and are for use by the client or user only." +
@@ -48,7 +48,7 @@ public class MailService {
         .append(SEPARATOR)
         .append(String.format("API key: \t%s %n",apikey))
         .append(APIKEY_USAGE).append(".")
-        .append(MESSAGEFOOTER);
+        .append(MESSAGE_FOOTER);
     return msg.toString();
   }
 }

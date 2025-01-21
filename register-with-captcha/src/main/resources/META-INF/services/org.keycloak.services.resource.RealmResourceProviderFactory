@@ -1,1 +1,1 @@
-eu.europeana.keycloak.registration.RegisterApiKeyProviderFactory
+eu.europeana.keycloak.registration.provider.RegisterApiKeyProviderFactory

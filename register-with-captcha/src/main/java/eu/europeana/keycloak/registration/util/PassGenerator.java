@@ -1,9 +1,9 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.util;
 
 import java.security.SecureRandom;
 import org.jboss.logging.Logger;
 
-/**
+/** This Utility is same as 'PassGenerator' from apikey project.
  * Created by luthien on 03/07/2017.
  * Generates pronounceable passwords. A cleaned up and deappletified version of
  * the Java Password Generator on www.multicians.org/thvv/gpw.html

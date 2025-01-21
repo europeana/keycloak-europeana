@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.registration;
+package eu.europeana.keycloak.registration.provider;
 
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
