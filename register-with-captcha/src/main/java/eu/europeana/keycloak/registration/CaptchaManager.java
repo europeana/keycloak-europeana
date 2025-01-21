@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -26,8 +24,8 @@ public class CaptchaManager {
     private static final Logger LOG = Logger.getLogger(CaptchaManager.class);
 
     private CloseableHttpClient httpClient;
-    @PostConstruct
-    public void init() {
+
+    public CaptchaManager() {
         httpClient = HttpClients.createDefault();
     }
 
@@ -88,14 +86,5 @@ public class CaptchaManager {
                 .setParameter("secret", secret)
                 .setParameter("response", captchaToken);
         return builder.build();
-    }
-
-    @PreDestroy
-    public void close() {
-        try {
-            httpClient.close();
-        } catch (IOException e) {
-            LOG.warn("Closing httpClient failed", e);
-        }
     }
 }
