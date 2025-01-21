@@ -6,7 +6,6 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 
 public class MailService {
-
   private final KeycloakSession session;
   private final UserModel userModel;
 
@@ -33,20 +32,23 @@ public class MailService {
     this.userModel = user;
   }
 
-  public void sendEmail() throws EmailException {
-
+  public void sendEmailToUserWithApikey(String apikey) throws EmailException {
     DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
-    String messageBody = "Dear %s %s,%n%nThank you for registering for the Europeana API." + "%n" +
-        "This is your Europeana API key: %n%n" +
-        SEPARATOR +
-        "API key: \t%s %n" +
-        SEPARATOR + "%n%n" +
-        APIKEY_USAGE + "." +
-        MESSAGEFOOTER;
-      senderProvider.send(session.getContext().getRealm().getSmtpConfig(),userModel,"Your Europeana API key",
-          messageBody,messageBody);
-
-
+    String messageSubject = "Your Europeana API key";
+    String messageBody = generateMessageForSendingApikey(apikey);
+    senderProvider.send(session.getContext().getRealm().getSmtpConfig(),userModel,
+        messageSubject, messageBody,messageBody);
   }
 
+  public String generateMessageForSendingApikey(String apikey) {
+    StringBuilder msg = new StringBuilder();
+    msg.append(String.format("Dear %s %s,%n%nThank you for registering for the Europeana API.",
+        userModel.getFirstName(),userModel.getLastName())).append("%n")
+        .append("This is your Europeana API key: %n%n")
+        .append(SEPARATOR)
+        .append(String.format("API key: \t%s %n",apikey))
+        .append(APIKEY_USAGE).append(".")
+        .append(MESSAGEFOOTER);
+    return msg.toString();
+  }
 }

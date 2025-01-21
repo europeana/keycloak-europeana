@@ -37,6 +37,7 @@ public class RegistrationService {
 
   public static final String CLIENT_OWNER = "client_owner";
   private static final Logger LOG = Logger.getLogger(RegistrationService.class);
+  public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s";
 
   private final KeycloakSession session;
   private final RealmModel realm;
@@ -53,22 +54,19 @@ public class RegistrationService {
   @Consumes({MediaType.APPLICATION_JSON})
   @Produces({MediaType.TEXT_HTML})
   public Response registerWithCaptcha(RegistrationInput input){
-    LOG.info("Input :" + input+ " Headers: " + session.getContext().getHttpRequest().getHttpHeaders());
     try {
       verifyCaptcha();
       if (input != null && StringUtils.isNotEmpty(input.getEmail())) {
         UserModel user = getUserBasedOnEmail(input.getEmail());
         if (user != null) {
-          createClientIfRequiredAndUpdateUser(user);
-          //send mail to accepted email id
+          String apikey = getOrCreateApikeyForUser(user);
+          //send mail to accepted email id i.e. email of user
           MailService mailService = new MailService(session,user);
-          mailService.sendEmail();
-
-          return Response.ok().entity("Created new Client, Role for user ").build();
+          mailService.sendEmailToUserWithApikey(apikey);
+          return Response.ok().build();
         } else {
           return Response.status(Status.BAD_REQUEST).entity(
-              String.format("An Europeana account was not found associated to the email address %s",
-                  input.getEmail())).build();
+              String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL,input.getEmail())).build();
         }
       }
       return Response.status(Status.BAD_REQUEST).entity("The email field is missing").build();
@@ -81,15 +79,26 @@ public class RegistrationService {
     }
   }
 
-  private void createClientIfRequiredAndUpdateUser(UserModel user) {
-    LOG.info(" Username for the provided email is : " + user.getUsername());
-    ClientModel client = getClientAssociatedToUser(user);
-    if (client == null) {
-      client = createClientWithNewKey(user);
-      RoleModel newRoleForClient = createNewRoleForClient(client);
-      LOG.info("New Role : " + newRoleForClient.getName() + " and new client : " + client.getClientId() + " is created for user : " + user.getUsername());
-      user.grantRole(newRoleForClient);
-    }
+  private String getOrCreateApikeyForUser(UserModel user) {
+    var client = getOrCreateClientForUser(user);
+    if(client !=null){
+      RoleModel clientRole = getOrCeateNewRoleForClient(client);
+      if(clientRole != null){
+          user.grantRole(clientRole);
+          LOG.info("Assigning new role : " + clientRole.getName() + " to User : " + user.getUsername());
+        }
+      }
+    return client.getId();
+  }
+
+  private ClientModel getOrCreateClientForUser(UserModel user) {
+    var client = Optional.ofNullable(getClientAssociatedToUser(user))
+        .orElseGet(() -> {
+          var newClient = createClientWithNewKey(user);
+          LOG.info("New client : " + newClient.getClientId() + " is created for user : "+ user.getUsername());
+          return newClient;
+        });
+    return client;
   }
 
   private void verifyCaptcha() {
@@ -106,13 +115,11 @@ public class RegistrationService {
   }
 
   private String getAuthorizationHeader(HttpRequest httpRequest, String captchaPattern) {
-
       String authorization = httpRequest.getHttpHeaders().getHeaderString(HttpHeaders.AUTHORIZATION);
       if (authorization != null) {
         try {
           Pattern pattern = Pattern.compile(captchaPattern);
           Matcher matcher = pattern.matcher(authorization);
-
           if (matcher.find()) {
             return matcher.group(1);
           }
@@ -123,10 +130,13 @@ public class RegistrationService {
       return null;
     }
 
-
-  private RoleModel createNewRoleForClient(ClientModel client) {
-    RoleProvider roles = session.roles();
-    return  roles.addClientRole(client, CLIENT_OWNER);
+  private RoleModel getOrCeateNewRoleForClient(ClientModel client) {
+      RoleProvider roles = session.roles();
+      if (client.getRole(CLIENT_OWNER) != null) {
+       return client.getRole(CLIENT_OWNER);
+      }
+      LOG.info("New owner role will be added for client : " + client.getId());
+      return roles.addClientRole(client, CLIENT_OWNER);
   }
 
   private ClientModel createClientWithNewKey(UserModel user) {
@@ -143,8 +153,7 @@ public class RegistrationService {
       ClientProvider clientProvider = session.clients();
       PassGenerator pg = new PassGenerator();
       do {
-        id = pg.generate(RandomUtils.nextInt(8, 13));
-        LOG.info("Generated Key " + id );
+        id = pg.generate(RandomUtils.nextInt(8, 13));       
       } while (clientProvider.getClientById(realm,id) != null);
       LOG.info("Created new API key : "+ id );
     return id;
@@ -159,6 +168,7 @@ public class RegistrationService {
       LOG.info("Client present for user " + container.getId());
       return (ClientModel) container;
     }
+    LOG.info("No Client found with client_owner role for user : "+user.getUsername());
     return null;
   }
 
