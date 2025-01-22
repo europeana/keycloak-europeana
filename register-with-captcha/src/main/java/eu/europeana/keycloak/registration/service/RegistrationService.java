@@ -85,12 +85,12 @@ public class RegistrationService {
     var client = getOrCreateClientForUser(user);
     if(client !=null){
       RoleModel clientRole = getOrCeateNewRoleForClient(client);
-      if(clientRole != null){
+      if(clientRole != null && !user.hasRole(clientRole)){
           user.grantRole(clientRole);
           LOG.info("Assigning new role : " + clientRole.getName() + " to User : " + user.getUsername());
         }
       }
-    return client.getId();
+    return client.getClientId();
   }
 
   private ClientModel getOrCreateClientForUser(UserModel user) {
