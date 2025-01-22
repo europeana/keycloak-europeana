@@ -59,15 +59,15 @@ public class RegistrationService {
   public Response registerWithCaptcha(RegistrationInput input){
     try {
       verifyCaptcha();
-      if (input == null && StringUtils.isEmpty(input.getEmail())) {
+      if (input == null || StringUtils.isEmpty(input.getEmail())) {
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("The email field is missing")).build();
       }
       UserModel user = getUserBasedOnEmail(input.getEmail());
       if (user == null) {
-
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))).build();
       }
+      LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
       updateKeyAndNotifyUser(user);
       return Response.ok().entity("").build();
     }
@@ -183,10 +183,12 @@ public class RegistrationService {
   }
 
   private UserModel getUserBasedOnEmail(String email) {
-    Map<String, String> filter = new HashMap<>();
-    filter.put(UserModel.EMAIL,email);
-    Optional<UserModel> userForEmail = userProvider.searchForUserStream(realm, filter).findFirst();
-    return userForEmail.orElse(null);
+      Map<String, String> filter = new HashMap<>();
+      filter.put(UserModel.EMAIL, email);
+      Optional<UserModel> userForEmail = userProvider.searchForUserStream(realm, filter)
+          .findFirst();
+      return userForEmail.orElse(null);
+
   }
 
 }
