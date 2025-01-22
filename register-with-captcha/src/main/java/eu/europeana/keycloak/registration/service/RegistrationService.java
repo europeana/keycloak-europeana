@@ -168,7 +168,7 @@ public class RegistrationService {
     if (rModel.isPresent() && rModel.get().isClientRole()) {
       RoleContainerModel container = rModel.get().getContainer();
       ClientModel client = (ClientModel) container;
-      LOG.info("Client with id " + client.getClientId() + " is present for user.");
+      LOG.info("Client with id " + client.getClientId() + " is present for user " +  user.getUsername());
       return client;
     }
     LOG.info("No Client found with client_owner role for user : "+user.getUsername());
