@@ -5,6 +5,7 @@ import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CA
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_VERIFICATION_FAILED;
 
 import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
+import eu.europeana.keycloak.registration.datamodel.ErrorResponse;
 import eu.europeana.keycloak.registration.exception.CaptchaException;
 import eu.europeana.keycloak.registration.util.PassGenerator;
 import jakarta.ws.rs.Consumes;
@@ -63,17 +64,20 @@ public class RegistrationService {
       }
       UserModel user = getUserBasedOnEmail(input.getEmail());
       if (user == null) {
-        return Response.status(Status.BAD_REQUEST).entity(
-            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())).build();
+
+        return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))).build();
       }
       updateKeyAndNotifyUser(user);
       return Response.ok().build();
     }
     catch (CaptchaException ex){
-      return Response.status(Status.BAD_REQUEST).entity(ex.getMessage()).build();
+      return Response.status(Status.BAD_REQUEST)
+          .entity(new ErrorResponse(ex.getMessage())).build();
     }
     catch (EmailException ex){
-      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(ex.getMessage()).build();
+      return Response.status(Status.INTERNAL_SERVER_ERROR)
+          .entity(new ErrorResponse(ex.getMessage())).build();
     }
   }
 
