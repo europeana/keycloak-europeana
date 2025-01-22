@@ -9,7 +9,7 @@
     <version>2.1</version>
   </parent>
 
-  <artifactId>keycloak-sessions</artifactId>
+  <artifactId>keycloak-apikey</artifactId>
   <version>2.1</version>
   <name>Keycloak persistent session SPI</name>
   <description>A Service Provider that adds a session history entity to Keycloak and provides API key functionality
