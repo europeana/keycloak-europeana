@@ -54,24 +54,20 @@ public class RegistrationService {
   @Path("")
   @POST
   @Consumes({MediaType.APPLICATION_JSON})
-  @Produces({MediaType.TEXT_HTML})
+  @Produces({MediaType.APPLICATION_JSON})
   public Response registerWithCaptcha(RegistrationInput input){
     try {
       verifyCaptcha();
-      if (input != null && StringUtils.isNotEmpty(input.getEmail())) {
-        UserModel user = getUserBasedOnEmail(input.getEmail());
-        if (user != null) {
-          String apikey = getOrCreateApikeyForUser(user);
-          //send mail to accepted email id i.e. email of user
-          MailService mailService = new MailService(session,user);
-          mailService.sendEmailToUserWithApikey(apikey);
-          return Response.ok().entity("").build();
-        } else {
-          return Response.status(Status.BAD_REQUEST).entity(
-              String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL,input.getEmail())).build();
-        }
+      if (input == null && StringUtils.isEmpty(input.getEmail())) {
+        return Response.status(Status.BAD_REQUEST).entity("The email field is missing").build();
       }
-      return Response.status(Status.BAD_REQUEST).entity("The email field is missing").build();
+      UserModel user = getUserBasedOnEmail(input.getEmail());
+      if (user == null) {
+        return Response.status(Status.BAD_REQUEST).entity(
+            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())).build();
+      }
+      updateKeyAndNotifyUser(user);
+      return Response.ok().build();
     }
     catch (CaptchaException ex){
       return Response.status(Status.BAD_REQUEST).entity(ex.getMessage()).build();
@@ -79,6 +75,13 @@ public class RegistrationService {
     catch (EmailException ex){
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(ex.getMessage()).build();
     }
+  }
+
+  private void updateKeyAndNotifyUser(UserModel user) throws EmailException {
+    String apikey = getOrCreateApikeyForUser(user);
+    //send mail to accepted email id i.e. email of user
+    MailService mailService = new MailService(session, user);
+    mailService.sendEmailToUserWithApikey(apikey);
   }
 
   private String getOrCreateApikeyForUser(UserModel user) {
