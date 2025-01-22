@@ -65,7 +65,7 @@ public class RegistrationService {
           //send mail to accepted email id i.e. email of user
           MailService mailService = new MailService(session,user);
           mailService.sendEmailToUserWithApikey(apikey);
-          return Response.ok().build();
+          return Response.ok().entity("").build();
         } else {
           return Response.status(Status.BAD_REQUEST).entity(
               String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL,input.getEmail())).build();
@@ -167,8 +167,9 @@ public class RegistrationService {
         roleModel -> CLIENT_OWNER.equals(roleModel.getName())).findFirst();
     if (rModel.isPresent() && rModel.get().isClientRole()) {
       RoleContainerModel container = rModel.get().getContainer();
-      LOG.info("Client present for user " + container.getId());
-      return (ClientModel) container;
+      ClientModel client = (ClientModel) container;
+      LOG.info("Client with id " + client.getClientId() + " is present for user.");
+      return client;
     }
     LOG.info("No Client found with client_owner role for user : "+user.getUsername());
     return null;
