@@ -47,6 +47,7 @@ public class MailService {
         .append("This is your Europeana API key: \n\n")
         .append(SEPARATOR)
         .append(String.format("API key: \t%s \n",apikey))
+        .append(SEPARATOR).append("\n\n")
         .append(APIKEY_USAGE).append(".")
         .append(MESSAGE_FOOTER);
     return msg.toString();
