@@ -35,6 +35,9 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.RoleProvider;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
+import org.keycloak.utils.EmailValidationUtil;
+import org.keycloak.validate.ValidationContext;
+import org.keycloak.validate.validators.EmailValidator;
 
 public class RegistrationService {
 
@@ -62,6 +65,7 @@ public class RegistrationService {
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("The email field is missing")).build();
       }
+      validateEmail(input.getEmail());
       UserModel user = getUserBasedOnEmail(input.getEmail());
       if (user == null) {
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
@@ -78,6 +82,12 @@ public class RegistrationService {
     catch (EmailException ex){
       return Response.status(Status.INTERNAL_SERVER_ERROR)
           .entity(new ErrorResponse(ex.getMessage())).build();
+    }
+  }
+
+  private void validateEmail(String email) throws EmailException {
+    if(!EmailValidationUtil.isValidEmail(email)){
+      throw new EmailException("Invalid Email Id");
     }
   }
 
