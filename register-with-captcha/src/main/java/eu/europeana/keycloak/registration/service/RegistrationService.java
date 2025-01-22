@@ -60,7 +60,7 @@ public class RegistrationService {
     try {
       verifyCaptcha();
       if (input == null && StringUtils.isEmpty(input.getEmail())) {
-        return Response.status(Status.BAD_REQUEST).entity("The email field is missing").build();
+        return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("The email field is missing")).build();
       }
       UserModel user = getUserBasedOnEmail(input.getEmail());
       if (user == null) {
@@ -69,7 +69,7 @@ public class RegistrationService {
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))).build();
       }
       updateKeyAndNotifyUser(user);
-      return Response.ok().build();
+      return Response.ok().entity("").build();
     }
     catch (CaptchaException ex){
       return Response.status(Status.BAD_REQUEST)
