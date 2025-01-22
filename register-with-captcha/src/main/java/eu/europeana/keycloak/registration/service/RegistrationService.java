@@ -66,7 +66,7 @@ public class RegistrationService {
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("The email field is missing")).build();
       }
       validateEmail(input.getEmail());
-      UserModel user = getUserBasedOnEmail(input.getEmail());
+      UserModel user = userProvider.getUserByEmail(realm,input.getEmail());
       if (user == null) {
         return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))).build();
@@ -192,13 +192,5 @@ public class RegistrationService {
     return null;
   }
 
-  private UserModel getUserBasedOnEmail(String email) {
-      Map<String, String> filter = new HashMap<>();
-      filter.put(UserModel.EMAIL, email);
-      Optional<UserModel> userForEmail = userProvider.searchForUserStream(realm, filter)
-          .findFirst();
-      return userForEmail.orElse(null);
-
-  }
 
 }
