@@ -39,4 +39,5 @@ k8s/base/deployment.yaml
 /.java-version
 
 .idea/compiler.xml
-keycloak-sessions/src/main/resources/META-INF/experiments-BK.sql
+
+**/experiments-BK.sql
