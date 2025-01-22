@@ -80,6 +80,14 @@ spec:
               value: "${ZOHO_REFRESH_TOKEN}"
             - name: ZOHO_REDIRECT_URL
               value: "${ZOHO_REDIRECT_URL}"
+            - name: RECAPTCHA_VERIFICATION_URL_SCHEME
+              value: "${RECAPTCHA_VERIFICATION_URL_SCHEME}"
+            - name: RECAPTCHA_VERIFICATION_URL_HOST
+              value: "${RECAPTCHA_VERIFICATION_URL_HOST}"
+            - name: RECAPTCHA_VERIFICATION_URL_PATH
+              value: "${RECAPTCHA_VERIFICATION_URL_PATH}"
+            - name: RECAPTCHA_SECRET
+              value: "${RECAPTCHA_SECRET}"
           ports:
             - containerPort: 8080
           livenessProbe:
