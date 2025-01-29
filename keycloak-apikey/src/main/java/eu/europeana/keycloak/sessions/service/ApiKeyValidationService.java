@@ -32,10 +32,10 @@ public class ApiKeyValidationService {
   }
 
 
-  @Path("/validate")
+  @Path("")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ){
-
+      LOG.info("Starting validation") ;
       if (!isAuthorized() || !validateApikey(clientId) ) { // ip validation required ?
         return Response.status(Status.BAD_REQUEST).build();  // should be UNAUTHORIZED ?
       }
@@ -44,20 +44,27 @@ public class ApiKeyValidationService {
   }
 
   private boolean isAuthorized() {
-    BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
-    AuthResult authResult = authenticator.authenticate();
-    if (authResult == null || authResult.getClient() == null) {
-      LOG.info(" Token unauthorized ");
-      return false;
+    try {
+      BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
+      AuthResult authResult = authenticator.authenticate();
+      if (authResult == null || authResult.getClient() == null) {
+        LOG.info(" Token unauthorized ");
+        return false;
+      }
+      ClientModel client = authResult.getClient();
+      Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
+      LOG.info(" Clinet For token  : " + client.getClientId());
+      LOG.info(" ClinetScopes : ");
+      for (Entry<String, ClientScopeModel> entry : clientScopes.entrySet()) {
+        LOG.info(entry.getKey());
+      }
+      return true;
     }
-    ClientModel client = authResult.getClient();
-    Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
-    LOG.info(" Clinet For token  : " + client.getClientId());
-    LOG.info(" ClinetScopes : ");
-    for (Entry<String, ClientScopeModel> entry : clientScopes.entrySet()) {
-      LOG.info(entry.getKey());
+    catch (Exception e){
+      LOG.error("Exception during auth : "+ e.getMessage());
+      e.printStackTrace();
+      return  false;
     }
-    return true;
   }
 
 
