@@ -16,9 +16,9 @@ import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 public class ApiKeyValidationService {
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
 
-  private KeycloakSession session;
+  private final KeycloakSession session;
 
-  private RealmModel realm;
+  private final RealmModel realm;
 
   public static final String APIKEY_NOT_REGISTERED                 = "API key %s is not registered";
   public static final String APIKEY_NOT_ACTIVE                 = "API key %s is not active";
@@ -38,7 +38,7 @@ public class ApiKeyValidationService {
         return Response.status(Status.BAD_REQUEST).build();  // should be UNAUTHORIZED ?
       }
       //TODO - Update the session history table
-      return Response.ok().build();
+      return Response.status(Status.NO_CONTENT).build();
   }
 
 
