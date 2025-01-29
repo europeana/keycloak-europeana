@@ -5,9 +5,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
+import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager.BearerTokenAuthenticator;
@@ -32,15 +35,30 @@ public class ApiKeyValidationService {
   @Path("/validate")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ){
-      BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
-      AuthResult authResult = authenticator.authenticate();
-      if (authResult == null || !validateApikey(clientId) ) { // ip validation required ?
+
+      if (!isAuthorized() || !validateApikey(clientId) ) { // ip validation required ?
         return Response.status(Status.BAD_REQUEST).build();  // should be UNAUTHORIZED ?
       }
       //TODO - Update the session history table
       return Response.status(Status.NO_CONTENT).build();
   }
 
+  private boolean isAuthorized() {
+    BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
+    AuthResult authResult = authenticator.authenticate();
+    if (authResult == null || authResult.getClient() == null) {
+      LOG.info(" Token unauthorized ");
+      return false;
+    }
+    ClientModel client = authResult.getClient();
+    Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
+    LOG.info(" Clinet For token  : " + client.getClientId());
+    LOG.info(" ClinetScopes : ");
+    for (Entry<String, ClientScopeModel> entry : clientScopes.entrySet()) {
+      LOG.info(entry.getKey());
+    }
+    return true;
+  }
 
 
   public boolean validateApikey(String apikey)
