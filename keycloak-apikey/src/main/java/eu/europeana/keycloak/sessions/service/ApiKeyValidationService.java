@@ -63,7 +63,11 @@ public class ApiKeyValidationService {
   private static boolean validateClientScope(AuthResult authResult) {
     ClientModel client = authResult.getClient();
     Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
-    return  clientScopes != null && clientScopes.keySet().contains(CLIENT_SCOPE_APIKEYS);
+    if(clientScopes != null && !clientScopes.containsKey(CLIENT_SCOPE_APIKEYS)){
+      LOG.error("Client with ID "+client.getClientId() + " does not have required scope - apikeys ");
+      return false;
+    }
+    return true;
   }
 
 
