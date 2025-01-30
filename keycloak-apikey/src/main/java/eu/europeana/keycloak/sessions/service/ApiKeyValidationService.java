@@ -1,12 +1,12 @@
 package eu.europeana.keycloak.sessions.service;
 
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Map;
-import java.util.Map.Entry;
 import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
@@ -17,7 +17,9 @@ import org.keycloak.services.managers.AppAuthManager.BearerTokenAuthenticator;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 
 public class ApiKeyValidationService {
+
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
+  public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
 
   private final KeycloakSession session;
 
@@ -35,9 +37,8 @@ public class ApiKeyValidationService {
   @Path("")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ){
-      LOG.info("Starting validation") ;
-      if (!isAuthorized() || !validateApikey(clientId) ) { // ip validation required ?
-        return Response.status(Status.BAD_REQUEST).build();  // should be UNAUTHORIZED ?
+      if (!isAuthorized() || !validateApikey(clientId) ) {
+        return Response.status(Status.BAD_REQUEST).build();
       }
       //TODO - Update the session history table
       return Response.status(Status.NO_CONTENT).build();
@@ -48,23 +49,21 @@ public class ApiKeyValidationService {
       BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
       AuthResult authResult = authenticator.authenticate();
       if (authResult == null || authResult.getClient() == null) {
-        LOG.info(" Token unauthorized ");
+        LOG.error(" Token unauthorized ");
         return false;
       }
-      ClientModel client = authResult.getClient();
-      Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
-      LOG.info(" Clinet For token  : " + client.getClientId());
-      LOG.info(" ClinetScopes : ");
-      for (Entry<String, ClientScopeModel> entry : clientScopes.entrySet()) {
-        LOG.info(entry.getKey());
-      }
-      return true;
+      return validateClientScope(authResult);
     }
-    catch (Exception e){
-      LOG.error("Exception during auth : "+ e.getMessage());
-      e.printStackTrace();
+    catch (NotAuthorizedException e){
+      LOG.error("Exception during token authentication : "+ e.getMessage());
       return  false;
     }
+  }
+
+  private static boolean validateClientScope(AuthResult authResult) {
+    ClientModel client = authResult.getClient();
+    Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
+    return  clientScopes != null && clientScopes.keySet().contains(CLIENT_SCOPE_APIKEYS);
   }
 
 
