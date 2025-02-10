@@ -10,22 +10,15 @@ public class MailService {
   private final UserModel userModel;
 
   private static final String SEPARATOR = "===========================\n";
-  private static final String APIKEY_USAGE = "The API key can be used for regular API request, see https://pro.europeana.eu/resources/apis/intro#access";
+  private static final String APIKEY_USAGE = "Visit <a href=\"https://apis.europeana.eu/\">Europeana’s APIs page</a> to get to know about the APIs and visit our <a href=\"https://europeana.atlassian.net/wiki/spaces/EF/pages/2462351393/Accessing+the+APIs\">documentation pages</a> to learn how to use your key.";
 
   private static final String MESSAGE_FOOTER =
-      "\n\n" +
+      "<br><br>" +
           "Please keep a safe record of these key(s) and do not share them with third parties or expose it in user " +
-          "interfaces or in markup, as the API key(s) are confidential and are for use by the client or user only." +
-          "\n\n" +
-          "Our technical documentation for all APIs is available at https://pro.europeana.eu/resources/apis which " +
-          "includes an API console for testing and community developed libraries for a variety of programming languages." +
-          "\n\n" +
-          "Please join us in the Europeana API Forum (https://groups.google.com/forum/?pli=1#!forum/europeanaapi) " +
-          "- to ask questions to us and other developers and to give us your feedback on our API. " +
-          "You can also contact us directly by mailing api@europeana.eu " +
-          "and we would be especially grateful if you would let us know about your implementation so that we can " +
-          "feature it in our application gallery on Europeana Pro - https://pro.europeana.eu/resources/apps." +
-          "\n\n" + "Best regards," + "\n" + "The Europeana API Team";
+          "interfaces or in markup, as they are confidential and are for use by yourself only." +
+          "<br><br>" +
+          "If you want to ask questions or give us your feedback, we are available directly via the email api@europeana.eu ." +
+          "<br><br>" + "Best regards," + "<br>" + "The Europeana API Team</body></html>";
 
   public MailService(KeycloakSession session, UserModel user) {
     this.session = session;
@@ -42,12 +35,12 @@ public class MailService {
 
   public String generateMessageForSendingApikey(String apikey) {
     StringBuilder msg = new StringBuilder();
-    msg.append(String.format("Dear %s %s,\n\nThank you for registering for the Europeana API.",
-        userModel.getFirstName(),userModel.getLastName())).append("\n")
-        .append("This is your Europeana API key: \n\n")
+    msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
+        userModel.getFirstName(),userModel.getLastName())).append("<br>")
+        .append("You can now try out Europeana’s APIs with your very own API key: <br><br>")
         .append(SEPARATOR)
-        .append(String.format("API key: \t%s \n",apikey))
-        .append(SEPARATOR).append("\n\n")
+        .append(String.format("&emsp; %s <br>",apikey))
+        .append(SEPARATOR).append("<br><br>")
         .append(APIKEY_USAGE).append(".")
         .append(MESSAGE_FOOTER);
     return msg.toString();
