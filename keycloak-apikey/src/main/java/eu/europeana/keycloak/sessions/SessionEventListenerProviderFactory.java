@@ -4,6 +4,11 @@ import java.util.List;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
+import org.keycloak.events.EventListenerProvider;
+import org.keycloak.events.EventListenerProviderFactory;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.connections.infinispan.InfinispanConnectionProviderFactory;
@@ -13,7 +18,7 @@ import org.keycloak.provider.ProviderConfigProperty;
  * Created by luthien on 19/12/2024.
  */
 
-public class SessionEventListenerProviderFactory implements InfinispanConnectionProviderFactory {
+public class SessionEventListenerProviderFactory implements EventListenerProviderFactory {
 
     private static final Logger LOG = Logger.getLogger(SessionEventListenerProviderFactory.class);
 
