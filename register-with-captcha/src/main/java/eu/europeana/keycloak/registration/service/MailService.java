@@ -30,7 +30,7 @@ public class MailService {
     String messageSubject = "Your Europeana API key";
     String messageBody = generateMessageForSendingApikey(apikey);
     senderProvider.send(session.getContext().getRealm().getSmtpConfig(),userModel,
-        messageSubject, messageBody,null);
+        messageSubject, null,messageBody);
   }
 
   public String generateMessageForSendingApikey(String apikey) {
