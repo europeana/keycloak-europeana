@@ -9,15 +9,15 @@ public class MailService {
   private final KeycloakSession session;
   private final UserModel userModel;
 
-  private static final String SEPARATOR = "===========================\n";
+  private static final String SEPARATOR = "===========================<br>";
   private static final String APIKEY_USAGE = "Visit <a href=\"https://apis.europeana.eu/\">Europeana’s APIs page</a> to get to know about the APIs and visit our <a href=\"https://europeana.atlassian.net/wiki/spaces/EF/pages/2462351393/Accessing+the+APIs\">documentation pages</a> to learn how to use your key.";
 
   private static final String MESSAGE_FOOTER =
       "<br><br>" +
-          "Please keep a safe record of these key(s) and do not share them with third parties or expose it in user " +
-          "interfaces or in markup, as they are confidential and are for use by yourself only." +
+          "Please keep a safe record of your individual key and do not share it with third parties or expose it in user " +
+          "interfaces or in markup, as the key are confidential and are for use by yourself only." +
           "<br><br>" +
-          "If you want to ask questions or give us your feedback, we are available directly via the email api@europeana.eu ." +
+          "If you want to ask questions or give us your feedback, we are available directly via the email <a href=\"mailto:api@europeana.eu\">api@europeana.eu</a> ." +
           "<br><br>" + "Best regards," + "<br>" + "The Europeana API Team</body></html>";
 
   public MailService(KeycloakSession session, UserModel user) {
@@ -39,8 +39,8 @@ public class MailService {
         userModel.getFirstName(),userModel.getLastName())).append("<br>")
         .append("You can now try out Europeana’s APIs with your very own API key: <br><br>")
         .append(SEPARATOR)
-        .append(String.format("&emsp; %s <br>",apikey))
-        .append(SEPARATOR).append("<br><br>")
+        .append(String.format("&emsp; &emsp; &emsp; %s <br>",apikey))
+        .append(SEPARATOR).append("<br>")
         .append(APIKEY_USAGE).append(".")
         .append(MESSAGE_FOOTER);
     return msg.toString();
