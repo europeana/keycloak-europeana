@@ -44,6 +44,13 @@
       <version>${keycloak.version}</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-model-infinispan -->
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-infinispan</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>

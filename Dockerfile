@@ -1,5 +1,5 @@
 ARG keycloak_version=26.0.7
-ARG theme_version=0.12
+ARG theme_version=0.12.1
 
 # 1 get theme from GitHub
 FROM europeana/keycloak-theme:${theme_version} AS theme
