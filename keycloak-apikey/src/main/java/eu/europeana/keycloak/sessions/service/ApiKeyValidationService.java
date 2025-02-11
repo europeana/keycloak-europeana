@@ -1,13 +1,12 @@
 package eu.europeana.keycloak.sessions.service;
 
 import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jboss.logging.Logger;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
 import org.keycloak.models.ClientScopeModel;
@@ -28,23 +27,13 @@ public class ApiKeyValidationService {
   public static final String APIKEY_NOT_REGISTERED                 = "API key %s is not registered";
   public static final String APIKEY_NOT_ACTIVE                 = "API key %s is not active";
 
+  public static final String APIKEY_PATTERN                        = "APIKEY\\s+([^\\s]+)";
+
   public ApiKeyValidationService(KeycloakSession session) {
     this.session = session;
     this.realm =  session.getContext().getRealm();
   }
-
-
-  @Path("")
-  @POST
-  public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ){
-      if (!isAuthorized() || !validateApikey(clientId) ) {
-        return Response.status(Status.BAD_REQUEST).build();
-      }
-      //TODO - Update the session history table
-      return Response.status(Status.NO_CONTENT).build();
-  }
-
-  private boolean isAuthorized() {
+  public boolean isAuthorized() {
     try {
       BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
       AuthResult authResult = authenticator.authenticate();
@@ -86,6 +75,25 @@ public class ApiKeyValidationService {
       return false;
      }
     return true;
+  }
+
+
+  public String extractApikeyFromAuthorizationHeader(HttpRequest httpRequest){
+    HttpHeaders httpHeaders = httpRequest.getHttpHeaders();
+    String authorization = httpHeaders!=null?httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION):null;
+    if (authorization != null) {
+      try {
+        Pattern pattern = Pattern.compile(APIKEY_PATTERN);
+        Matcher matcher = pattern.matcher(authorization);
+        if (matcher.find()) {
+          return matcher.group(1);
+        }
+      } catch (RuntimeException e) {
+        LOG.error("Regex problem while parsing authorization header", e);
+      }
+    }
+    LOG.error("No Apikey found in request header!");
+    return null;
   }
 
 }

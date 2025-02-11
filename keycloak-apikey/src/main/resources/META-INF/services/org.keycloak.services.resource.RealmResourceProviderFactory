@@ -1,1 +1,2 @@
 eu.europeana.keycloak.sessions.provider.ApiKeyValidationProviderFactory
+eu.europeana.keycloak.sessions.provider.ApiKeyLegacyValidationProviderFactory
