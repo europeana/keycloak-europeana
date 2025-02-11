@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
+import eu.europeana.keycloak.validation.exception.ErrorResponse;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -16,6 +17,7 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
   private final ApiKeyValidationService service;
 
   public static final String APIKEY_MISSING = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
+  public static final String APIKEY_NOT_REGISTERED  = "API key %s is not registered";
 
 
   public ApiKeyLegacyValidationProvider(KeycloakSession keycloakSession) {
@@ -38,7 +40,14 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
     HttpRequest httpRequest = session.getContext().getHttpRequest();
     String apikey = service.extractApikeyFromAuthorizationHeader(httpRequest);
     if (StringUtils.isBlank(apikey)) {
-      return Response.status(Status.BAD_REQUEST).entity(APIKEY_MISSING).build();
+      ErrorResponse errorResponse = new ErrorResponse(Status.BAD_REQUEST.getStatusCode(),
+          Status.BAD_REQUEST.getReasonPhrase(),
+          APIKEY_MISSING,
+          httpRequest.getUri().getPath());
+      return Response.status(Status.BAD_REQUEST).entity(errorResponse).build();
+    }
+    if(!service.validateApikey(apikey)){
+      return Response.status(Status.UNAUTHORIZED).entity(String.format(APIKEY_NOT_REGISTERED, apikey)).build();
     }
     //TODO - Update the session history table
     return Response.status(Status.NO_CONTENT).build();
