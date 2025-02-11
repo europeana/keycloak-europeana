@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  
+
   <parent>
     <groupId>eu.europeana</groupId>
     <artifactId>europeana-parent-pom</artifactId>
@@ -37,11 +37,30 @@
     <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
     <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
     <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
+    <jakarta-json.version>2.1.3</jakarta-json.version>
+    <jakarta-annotationapi.version>3.0.0</jakarta-annotationapi.version>
 
-<!--    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>-->
+    <!--    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>-->
     <dependency-check-maven.version>11.1.0</dependency-check-maven.version>
 
   </properties>
+
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
+    <dependency>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
+      <version>${jakarta-json.version}</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>${jakarta-annotationapi.version}</version>
+    </dependency>
+
+  </dependencies>
 
   <build>
     <pluginManagement>
@@ -68,33 +87,33 @@
         </plugin>
       </plugins>
     </pluginManagement>
-<!--    <plugins>-->
-<!--      &lt;!&ndash; This will be active when running the verify or install goal-->
-<!--           To skip (e.g. during debugging) use 'mvn clean package')&ndash;&gt;-->
-<!--      <plugin>-->
-<!--        <groupId>org.owasp</groupId>-->
-<!--        <artifactId>dependency-check-maven</artifactId>-->
-<!--        <version>${dependency-check-maven.version}</version>-->
-<!--        <configuration>-->
-<!--          <nvdApiKey>dc601836-6867-4367-8fee-fc1e2aaf594b</nvdApiKey>-->
-<!--          <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>-->
-<!--          &lt;!&ndash; see EA-3505 why we host the known exploited vulnerabilities file ourselves &ndash;&gt;-->
-<!--          <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>-->
-<!--          <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>-->
-<!--          <failBuildOnCVSS>9</failBuildOnCVSS>-->
-<!--          <suppressionFiles>-->
-<!--            <suppressionFile>owasp-suppress.xml</suppressionFile>-->
-<!--          </suppressionFiles>-->
-<!--        </configuration>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <goals>-->
-<!--              <goal>check</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
-<!--    </plugins>-->
+    <!--    <plugins>-->
+    <!--      &lt;!&ndash; This will be active when running the verify or install goal-->
+    <!--           To skip (e.g. during debugging) use 'mvn clean package')&ndash;&gt;-->
+    <!--      <plugin>-->
+    <!--        <groupId>org.owasp</groupId>-->
+    <!--        <artifactId>dependency-check-maven</artifactId>-->
+    <!--        <version>${dependency-check-maven.version}</version>-->
+    <!--        <configuration>-->
+    <!--          <nvdApiKey>dc601836-6867-4367-8fee-fc1e2aaf594b</nvdApiKey>-->
+    <!--          <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>-->
+    <!--          &lt;!&ndash; see EA-3505 why we host the known exploited vulnerabilities file ourselves &ndash;&gt;-->
+    <!--          <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>-->
+    <!--          <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>-->
+    <!--          <failBuildOnCVSS>9</failBuildOnCVSS>-->
+    <!--          <suppressionFiles>-->
+    <!--            <suppressionFile>owasp-suppress.xml</suppressionFile>-->
+    <!--          </suppressionFiles>-->
+    <!--        </configuration>-->
+    <!--        <executions>-->
+    <!--          <execution>-->
+    <!--            <goals>-->
+    <!--              <goal>check</goal>-->
+    <!--            </goals>-->
+    <!--          </execution>-->
+    <!--        </executions>-->
+    <!--      </plugin>-->
+    <!--    </plugins>-->
   </build>
 
 </project>

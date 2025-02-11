@@ -20,7 +20,6 @@
     <properties>
         <snakeyaml.version>2.3</snakeyaml.version>
         <jakarta.version>4.0.0</jakarta.version>
-        <javax.version>1.1.4</javax.version>
         <jboss.logging.version>3.5.3.Final</jboss.logging.version>
         <apache.httpclient.version>4.5.14</apache.httpclient.version>
     </properties>
@@ -69,13 +68,6 @@
                     <artifactId>resteasy-multipart-provider</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-            <version>${javax.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
