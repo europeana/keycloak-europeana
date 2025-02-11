@@ -1,6 +1,6 @@
-package eu.europeana.keycloak.sessions.provider;
+package eu.europeana.keycloak.validation.provider;
 
-import eu.europeana.keycloak.sessions.service.ApiKeyValidationService;
+import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
