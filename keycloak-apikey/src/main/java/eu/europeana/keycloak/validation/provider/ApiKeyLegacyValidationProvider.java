@@ -16,8 +16,8 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
-  public static final String APIKEY_MISSING = "Correct header syntax 'Authorization: APIKEY <your_key_here>'";
-  public static final String APIKEY_NOT_REGISTERED  = "API key %s is not registered";
+  public static final String APIKEY_MISSING = "No API key in header. Correct header syntax 'Authorization: APIKEY <your_key_here>'";
+   public static final String APIKEY_NOT_REGISTERED  = "\"API key %s is not registered\"";
 
 
   public ApiKeyLegacyValidationProvider(KeycloakSession keycloakSession) {
