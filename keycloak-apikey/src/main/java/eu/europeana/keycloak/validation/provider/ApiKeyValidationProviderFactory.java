@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.sessions.provider;
+package eu.europeana.keycloak.validation.provider;
 
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
