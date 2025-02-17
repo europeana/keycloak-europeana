@@ -3,19 +3,22 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
-        <groupId>eu.europeana</groupId>
         <artifactId>keycloak-europeana</artifactId>
+        <groupId>eu.europeana</groupId>
         <version>2.1</version>
     </parent>
+
     <artifactId>bcrypt-addon</artifactId>
+    <groupId>eu.europeana</groupId>
     <version>2.1</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
 
     <properties>
-        <jboss.logging.version>3.4.2.Final</jboss.logging.version>
+        <!-- these are specific for bcrypt so not moving to the root pom -->
         <commons-codec.version>1.15</commons-codec.version>
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
         <favre-bytes.version>1.4.0</favre-bytes.version>
@@ -60,6 +63,12 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>${commons-codec.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>${jakarta.version}</version>
         </dependency>
 
     </dependencies>

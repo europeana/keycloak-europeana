@@ -4,12 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>eu.europeana</groupId>
     <artifactId>keycloak-europeana</artifactId>
+    <groupId>eu.europeana</groupId>
     <version>2.1</version>
   </parent>
 
   <artifactId>custom-protocol-mapper</artifactId>
+  <groupId>eu.europeana</groupId>
   <version>2.1</version>
 
   <name>Custom Protocol Mapper</name>
@@ -17,13 +18,6 @@
   </description>
 
   <packaging>jar</packaging>
-
-
-  <properties>
-    <snakeyaml.version>2.3</snakeyaml.version>
-    <!-- non-dependencies -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <dependencies>
 
