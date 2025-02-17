@@ -1,6 +1,6 @@
-package eu.europeana.keycloak.sessions.provider;
+package eu.europeana.keycloak.apikey.provider;
 
-import eu.europeana.keycloak.sessions.service.ApiKeyValidationService;
+import eu.europeana.keycloak.apikey.service.ApiKeyValidationService;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
 

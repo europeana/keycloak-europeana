@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.sessions.service;
+package eu.europeana.keycloak.apikey.service;
 
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.POST;
