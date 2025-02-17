@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>eu.europeana</groupId>
+    <artifactId>keycloak-europeana</artifactId>
+    <version>2.1</version>
+  </parent>
+
+  <artifactId>keycloak-apikey</artifactId>
+  <groupId>eu.europeana</groupId>
+  <version>2.1</version>
+
+  <name>Keycloak persistent session SPI</name>
+  <description>A Service Provider that adds a session history entity to Keycloak and provides API key functionality
+  </description>
+
+  <packaging>jar</packaging>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-dependencies-server-all</artifactId>
+        <version>${keycloak.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi-private</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-services</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-jpa</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!--		<dependency>-->
+    <!--			<groupId>org.keycloak</groupId>-->
+    <!--			<artifactId>keycloak-crypto-default</artifactId>-->
+    <!--			<version>${keycloak.version}</version>-->
+    <!--		</dependency>-->
+
+    <!--		<dependency>-->
+    <!--			<groupId>org.keycloak</groupId>-->
+    <!--			<artifactId>keycloak-admin-ui</artifactId>-->
+    <!--			<version>${keycloak.version}</version>-->
+    <!--		</dependency>-->
+
+    <!--		<dependency>-->
+    <!--			<groupId>org.jboss.resteasy</groupId>-->
+    <!--			<artifactId>resteasy-jackson2-provider</artifactId>-->
+    <!--			<version>${resteasy.version}</version>-->
+    <!--		</dependency>-->
+
+    <!--		<dependency>-->
+    <!--			<groupId>org.infinispan</groupId>-->
+    <!--			<artifactId>infinispan-commons</artifactId>-->
+    <!--			<version>${infinispan.common.version}</version>-->
+    <!--		</dependency>-->
+
+
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>${json.version}</version>
+    </dependency>
+
+  </dependencies>
+
+
+
+  <build>
+    <finalName>keycloak-sessions-spi</finalName>
+    <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <outputDirectory>../addon-jars</outputDirectory>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
