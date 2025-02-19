@@ -68,7 +68,9 @@ public class RegistrationService {
   @Path("")
   @OPTIONS
   public Response registerWithCaptchaPreflight() {
-    return Cors.add(this.request, Response.ok()).auth().preflight().build();
+    return Cors.add(this.request, Response.ok())
+        .auth().allowedMethods("POST","OPTIONS")
+        .auth().preflight().build();
   }
 
   @Path("")
