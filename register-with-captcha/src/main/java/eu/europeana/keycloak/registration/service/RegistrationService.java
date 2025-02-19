@@ -4,19 +4,18 @@ import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CA
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_PATTERN;
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_VERIFICATION_FAILED;
 
-import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
 import eu.europeana.keycloak.registration.datamodel.ErrorResponse;
+import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
 import eu.europeana.keycloak.registration.exception.CaptchaException;
 import eu.europeana.keycloak.registration.util.PassGenerator;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,9 +34,8 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.RoleProvider;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
+import org.keycloak.services.resources.Cors;
 import org.keycloak.utils.EmailValidationUtil;
-import org.keycloak.validate.ValidationContext;
-import org.keycloak.validate.validators.EmailValidator;
 
 public class RegistrationService {
 
@@ -49,10 +47,28 @@ public class RegistrationService {
   private final RealmModel realm;
   private final UserProvider userProvider;
 
+  private final HttpRequest request;
+
+  private Cors cors;
+
   public RegistrationService(KeycloakSession session) {
     this.session =session;
     this.realm = session.getContext().getRealm();
     this.userProvider = session.users();
+    this.request = session.getContext().getHttpRequest();
+  }
+
+  private void setupCors() {
+    this.cors = Cors.add(this.request)
+        .auth().allowedMethods("POST")
+        .auth().exposedHeaders("Access-Control-Allow-Methods")
+        .allowAllOrigins();
+  }
+
+  @Path("")
+  @OPTIONS
+  public Response registerWithCaptchaPreflight() {
+    return Cors.add(this.request, Response.ok()).auth().preflight().build();
   }
 
   @Path("")
@@ -61,27 +77,29 @@ public class RegistrationService {
   @Produces({MediaType.APPLICATION_JSON})
   public Response registerWithCaptcha(RegistrationInput input){
     try {
+      setupCors();
       verifyCaptcha();
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
-        return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("The email field is missing")).build();
+        return this.cors.builder(Response.status(Status.BAD_REQUEST)
+            .entity(new ErrorResponse("The email field is missing"))).build();
       }
       validateEmail(input.getEmail());
       UserModel user = userProvider.getUserByEmail(realm,input.getEmail());
       if (user == null) {
-        return Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
-            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))).build();
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())))).build();
       }
       LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
       updateKeyAndNotifyUser(user);
-      return Response.ok().entity("").build();
+      return this.cors.builder(Response.ok().entity("")).build();
     }
     catch (CaptchaException ex){
-      return Response.status(Status.BAD_REQUEST)
-          .entity(new ErrorResponse(ex.getMessage())).build();
+      return this.cors.builder(Response.status(Status.BAD_REQUEST)
+          .entity(new ErrorResponse(ex.getMessage()))).build();
     }
     catch (EmailException ex){
-      return Response.status(Status.INTERNAL_SERVER_ERROR)
-          .entity(new ErrorResponse(ex.getMessage())).build();
+      return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)
+          .entity(new ErrorResponse(ex.getMessage()))).build();
     }
   }
 
@@ -94,6 +112,10 @@ public class RegistrationService {
   private void updateKeyAndNotifyUser(UserModel user) throws EmailException {
     String apikey = getOrCreateApikeyForUser(user);
     //send mail to accepted email id i.e. email of user
+   if(StringUtils.isEmpty(apikey)) {
+     LOG.error("User not registered. No Apikey will be returned!!");
+     return;
+   }
     MailService mailService = new MailService(session, user);
     mailService.sendEmailToUserWithApikey(apikey);
   }
@@ -103,25 +125,25 @@ public class RegistrationService {
     if(client !=null){
       RoleModel clientRole = getOrCeateNewRoleForClient(client);
       if(clientRole != null && !user.hasRole(clientRole)){
-          user.grantRole(clientRole);
-          LOG.info("Assigning new role : " + clientRole.getName() + " to User : " + user.getUsername());
-        }
+        user.grantRole(clientRole);
+        LOG.info("Assigning new role : " + clientRole.getName() + " to User : " + user.getUsername());
       }
-    return client.getClientId();
+      return client.getClientId();
+    }
+    return null;
   }
 
   private ClientModel getOrCreateClientForUser(UserModel user) {
-    var client = Optional.ofNullable(getClientAssociatedToUser(user))
+    return Optional.ofNullable(getClientAssociatedToUser(user))
         .orElseGet(() -> {
           var newClient = createClientWithNewKey(user);
           LOG.info("New client : " + newClient.getClientId() + " is created for user : "+ user.getUsername());
           return newClient;
         });
-    return client;
   }
 
   private void verifyCaptcha() {
-    String captchaToken = getAuthorizationHeader(session.getContext().getHttpRequest(), CAPTCHA_PATTERN);
+    String captchaToken = getAuthorizationHeader(session.getContext().getHttpRequest());
     if (captchaToken == null) {
       LOG.info(CAPTCHA_MISSING);
       throw new CaptchaException(CAPTCHA_MISSING);
@@ -133,11 +155,11 @@ public class RegistrationService {
     }
   }
 
-  private String getAuthorizationHeader(HttpRequest httpRequest, String captchaPattern) {
+  private String getAuthorizationHeader(HttpRequest httpRequest) {
       String authorization = httpRequest.getHttpHeaders().getHeaderString(HttpHeaders.AUTHORIZATION);
       if (authorization != null) {
         try {
-          Pattern pattern = Pattern.compile(captchaPattern);
+          Pattern pattern = Pattern.compile(CAPTCHA_PATTERN);
           Matcher matcher = pattern.matcher(authorization);
           if (matcher.find()) {
             return matcher.group(1);
