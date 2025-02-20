@@ -61,7 +61,6 @@ public class RegistrationService {
   private void setupCors() {
     this.cors = Cors.add(this.request)
         .auth().allowedMethods("POST")
-        .auth().exposedHeaders("Access-Control-Allow-Methods")
         .allowAllOrigins();
   }
 
