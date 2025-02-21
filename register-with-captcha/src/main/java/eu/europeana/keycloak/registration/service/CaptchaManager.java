@@ -6,6 +6,7 @@ import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.ve
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.verificationUrlScheme;
 
 
+import eu.europeana.keycloak.registration.config.CaptachaManagerConfig;
 import eu.europeana.keycloak.registration.exception.CaptchaException;
 import java.io.IOException;
 import java.net.URI;
@@ -45,8 +46,7 @@ public class CaptchaManager {
             if (!jsonObject.getBoolean("success")) {
                 JSONArray jsonArray = jsonObject.getJSONArray("error-codes");
                 LOG.error("Captcha verification error: " + jsonArray.get(0));
-               // throw new CaptchaException(jsonArray.get(0).toString());
-                throw new CaptchaException("Please indicate that you are not a robot once again");
+                 throw new CaptchaException(CaptachaManagerConfig.RESUBMIT_CAPTCHA);
             }
             return true;
         }

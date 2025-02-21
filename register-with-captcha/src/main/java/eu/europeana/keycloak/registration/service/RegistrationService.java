@@ -1,8 +1,7 @@
 package eu.europeana.keycloak.registration.service;
 
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_MISSING;
+import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.RESUBMIT_CAPTCHA;
 import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_PATTERN;
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CAPTCHA_VERIFICATION_FAILED;
 
 import eu.europeana.keycloak.registration.datamodel.ErrorResponse;
 import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
@@ -41,7 +40,7 @@ public class RegistrationService {
 
   public static final String CLIENT_OWNER = "client_owner";
   private static final Logger LOG = Logger.getLogger(RegistrationService.class);
-  public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s, please register for an Europeana account in the Europeana website first before filling in this form";
+  public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s, please register for one in the Europeana website first before filling in this form";
 
   private final KeycloakSession session;
   private final RealmModel realm;
@@ -146,14 +145,16 @@ public class RegistrationService {
 
   private void verifyCaptcha() {
     String captchaToken = getAuthorizationHeader(session.getContext().getHttpRequest());
-    if (captchaToken == null) {
-      LOG.info(CAPTCHA_MISSING);
-      throw new CaptchaException(CAPTCHA_MISSING);
-    }
+//    if (captchaToken == null) {
+//      LOG.info(RESUBMIT_CAPTCHA);
+//      throw new CaptchaException(RESUBMIT_CAPTCHA);
+//    }
     CaptchaManager captchaManager = new CaptchaManager();
-    if (!captchaManager.verifyCaptchaToken(captchaToken)) {
-      LOG.info(CAPTCHA_VERIFICATION_FAILED);
-      throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
+    if (captchaToken == null || !captchaManager.verifyCaptchaToken(captchaToken)) {
+//      LOG.info(CAPTCHA_VERIFICATION_FAILED);
+//      throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
+      LOG.info(RESUBMIT_CAPTCHA);
+      throw new CaptchaException(RESUBMIT_CAPTCHA);
     }
   }
 
