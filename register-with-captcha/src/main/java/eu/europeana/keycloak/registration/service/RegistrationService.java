@@ -41,7 +41,7 @@ public class RegistrationService {
 
   public static final String CLIENT_OWNER = "client_owner";
   private static final Logger LOG = Logger.getLogger(RegistrationService.class);
-  public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s";
+  public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s, please register for an Europeana account in the Europeana website first before filling in this form";
 
   private final KeycloakSession session;
   private final RealmModel realm;
@@ -82,12 +82,12 @@ public class RegistrationService {
       verifyCaptcha();
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
         return this.cors.builder(Response.status(Status.BAD_REQUEST)
-            .entity(new ErrorResponse("The email field is missing"))).build();
+            .entity(new ErrorResponse("400-missing-email","The email address is missing","Please fill the email address with the email associated to your Europeana account"))).build();
       }
       validateEmail(input.getEmail());
       UserModel user = userProvider.getUserByEmail(realm,input.getEmail());
       if (user == null) {
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unknown","Europeana account not known",
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())))).build();
       }
       LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
@@ -96,11 +96,12 @@ public class RegistrationService {
     }
     catch (CaptchaException ex){
       return this.cors.builder(Response.status(Status.BAD_REQUEST)
-          .entity(new ErrorResponse(ex.getMessage()))).build();
+          .entity(new ErrorResponse("400-captcha-error","There was a problem validating reCaptcha",
+              ex.getMessage()))).build();
     }
     catch (EmailException ex){
       return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)
-          .entity(new ErrorResponse(ex.getMessage()))).build();
+          .entity(new ErrorResponse("500-Internal-Server-Error","Internal Server Error",ex.getMessage()))).build();
     }
   }
 

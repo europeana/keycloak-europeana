@@ -45,7 +45,8 @@ public class CaptchaManager {
             if (!jsonObject.getBoolean("success")) {
                 JSONArray jsonArray = jsonObject.getJSONArray("error-codes");
                 LOG.error("Captcha verification error: " + jsonArray.get(0));
-                throw new CaptchaException(jsonArray.get(0).toString());
+               // throw new CaptchaException(jsonArray.get(0).toString());
+                throw new CaptchaException("Please indicate that you are not a robot once again");
             }
             return true;
         }
