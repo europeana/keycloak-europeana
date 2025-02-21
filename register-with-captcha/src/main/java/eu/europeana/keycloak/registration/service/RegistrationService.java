@@ -118,7 +118,7 @@ public class RegistrationService {
      return;
    }
     MailService mailService = new MailService(session, user);
-    mailService.sendEmailToUserWithApikey(apikey);
+    mailService.sendEmailToUserWithApikey(apikey,user.getFirstName(),user.getLastName());
   }
 
   private String getOrCreateApikeyForUser(UserModel user) {

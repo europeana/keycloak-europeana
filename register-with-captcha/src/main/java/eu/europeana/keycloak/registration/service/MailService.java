@@ -1,5 +1,7 @@
 package eu.europeana.keycloak.registration.service;
 
+import java.util.Map;
+import org.apache.commons.logging.Log;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
@@ -25,15 +27,20 @@ public class MailService {
     this.userModel = user;
   }
 
-  public void sendEmailToUserWithApikey(String apikey) throws EmailException {
+  public void sendEmailToUserWithApikey(String apikey, String firstName, String lastName) throws EmailException {
     DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
     String messageSubject = "Your Europeana API key";
-    String messageBody = generateMessageForSendingApikey(apikey);
-    senderProvider.send(session.getContext().getRealm().getSmtpConfig(),userModel,
+    String messageBody = String.format(getMessageTemplateForSendingApikey(apikey),firstName,lastName);
+    Map<String, String> smtpConfig = session.getContext().getRealm().getSmtpConfig();
+    smtpConfig.put("fromDisplayName",null);
+
+    System.out.println(" new :" + smtpConfig.get("fromDisplayName") + "  old: " + session.getContext().getRealm().getSmtpConfig().get("fromDisplayName"));
+
+    senderProvider.send(smtpConfig,userModel,
         messageSubject, null,messageBody);
   }
 
-  public String generateMessageForSendingApikey(String apikey) {
+  public String getMessageTemplateForSendingApikey(String apikey) {
     StringBuilder msg = new StringBuilder();
     msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
         userModel.getFirstName(),userModel.getLastName())).append("<br>")
