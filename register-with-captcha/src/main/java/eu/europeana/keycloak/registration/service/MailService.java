@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.registration.service;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.keycloak.email.DefaultEmailSenderProvider;
@@ -31,13 +32,18 @@ public class MailService {
     DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
     String messageSubject = "Your Europeana API key";
     String messageBody = String.format(getMessageTemplateForSendingApikey(apikey),firstName,lastName);
-    Map<String, String> smtpConfig = session.getContext().getRealm().getSmtpConfig();
-    smtpConfig.put("fromDisplayName",null);
+    senderProvider.send(getSmtpConfig(),userModel, messageSubject, null,messageBody);
+  }
 
-    System.out.println(" new :" + smtpConfig.get("fromDisplayName") + "  old: " + session.getContext().getRealm().getSmtpConfig().get("fromDisplayName"));
-
-    senderProvider.send(smtpConfig,userModel,
-        messageSubject, null,messageBody);
+  private Map<String, String> getSmtpConfig() {
+    Map<String, String> smtpConfigMap = session.getContext().getRealm().getSmtpConfig();
+    Map<String, String> smtpConfig = new HashMap<>();
+    for(Map.Entry<String,String> entry :smtpConfigMap.entrySet()){
+      String value = entry.getValue();
+      if("fromDisplayName".equals(entry.getKey())){ value =null;}
+      smtpConfig.put(entry.getKey(), value);
+    }
+    return smtpConfig;
   }
 
   public String getMessageTemplateForSendingApikey(String apikey) {
