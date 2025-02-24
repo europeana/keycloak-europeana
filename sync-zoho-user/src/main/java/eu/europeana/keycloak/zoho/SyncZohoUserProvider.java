@@ -39,6 +39,44 @@ import org.keycloak.services.resource.RealmResourceProvider;
 @Provider
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
+    /**
+     *
+     * First: loop through Zoho Contacts
+     *    IF User Account ID != NULL
+     *       IF User Account ID == Keycloak ID
+     *          do_things_args()
+     *       ELSE
+     *          unzohoify()
+     *       ENDIF
+     *    ELSE # User Account ID == NULL
+     *       IF Primary email ~= Keycloak User email
+     *          add User Account ID from Keycloak User ID <= Primary email
+     *          do_things_args(for primary KC API user)
+     *       ELSIF Secondary email ~= Keycloak User email
+     *          add User Account ID from Keycloak User ID <= Primary email
+     *          do_things_args(for primary KC API user)
+     *       ENDIF
+     *    ENDIF
+     *
+     * Second: loop through Keycloak Users
+     *    IF Keycloak USER Email NONE EXISTS Zoho Contact primary or secondary
+     *       create Contact
+     *       add User Account ID from Keycloak User ID
+     *       do_things_args()
+     *    ENDIF
+     *
+     * function do_things_args(){
+     *    add “Account holder“ to participation level
+     *    add “API user“ or (and/or?) “API customer“ based on assigned Keycloak API client owner status to participation level
+     *    update affiliation
+     * }
+     *
+     * function unzohoify(){
+     *    clear User Account ID field
+     *    remove participation level of “Account holder“, “API user“ and “API customer“ in Zoho if present
+     * }
+     */
+
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
     public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.\"}";
@@ -72,6 +110,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
      *
      * @return String (completed message)
      */
+
 
 
     @Path("")

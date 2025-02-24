@@ -29,6 +29,9 @@ public class Contact {
     private String email;
 
     @CsvBindByPosition(position = 6)
+    private String userAccountID;
+
+    @CsvBindByPosition(position = 7)
     private String modifiedTime;
 
     public String getID() {
@@ -79,11 +82,18 @@ public class Contact {
         this.email = email;
     }
 
+    public String getUserAccountID() {
+        return userAccountID;
+    }
+
+    public void setuUerAccountID(String userAccountID) {
+        this.userAccountID = userAccountID;
+    }
+
     public OffsetDateTime getModifiedTime(){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
     }
-
     public void setModifiedTime(String modifiedTime){
         this.modifiedTime = modifiedTime;
     }

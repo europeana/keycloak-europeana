@@ -15,14 +15,14 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
@@ -32,24 +32,24 @@ import org.jboss.logging.Logger;
  */
 public class ZohoBatchDownload {
 
-    private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
+    private static final Logger LOG       = Logger.getLogger(ZohoBatchDownload.class);
     private static final String COMPLETED = "COMPLETED";
 
     public String downloadResult(Long jobId) throws Exception {
-        String jobStatus = null;
-        BulkReadOperations           bulkReadOperations = new BulkReadOperations();
-        int maxLoops = 20;
-        int loops = 0;
+        String             jobStatus          = null;
+        BulkReadOperations bulkReadOperations = new BulkReadOperations();
+        int                maxLoops           = 20;
+        int                loops              = 0;
         while (loops < maxLoops) {
             APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
             if (response != null) {
                 if (response.isExpected()) {
                     ResponseHandler responseHandler = response.getObject();
-                    if (responseHandler instanceof ResponseWrapper){
+                    if (responseHandler instanceof ResponseWrapper) {
                         ResponseWrapper responseWrapper = (ResponseWrapper) responseHandler;
                         List<JobDetail> jobDetails      = responseWrapper.getData();
-                        for (JobDetail jobDetail : jobDetails){
-                            if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
+                        for (JobDetail jobDetail : jobDetails) {
+                            if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)) {
                                 return downloadCompleted(jobId);
                             }
                         }
@@ -57,7 +57,7 @@ public class ZohoBatchDownload {
 
                 }
             }
-            loops ++;
+            loops++;
             LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
             Thread.sleep(1000);
         }
@@ -65,43 +65,41 @@ public class ZohoBatchDownload {
     }
 
     private String downloadCompleted(Long jobId) throws Exception {
-        String jobStatus = null;
-        BulkReadOperations           bulkReadOperations = new BulkReadOperations();
+        String             jobStatus          = null;
+        BulkReadOperations bulkReadOperations = new BulkReadOperations();
 
-        APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
-        if (response != null) {
-            if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
-                LOG.error(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
-                return "";
-            }
-            if (response.isExpected()) {
-                ResponseHandler responseHandler = response.getObject();
-                if (responseHandler instanceof FileBodyWrapper) {
+        APIResponse<ResponseHandler> response = bulkReadOperations.downloadResult(jobId);
+        if (response != null && Arrays.asList(204, 304).contains(response.getStatusCode())) {
+            LOG.error(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
+            return "";
+        }
+        if (response.isExpected()) {
+            ResponseHandler responseHandler = response.getObject();
+            if (responseHandler instanceof FileBodyWrapper bodyWrapper) {
 
-                    FileBodyWrapper fileBodyWrapper = (FileBodyWrapper) responseHandler;
-                    StreamWrapper   streamWrapper   = fileBodyWrapper.getFile();
-                    File            file            = new File(streamWrapper.getName());
-                    InputStream inputStream = streamWrapper.getStream();
-                    try {
-                        FileUtils.copyInputStreamToFile(inputStream, file);
-                        return unZipFile(file.getCanonicalPath());
-                    } catch (Exception e) {
-                        LOG.error("Error downloading batch job: " + e.getMessage());
-                    }
-                    inputStream.close();
-                } else if (responseHandler instanceof APIException) {
-                    APIException exception = (APIException) responseHandler;
-                    LOG.error("Status: " + exception.getStatus().getValue());
-                    LOG.error("Code: " + exception.getCode().getValue());
-                    LOG.error("Details: ");
-                    for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                        LOG.error(entry.getKey() + ": " + entry.getValue());
-                    }
-                    LOG.error("Error downloading batch job: " + exception.getMessage());
+                FileBodyWrapper fileBodyWrapper = bodyWrapper;
+                StreamWrapper   streamWrapper   = fileBodyWrapper.getFile();
+                File            file            = new File(streamWrapper.getName());
+                InputStream     inputStream     = streamWrapper.getStream();
+                try {
+                    FileUtils.copyInputStreamToFile(inputStream, file);
+                    return unZipFile(file.getCanonicalPath());
+                } catch (Exception e) {
+                    LOG.error("Error downloading batch job: " + e.getMessage());
                 }
-            } else {
-                LOG.error("No usable response received");
+                inputStream.close();
+            } else if (responseHandler instanceof APIException apiException) {
+                APIException exception = apiException;
+                LOG.error("Status: " + exception.getStatus().getValue());
+                LOG.error("Code: " + exception.getCode().getValue());
+                LOG.error("Details: ");
+                for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
+                    LOG.error(entry.getKey() + ": " + entry.getValue());
+                }
+                LOG.error("Error downloading batch job: " + exception.getMessage());
             }
+        } else {
+            LOG.error("No usable response received");
         }
         return "";
     }
@@ -144,7 +142,7 @@ public class ZohoBatchDownload {
                         throw new IOException("failed to create directory " + unzippedParent);
                     }
 
-                    try(InputStream in = zipFile.getInputStream(zipEntry)) {
+                    try (InputStream in = zipFile.getInputStream(zipEntry)) {
                         Files.copy(in, unzippedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         Files.deleteIfExists(zipFilePath);
                         return unzippedFile.getCanonicalPath();
