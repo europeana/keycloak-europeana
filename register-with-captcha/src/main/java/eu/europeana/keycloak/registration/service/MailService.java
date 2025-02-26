@@ -2,7 +2,6 @@ package eu.europeana.keycloak.registration.service;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.logging.Log;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
@@ -28,10 +27,10 @@ public class MailService {
     this.userModel = user;
   }
 
-  public void sendEmailToUserWithApikey(String apikey, String firstName, String lastName) throws EmailException {
+  public void sendEmailToUserWithApikey(String apikey) throws EmailException {
     DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
     String messageSubject = "Your Europeana API key";
-    String messageBody = String.format(getMessageTemplateForSendingApikey(apikey),firstName,lastName);
+    String messageBody = getMessageForSendingApikey(apikey);
     senderProvider.send(getSmtpConfig(),userModel, messageSubject, null,messageBody);
   }
 
@@ -40,13 +39,13 @@ public class MailService {
     Map<String, String> smtpConfig = new HashMap<>();
     for(Map.Entry<String,String> entry :smtpConfigMap.entrySet()){
       String value = entry.getValue();
-      if("fromDisplayName".equals(entry.getKey())){ value =null;}
+      if("fromDisplayName".equals(entry.getKey())){ value = "Europeana APIs customer support";}
       smtpConfig.put(entry.getKey(), value);
     }
     return smtpConfig;
   }
 
-  public String getMessageTemplateForSendingApikey(String apikey) {
+  public String getMessageForSendingApikey(String apikey) {
     StringBuilder msg = new StringBuilder();
     msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
         userModel.getFirstName(),userModel.getLastName())).append("<br>")

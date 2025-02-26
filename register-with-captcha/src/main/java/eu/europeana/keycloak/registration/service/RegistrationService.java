@@ -41,7 +41,8 @@ public class RegistrationService {
   public static final String CLIENT_OWNER = "client_owner";
   private static final Logger LOG = Logger.getLogger(RegistrationService.class);
   public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s, please register for one in the Europeana website first before filling in this form";
-
+  public static final String EMAIL_NOT_VERIFIED ="Please confirm your account by clicking on the link that was sent to you when registering for an Europeana account";
+  public static final String ACCOUNT_DISABLED="Please contact Europeana customer support for further information";
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
@@ -79,18 +80,30 @@ public class RegistrationService {
     try {
       setupCors();
       verifyCaptcha();
+      //input Email id validations
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
         return this.cors.builder(Response.status(Status.BAD_REQUEST)
             .entity(new ErrorResponse("400-missing-email","The email address is missing","Please fill the email address with the email associated to your Europeana account"))).build();
       }
       validateEmail(input.getEmail());
+
+      //Validate User
       UserModel user = userProvider.getUserByEmail(realm,input.getEmail());
       if (user == null) {
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unknown","Europeana account not known",
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())))).build();
       }
+      if(!user.isEmailVerified()){
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unconfirmed","Europeana account not yet confirmed",
+             EMAIL_NOT_VERIFIED))).build();
+      }
+      if(!user.isEnabled()){
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-disabled","Europeana account has been disabled",
+            ACCOUNT_DISABLED))).build();
+      }
       LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
       updateKeyAndNotifyUser(user);
+
       return this.cors.builder(Response.ok().entity("")).build();
     }
     catch (CaptchaException ex){
@@ -118,7 +131,7 @@ public class RegistrationService {
      return;
    }
     MailService mailService = new MailService(session, user);
-    mailService.sendEmailToUserWithApikey(apikey,user.getFirstName(),user.getLastName());
+    mailService.sendEmailToUserWithApikey(apikey);
   }
 
   private String getOrCreateApikeyForUser(UserModel user) {
@@ -145,14 +158,8 @@ public class RegistrationService {
 
   private void verifyCaptcha() {
     String captchaToken = getAuthorizationHeader(session.getContext().getHttpRequest());
-//    if (captchaToken == null) {
-//      LOG.info(RESUBMIT_CAPTCHA);
-//      throw new CaptchaException(RESUBMIT_CAPTCHA);
-//    }
     CaptchaManager captchaManager = new CaptchaManager();
     if (captchaToken == null || !captchaManager.verifyCaptchaToken(captchaToken)) {
-//      LOG.info(CAPTCHA_VERIFICATION_FAILED);
-//      throw new CaptchaException(CAPTCHA_VERIFICATION_FAILED);
       LOG.info(RESUBMIT_CAPTCHA);
       throw new CaptchaException(RESUBMIT_CAPTCHA);
     }
