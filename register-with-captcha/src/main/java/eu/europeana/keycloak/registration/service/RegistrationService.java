@@ -81,26 +81,28 @@ public class RegistrationService {
       setupCors();
       verifyCaptcha();
       //input Email id validations
+
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
         return this.cors.builder(Response.status(Status.BAD_REQUEST)
             .entity(new ErrorResponse("400-missing-email","The email address is missing","Please fill the email address with the email associated to your Europeana account"))).build();
       }
-      validateEmail(input.getEmail());
-
+      String email = input.getEmail().toLowerCase();
+      validateEmail(email);
       //Validate User
-      UserModel user = userProvider.getUserByEmail(realm,input.getEmail());
+      UserModel user = userProvider.getUserByEmail(realm, email);
       if (user == null) {
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unknown","Europeana account not known",
             String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())))).build();
       }
       if(!user.isEmailVerified()){
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unconfirmed","Europeana account not yet confirmed",
-             EMAIL_NOT_VERIFIED))).build();
+            EMAIL_NOT_VERIFIED))).build();
       }
       if(!user.isEnabled()){
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-disabled","Europeana account has been disabled",
             ACCOUNT_DISABLED))).build();
       }
+
       LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
       updateKeyAndNotifyUser(user);
 
