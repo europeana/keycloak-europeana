@@ -3,6 +3,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>eu.europeana</groupId>
     <artifactId>keycloak-europeana</artifactId>
@@ -10,6 +11,7 @@
   </parent>
 
   <artifactId>keycloak-apikey</artifactId>
+  <groupId>eu.europeana</groupId>
   <version>2.1</version>
   <name>Keycloak persistent session SPI</name>
   <description>A Service Provider that adds a session history entity to Keycloak and provides API key functionality
@@ -43,14 +45,7 @@
       <artifactId>keycloak-server-spi-private</artifactId>
       <version>${keycloak.version}</version>
     </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-model-infinispan -->
-    <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-model-infinispan</artifactId>
-      <version>${keycloak.version}</version>
-    </dependency>
-
+    
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>

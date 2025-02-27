@@ -1,136 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <parent>
-        <groupId>eu.europeana</groupId>
-        <artifactId>europeana-parent-pom</artifactId>
-        <version>2.4</version>
-    </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>keycloak-europeana</artifactId>
-    <version>2.1</version>
-    <packaging>pom</packaging>
+  <parent>
+    <groupId>eu.europeana</groupId>
+    <artifactId>europeana-parent-pom</artifactId>
+    <version>2.4</version>
+  </parent>
 
-    <modules>
-        <module>bcrypt-addon</module>
-        <module>keycloak-metrics</module>
-        <module>europeana-eventlistener</module>
-        <module>delete-unverified-users</module>
-        <module>custom-protocol-mapper</module>
-        <module>sync-zoho-user</module>
-        <module>keycloak-apikey</module>
-    </modules>
+  <artifactId>keycloak-europeana</artifactId>
+  <groupId>eu.europeana</groupId>
+  <version>2.1</version>
 
-    <name>Keycloak for Europeana</name>
-    <description>Keycloak customised with several add-on modules and custom encryption</description>
+  <packaging>pom</packaging>
 
-    <properties>
-        <!-- Make sure this version matches the Keycloak version in the Dockerfile! -->
-        <keycloak.version>26.0.7</keycloak.version>
+  <modules>
+    <module>bcrypt-addon</module>
+    <module>keycloak-metrics</module>
+    <module>europeana-eventlistener</module>
+    <module>delete-unverified-users</module>
+    <module>keycloak-apikey</module>
+    <module>custom-protocol-mapper</module>
+    <module>sync-zoho-user</module>
+  </modules>
 
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jboss.logging.version>3.5.3.Final</jboss.logging.version>
+  <name>Keycloak for Europeana</name>
+  <description>Keycloak customised with several add-on modules and custom encryption</description>
 
-        <apache.httpclient.version>4.5.14</apache.httpclient.version>
-        <apache.httpcore.version>4.4.16</apache.httpcore.version>
-        <apache.httpmime.version>4.5.14</apache.httpmime.version>
-        <apache.commons-lang3.version>3.14.0</apache.commons-lang3.version>
-        <apache.commons-compress.version>1.26.1</apache.commons-compress.version>
-        <apache.commons-text.version>1.12.0</apache.commons-text.version>
-        <apache.commons-collections4.version>4.5.0-M1</apache.commons-collections4.version>
+  <properties>
+    <!-- Check this version to match the one in the Dockerfile! -->
+    <keycloak.version>23.0.7</keycloak.version>
 
-        <opencsv.version>5.9</opencsv.version>
-        <commons-io.version>2.16.1</commons-io.version>
-        <commons-logging.version>1.3.0</commons-logging.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
 
-        <maven.compiler.target>21</maven.compiler.target>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.release>21</maven.compiler.release>
-        <maven.compiler.version>3.11.0</maven.compiler.version>
-        <maven.shade.version>3.5.1</maven.shade.version>
-        <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
-        <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
-        <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
-        <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
-        <maven.surefire.version>3.2.1</maven.surefire.version>
+    <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
+    <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
+    <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+    <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
 
-        <json.version>20240205</json.version>
-        <dependency-check-maven.version>10.0.4</dependency-check-maven.version>
+    <jakarta-json.version>2.1.3</jakarta-json.version>
+    <jakarta-annotationapi.version>3.0.0</jakarta-annotationapi.version>
+    <jakarta.version>4.0.0</jakarta.version>
 
-        <jakarta.version>4.0.0</jakarta.version>
-        <javax.version>1.1.4</javax.version>
-        <snakeyaml.version>2.3</snakeyaml.version>
-        <lombok.version>1.18.32</lombok.version>
-        <!-- these should be updated together with Keycloak -->
-        <!-- check keycloak-dependencies-server-all effective pom -->
-        <resteasy.version>6.2.4.Final</resteasy.version>
-        <infinispan.common.version>14.0.10.Final</infinispan.common.version>
+    <httpclient.version>4.5.14</httpclient.version>
+    <httpcore.version>4.4.16</httpcore.version>
+    <httpmime.version>4.5.14</httpmime.version>
 
-    </properties>
+    <snakeyaml.version>2.3</snakeyaml.version>
+    <jboss.logging.version>3.5.3.Final</jboss.logging.version>
+    <!--    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>-->
+    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>
 
-    <build>
-        <pluginManagement>
-            <plugins>
+    <snakeyaml.version>2.3</snakeyaml.version>
+    <lombok.version>1.18.32</lombok.version>
 
-                <plugin>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>${maven-clean-plugin.version}</version>
-                </plugin>
+    <commons-lang3.version>3.14.0</commons-lang3.version>
+    <commons-io.version>2.16.1</commons-io.version>
+    <commons-compress.version>1.26.1</commons-compress.version>
+    <commons-lang3.version>3.14.0</commons-lang3.version>
+    <commons-logging.version>1.3.0</commons-logging.version>
+    <commons-beanutils.version>1.9.4</commons-beanutils.version>
+    <commons-text.version>1.12.0</commons-text.version>
+    <commons-collections4.version>4.5.0-M1</commons-collections4.version>
 
-                <plugin>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>${maven-dependency-plugin.version}</version>
-                </plugin>
+    <!-- non-dependencies -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-                <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>${maven-install-plugin.version}</version>
-                </plugin>
 
-                <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>${maven-deploy-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
 
-    <profiles>
-        <profile>
-            <id>depcheck</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.owasp</groupId>
-                        <artifactId>dependency-check-maven</artifactId>
-                        <version>${dependency-check-maven.version}</version>
-                        <configuration>
-                            <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>
-                            <!-- see EA-3505 why we host the known exploited vulnerabilties file ourselves -->
-                            <knownExploitedUrl>
-                                https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json
-                            </knownExploitedUrl>
-                            <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-                            <failBuildOnCVSS>8</failBuildOnCVSS>
-                            <suppressionFiles>
-                                <suppressionFile>owasp-suppress.xml</suppressionFile>
-                            </suppressionFiles>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <json.version>20240205</json.version>
+    <!--    <mysql-connector-j.version>8.3.0</mysql-connector-j.version>-->
+    <opencsv.version>5.9</opencsv.version>
 
+  </properties>
+
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
+    <dependency>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
+      <version>${jakarta-json.version}</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api -->
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>${jakarta-annotationapi.version}</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${maven-dependency-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${maven-install-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <!--    <plugins>-->
+    <!--      &lt;!&ndash; This will be active when running the verify or install goal-->
+    <!--           To skip (e.g. during debugging) use 'mvn clean package')&ndash;&gt;-->
+    <!--      <plugin>-->
+    <!--        <groupId>org.owasp</groupId>-->
+    <!--        <artifactId>dependency-check-maven</artifactId>-->
+    <!--        <version>${dependency-check-maven.version}</version>-->
+    <!--        <configuration>-->
+    <!--          <nvdApiKey>dc601836-6867-4367-8fee-fc1e2aaf594b</nvdApiKey>-->
+    <!--          <nvdApiKeyEnvironmentVariable>NVD_APIKEY</nvdApiKeyEnvironmentVariable>-->
+    <!--          &lt;!&ndash; see EA-3505 why we host the known exploited vulnerabilities file ourselves &ndash;&gt;-->
+    <!--          <knownExploitedUrl>https://artifactory.eanadev.org/artifactory/ext-release-local/gov/cisa/www/known_exploited_vulnerabilities.json</knownExploitedUrl>-->
+    <!--          <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>-->
+    <!--          <failBuildOnCVSS>9</failBuildOnCVSS>-->
+    <!--          <suppressionFiles>-->
+    <!--            <suppressionFile>owasp-suppress.xml</suppressionFile>-->
+    <!--          </suppressionFiles>-->
+    <!--        </configuration>-->
+    <!--        <executions>-->
+    <!--          <execution>-->
+    <!--            <goals>-->
+    <!--              <goal>check</goal>-->
+    <!--            </goals>-->
+    <!--          </execution>-->
+    <!--        </executions>-->
+    <!--      </plugin>-->
+    <!--    </plugins>-->
+  </build> 
 </project>

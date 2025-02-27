@@ -4,12 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>eu.europeana</groupId>
     <artifactId>keycloak-europeana</artifactId>
+    <groupId>eu.europeana</groupId>
     <version>2.1</version>
   </parent>
 
   <artifactId>custom-protocol-mapper</artifactId>
+  <groupId>eu.europeana</groupId>
   <version>2.1</version>
 
   <name>Custom Protocol Mapper</name>
