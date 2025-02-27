@@ -11,7 +11,7 @@
   </parent>
 
   <artifactId>sync-zoho-user</artifactId>
-  <groupId>eu.europeana</groupId>
+
   <version>2.1</version>
   <name>Sync Zoho Users</name>
   <description>This SPI provides synchronisation between Zoho and Keycloak users</description>
@@ -119,14 +119,14 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
-      <version>${apache.commons-text.version}</version>
+      <version>${commons-text.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>${apache.commons-collections4.version}</version>
+      <version>${commons-collections4.version}</version>
     </dependency>
 
 
@@ -134,14 +134,14 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>${apache.commons-compress.version}</version>
+      <version>${commons-compress.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>${apache.commons-lang3.version}</version>
+      <version>${commons-lang3.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/commons-logging/commons-logging -->
@@ -154,21 +154,21 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>${apache.httpclient.version}</version>
+      <version>${httpclient.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpcore</artifactId>
-      <version>${apache.httpcore.version}</version>
+      <version>${httpcore.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpmime -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
-      <version>${apache.httpmime.version}</version>
+      <version>${httpmime.version}</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.json/json -->
@@ -233,7 +233,7 @@
             <artifactItem>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-lang3</artifactId>
-              <version>${apache.commons-lang3.version}</version>
+              <version>${commons-lang3.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
@@ -247,14 +247,14 @@
             <artifactItem>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-compress</artifactId>
-              <version>${apache.commons-compress.version}</version>
+              <version>${commons-compress.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
             <artifactItem>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-collections4</artifactId>
-              <version>${apache.commons-collections4.version}</version>
+              <version>${commons-collections4.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
@@ -268,7 +268,7 @@
             <artifactItem>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-text</artifactId>
-              <version>${apache.commons-text.version}</version>
+              <version>${commons-text.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
@@ -282,21 +282,21 @@
             <artifactItem>
               <groupId>org.apache.httpcomponents</groupId>
               <artifactId>httpclient</artifactId>
-              <version>${apache.httpclient.version}</version>
+              <version>${httpclient.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
             <artifactItem>
               <groupId>org.apache.httpcomponents</groupId>
               <artifactId>httpcore</artifactId>
-              <version>${apache.httpcore.version}</version>
+              <version>${httpcore.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
             <artifactItem>
               <groupId>org.apache.httpcomponents</groupId>
               <artifactId>httpmime</artifactId>
-              <version>${apache.httpmime.version}</version>
+              <version>${httpmime.version}</version>
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>

@@ -11,13 +11,13 @@
     </parent>
 
     <artifactId>bcrypt-addon</artifactId>
-    <groupId>eu.europeana</groupId>
+
     <version>2.1</version>
 
     <name>Keycloak Bcrypt Addon</name>
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
 
-    <properties> 
+    <properties>
         <!-- these are specific for bcrypt so not moving to the root pom --> 
         <commons-codec.version>1.15</commons-codec.version>
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>

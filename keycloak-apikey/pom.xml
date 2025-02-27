@@ -11,7 +11,7 @@
   </parent>
 
   <artifactId>keycloak-apikey</artifactId>
-  <groupId>eu.europeana</groupId>
+
   <version>2.1</version>
   <name>Keycloak persistent session SPI</name>
   <description>A Service Provider that adds a session history entity to Keycloak and provides API key functionality
@@ -45,7 +45,6 @@
       <artifactId>keycloak-server-spi-private</artifactId>
       <version>${keycloak.version}</version>
     </dependency>
-    
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
