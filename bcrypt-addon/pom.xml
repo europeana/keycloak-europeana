@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>bcrypt-addon</artifactId>
-
+    <groupId>eu.europeana</groupId>
     <version>2.1</version>
 
     <name>Keycloak Bcrypt Addon</name>
