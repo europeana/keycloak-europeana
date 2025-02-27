@@ -3,7 +3,6 @@ package eu.europeana.keycloak.sessions;
 import java.util.List;
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.connections.infinispan.InfinispanConnectionProviderFactory;
