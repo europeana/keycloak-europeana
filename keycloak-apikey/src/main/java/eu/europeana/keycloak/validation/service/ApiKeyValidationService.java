@@ -1,10 +1,13 @@
 package eu.europeana.keycloak.validation.service;
 
+import eu.europeana.keycloak.validation.exception.ErrorResponse;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
@@ -12,6 +15,7 @@ import org.keycloak.models.ClientProvider;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AppAuthManager.BearerTokenAuthenticator;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 
@@ -37,10 +41,16 @@ public class ApiKeyValidationService {
     try {
       BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
       AuthResult authResult = authenticator.authenticate();
-      if (authResult == null || authResult.getClient() == null) {
-        LOG.error(" Token unauthorized ");
+      if (authResult == null ) {
+        LOG.error("AuthResult is null Token expired ");
         return false;
       }
+      if(authResult.getToken()==null){ LOG.error("Token is null ");  return false;}
+
+      if(authResult.getToken().isExpired()){LOG.error("Token is expired ");  return false;}
+
+      if(authResult.getClient()==null){LOG.error("Token not associated to any client ");  return false;}
+
       return validateClientScope(authResult);
     }
     catch (NotAuthorizedException e){
@@ -96,4 +106,16 @@ public class ApiKeyValidationService {
     return null;
   }
 
+  public ErrorResponse validateAuthToken() {
+    HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
+    String authHeader = AppAuthManager.extractAuthorizationHeaderToken(headers);
+    if(StringUtils.isEmpty(authHeader)) {
+      return new ErrorResponse(Status.UNAUTHORIZED.getStatusCode(),"Token is missing","Please issue a token and supply it within the Authorization header.",null);
+    }
+
+
+
+
+    return null;
+  }
 }
