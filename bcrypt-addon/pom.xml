@@ -18,7 +18,7 @@
     <description>Addon package containing the password encryption algorithm used for Keycloak</description>
 
     <properties>
-        <!-- these are specific for bcrypt so not moving to the root pom -->
+        <!-- these are specific for bcrypt so not moving to the root pom --> 
         <commons-codec.version>1.15</commons-codec.version>
         <favre-bcrypt.version>0.9.0</favre-bcrypt.version>
         <favre-bytes.version>1.4.0</favre-bytes.version>
