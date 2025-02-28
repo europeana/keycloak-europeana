@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
@@ -35,7 +36,10 @@ public class ErrorResponse {
 
   public String getPath() { return path; }
 
-  public OffsetDateTime getTimestamp() {  return timestamp; }
+  public String getTimestamp() {
+    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    return fmt.format(timestamp);
+  }
 
 
 }
