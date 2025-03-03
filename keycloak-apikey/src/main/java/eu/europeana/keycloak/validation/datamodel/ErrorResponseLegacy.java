@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.OffsetDateTime;
 import lombok.Getter;
 
-@Getter
+
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
 public class ErrorResponseLegacy {
@@ -25,4 +25,6 @@ public class ErrorResponseLegacy {
     this.message = message;
     this.path = path;
   }
+
+
 }
