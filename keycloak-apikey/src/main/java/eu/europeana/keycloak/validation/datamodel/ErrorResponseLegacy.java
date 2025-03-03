@@ -5,8 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
+import lombok.Getter;
 
+@Getter
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
 public class ErrorResponseLegacy {
@@ -25,21 +26,5 @@ public class ErrorResponseLegacy {
     this.message = message;
     this.path = path;
   }
-
-  public boolean isSuccess() {return success; }
-
-  public int getStatus() { return status; }
-
-  public String getError() { return error; }
-
-  public String getMessage() { return message; }
-
-  public String getPath() { return path; }
-
-//  public String getTimestamp() {
-//    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-//    return fmt.format(timestamp);
-//  }
-
 
 }
