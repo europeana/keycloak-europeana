@@ -2,7 +2,7 @@ package eu.europeana.keycloak.validation.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+
 
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum ErrorMessage {
@@ -30,18 +30,24 @@ public enum ErrorMessage {
     this.error = error;
     this.message = message;
   }
+
   @JsonProperty("code")
   public String getCode() {
     return code;
   }
 
-  @JsonProperty("error")
+  @JsonProperty
   public String getError() {
     return error;
   }
 
-  @JsonProperty
   public String getMessage() {
     return message;
   }
+
+  //  @JsonValue
+//  @Override
+//  public String toString() {
+//    return "{ \"code\" : \""+code +"\",\"error\" : \""+error +"\", \"message\" : \""+message+"\"}";
+//  }
 }
