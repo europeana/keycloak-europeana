@@ -2,8 +2,9 @@ package eu.europeana.keycloak.validation.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
+@JsonPropertyOrder({"code", "error", "message"})
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum ErrorMessage {
   TOKEN_INVALID_401("401_token_invalid","Token is invalid","Please acquire a new token or get in contact with the Europeana APIs customer support via api@europeana.eu"),
@@ -18,11 +19,8 @@ public enum ErrorMessage {
       "Client not authorised due to missing scope access",
       "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu");
 
-
   private final String code;
-
   private final String error;
-
   private final String message;
 
   ErrorMessage(String code, String error, String message) {
@@ -30,24 +28,8 @@ public enum ErrorMessage {
     this.error = error;
     this.message = message;
   }
+  public String getCode() {return code;}
+  public String getError() {return error; }
+  public String getMessage() {return message;}
 
-  @JsonProperty("code")
-  public String getCode() {
-    return code;
-  }
-
-  @JsonProperty
-  public String getError() {
-    return error;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  //  @JsonValue
-//  @Override
-//  public String toString() {
-//    return "{ \"code\" : \""+code +"\",\"error\" : \""+error +"\", \"message\" : \""+message+"\"}";
-//  }
 }
