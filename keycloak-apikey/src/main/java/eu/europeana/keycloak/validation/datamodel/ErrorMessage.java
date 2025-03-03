@@ -18,16 +18,30 @@ public enum ErrorMessage {
       "Client not authorised due to missing scope access",
       "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu");
 
-  @JsonProperty
+
   private final String code;
-  @JsonProperty
+
   private final String error;
-  @JsonProperty
+
   private final String message;
 
   ErrorMessage(String code, String error, String message) {
     this.code = code;
     this.error = error;
     this.message = message;
+  }
+  @JsonProperty("code")
+  public String getCode() {
+    return code;
+  }
+
+  @JsonProperty("error")
+  public String getError() {
+    return error;
+  }
+
+  @JsonProperty
+  public String getMessage() {
+    return message;
   }
 }
