@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
-import eu.europeana.keycloak.validation.exception.ErrorResponse;
+import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
@@ -9,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
+import org.keycloak.TokenVerifier;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
@@ -16,7 +18,7 @@ import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
-import org.keycloak.services.managers.AppAuthManager.BearerTokenAuthenticator;
+import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 
 public class ApiKeyValidationService {
@@ -37,41 +39,42 @@ public class ApiKeyValidationService {
     this.session = session;
     this.realm =  session.getContext().getRealm();
   }
-  public boolean isAuthorized() {
+  public ValidationResult isAuthorized(String tokenString) {
     try {
-      BearerTokenAuthenticator authenticator = new BearerTokenAuthenticator(session);
-      AuthResult authResult = authenticator.authenticate();
-      if (authResult == null ) {
-        LOG.error("AuthResult is null Token expired ");
-        return false;
+      //As we want to send different message when the token is inactive , first get the token verified without the ifActive check.
+      AuthResult authResult=  AuthenticationManager.verifyIdentityToken(
+          this.session, this.realm, session.getContext().getUri(),
+          session.getContext().getConnection(), false, true,null, false,
+          tokenString, session.getContext().getRequestHeaders(), new TokenVerifier.Predicate[0]);
+      if (authResult == null) {
+        return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
       }
-      if(authResult.getToken()==null){ LOG.error("Token is null ");  return false;}
-
-      if(authResult.getToken().isExpired()){LOG.error("Token is expired ");  return false;}
-
-      if(authResult.getClient()==null){LOG.error("Token not associated to any client ");  return false;}
-
+      if(!authResult.getToken().isActive()) {
+        return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_EXPIRED_401);
+      }
       return validateClientScope(authResult);
-    }
-    catch (NotAuthorizedException e){
+    }catch(NotAuthorizedException e){
       LOG.error("Exception during token authentication : "+ e.getMessage());
-      return  false;
+      return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
     }
   }
 
-  private static boolean validateClientScope(AuthResult authResult) {
+  private ValidationResult validateClientScope(AuthResult authResult) {
     ClientModel client = authResult.getClient();
-    Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
-    if(clientScopes != null && !clientScopes.containsKey(CLIENT_SCOPE_APIKEYS)){
-      LOG.error("Client with ID "+client.getClientId() + " does not have required scope - apikeys ");
-      return false;
+    if (client == null) {
+      throw new NotAuthorizedException("Client not found");
     }
-    return true;
+    Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
+    if (clientScopes == null || !clientScopes.containsKey(CLIENT_SCOPE_APIKEYS)) {
+      LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
+      return new ValidationResult(Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
+    }
+    return null;
   }
 
 
-  public boolean validateApikey(String apikey)
-  {
+   public boolean validateApikeyLegacy(String apikey)
+   {
     //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientProvider clientProvider = session.clients();
     ClientModel client = clientProvider.getClientByClientId(realm, apikey);
@@ -86,6 +89,22 @@ public class ApiKeyValidationService {
      }
     return true;
   }
+
+  public ValidationResult validateApikey(String apikey)
+  {
+    //validate if key exists . The clientID we receive in request parameter is actually the apikey.
+    ClientProvider clientProvider = session.clients();
+    ClientModel client = clientProvider.getClientByClientId(realm, apikey);
+    if(client ==null ){
+      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.KEY_INVALID_401);
+    }
+    //check if key not deprecated and currently active
+    if(!client.isEnabled()){
+      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.KEY_DISABLED_401);
+    }
+    return null;
+  }
+
 
 
   public String extractApikeyFromAuthorizationHeader(HttpRequest httpRequest){
@@ -106,16 +125,30 @@ public class ApiKeyValidationService {
     return null;
   }
 
-  public ErrorResponse validateAuthToken() {
+  public ValidationResult validateAuthToken() {
     HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
     String authHeader = AppAuthManager.extractAuthorizationHeaderToken(headers);
     if(StringUtils.isEmpty(authHeader)) {
-      return new ErrorResponse(Status.UNAUTHORIZED.getStatusCode(),"Token is missing","Please issue a token and supply it within the Authorization header.",null);
+     return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
     }
+    return isAuthorized(authHeader);
+  }
 
-
-
-
+  public ValidationResult validateIp(String ip) {
+    if(StringUtils.isBlank(ip)) {
+      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.IP_MISSING_400);
+    }
+    if(!isValidIpAddress(ip)){
+      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.IP_INVALID_400);
+    }
     return null;
+  }
+
+  private boolean isValidIpAddress(String ip) {
+    String regexFrag = "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])";
+    String regex =regexFrag+"\\."+regexFrag+"\\."+regexFrag+"\\."+regexFrag;
+    Pattern pattern = Pattern.compile(regex);
+    Matcher matcher = pattern.matcher(ip);
+    return  matcher.matches();
   }
 }

@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
-import eu.europeana.keycloak.validation.exception.ErrorResponse;
+import eu.europeana.keycloak.validation.datamodel.ErrorResponseLegacy;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -40,13 +40,13 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
     HttpRequest httpRequest = session.getContext().getHttpRequest();
     String apikey = service.extractApikeyFromAuthorizationHeader(httpRequest);
     if (StringUtils.isBlank(apikey)) {
-      ErrorResponse errorResponse = new ErrorResponse(Status.BAD_REQUEST.getStatusCode(),
+      ErrorResponseLegacy errorResponse = new ErrorResponseLegacy(Status.BAD_REQUEST.getStatusCode(),
           Status.BAD_REQUEST.getReasonPhrase(),
           APIKEY_MISSING,
           httpRequest.getUri().getPath());
       return Response.status(Status.BAD_REQUEST).entity(errorResponse).build();
     }
-    if(!service.validateApikey(apikey)){
+    if(!service.validateApikeyLegacy(apikey)){
       return Response.status(Status.UNAUTHORIZED).entity(String.format(APIKEY_NOT_REGISTERED, apikey)).build();
     }
     //TODO - Update the session history table

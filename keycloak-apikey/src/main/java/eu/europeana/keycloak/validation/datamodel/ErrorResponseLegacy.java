@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.validation.exception;
+package eu.europeana.keycloak.validation.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
-public class ErrorResponse {
+public class ErrorResponseLegacy {
   private final boolean success = false;
   private final int status;
   private final String error;
@@ -19,7 +19,7 @@ public class ErrorResponse {
       pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'"
   )
   private final OffsetDateTime timestamp = OffsetDateTime.now();
-  public ErrorResponse(int status, String error, String message,String path) {
+  public ErrorResponseLegacy(int status, String error, String message,String path) {
     this.status = status;
     this.error = error;
     this.message = message;
@@ -36,10 +36,10 @@ public class ErrorResponse {
 
   public String getPath() { return path; }
 
-  public String getTimestamp() {
-    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-    return fmt.format(timestamp);
-  }
+//  public String getTimestamp() {
+//    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+//    return fmt.format(timestamp);
+//  }
 
 
 }
