@@ -1,9 +1,10 @@
 package eu.europeana.keycloak.validation.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
-@JsonFormat(shape= JsonFormat.Shape.OBJECT)
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum ErrorMessage {
   TOKEN_INVALID_401("401_token_invalid","Token is invalid","Please acquire a new token or get in contact with the Europeana APIs customer support via api@europeana.eu"),
   TOKEN_MISSING_401("401_token_missing","Token is missing","Please issue a token and supply it within the Authorization header."),
@@ -17,8 +18,11 @@ public enum ErrorMessage {
       "Client not authorised due to missing scope access",
       "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu");
 
+  @JsonProperty
   private final String code;
+  @JsonProperty
   private final String error;
+  @JsonProperty
   private final String message;
 
   ErrorMessage(String code, String error, String message) {
@@ -26,5 +30,4 @@ public enum ErrorMessage {
     this.error = error;
     this.message = message;
   }
-
 }
