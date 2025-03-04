@@ -141,7 +141,12 @@ public class ApiKeyValidationService {
   }
 
   /** Method checks IPV4 address input and checks if it is matching the xxx.xxx.xxx.xxx
-   * where xxx  ranges from 0-255
+   * where xxx  ranges from 0-255 and validated using regex.
+   * Regex explanation:
+   * (\d{1,2}  -> one or two-digit number
+   * |(0|1)\d{2}-> or first number can be 0 or 1 followed by any 2-digit number
+   * |2[0-4]\d -> or  first number is 2 middle number can be between 0 and 4 and last number can be any single digit
+   * |25[0-5]) -> or  first number is 2 middle number is 5 and last number can be between 0 and 5
    * @param ip value as string
    * @return boolean indication if ip format is valid or not
    */
