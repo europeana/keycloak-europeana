@@ -4,6 +4,7 @@ metadata:
   name: keycloak-validate-ingress
   annotations:
     ${K8S_INGRESS_ANNOTATIONS}
+    ${K8S_INGRESS_REDIRECT_ANNOTATION}
 spec:
   tls:
     - hosts:
