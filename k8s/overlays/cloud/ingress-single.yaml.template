@@ -13,6 +13,15 @@ spec:
     - host: ${K8S_HOSTNAME}
       http:
         paths:
+          - path: /validate
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 80
+            annotations:
+                      ${K8S_INGRESS_REDIRECT_ANNOTATION}
           - path: /
             pathType: Prefix
             backend:
