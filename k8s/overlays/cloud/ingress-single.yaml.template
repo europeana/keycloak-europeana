@@ -1,30 +1,6 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: keycloak-validate-ingress
-  annotations:
-    ${K8S_INGRESS_ANNOTATIONS}
-    ${K8S_INGRESS_REDIRECT_ANNOTATION}
-spec:
-  tls:
-    - hosts:
-        - ${K8S_HOSTNAME}
-      secretName: ${K8S_HOSTNAME_SECRET}
-  rules:
-    - host: ${K8S_HOSTNAME}
-      http:
-        paths:
-          - path: /auth/realms/europeana/validate
-            pathType: Prefix
-            backend:
-              service:
-                name: keycloak-service
-                port:
-                  number: 80
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: keycloak-ingress
   annotations:
     ${K8S_INGRESS_ANNOTATIONS}
