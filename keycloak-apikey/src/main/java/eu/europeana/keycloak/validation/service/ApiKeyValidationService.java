@@ -74,8 +74,6 @@ public class ApiKeyValidationService {
 
    public boolean validateApikeyLegacy(String apikey)
    {
-     printRequestHeaders();
-
      //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientProvider clientProvider = session.clients();
     ClientModel client = clientProvider.getClientByClientId(realm, apikey);
@@ -91,7 +89,7 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  private void printRequestHeaders() {
+  public void printRequestHeaders() {
     HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
     for (Entry<String, List<String>> entry :  headers.getRequestHeaders().entrySet()) {
       String key = entry.getKey();

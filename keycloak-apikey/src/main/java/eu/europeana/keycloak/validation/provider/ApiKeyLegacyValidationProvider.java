@@ -38,6 +38,7 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
   @POST
   public Response validateApiKeyLegacy(){
     HttpRequest httpRequest = session.getContext().getHttpRequest();
+    service.printRequestHeaders();
     String apikey = service.extractApikeyFromAuthorizationHeader(httpRequest);
     if (StringUtils.isBlank(apikey)) {
       ErrorResponseLegacy errorResponse = new ErrorResponseLegacy(Status.BAD_REQUEST.getStatusCode(),
