@@ -3,12 +3,8 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response.Status;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -89,25 +85,6 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  public void printRequestHeaders() {
-    HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
-    for (Entry<String, List<String>> entry :  headers.getRequestHeaders().entrySet()) {
-      String key = entry.getKey();
-      String logger = "";
-      List<String> values = entry.getValue();
-      logger =  key + ": [";
-      if(values!= null) {
-        for (int i = 0; i < values.size(); i++) {
-          logger = logger + values.get(i);
-          if (i < values.size() - 1) {
-            logger = logger + (", ");
-          }
-        }
-      }
-      LOG.info(logger+"]");
-    }
-  }
-
   public ValidationResult validateApikey(String apikey)
   {
     //validate if key exists . The clientID we receive in request parameter is actually the apikey.
@@ -146,7 +123,6 @@ public class ApiKeyValidationService {
    */
   public ValidationResult validateAuthToken() {
     HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
-    printRequestHeaders();
     String authHeader = AppAuthManager.extractAuthorizationHeaderToken(headers);
     if(StringUtils.isEmpty(authHeader)) {
      return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
