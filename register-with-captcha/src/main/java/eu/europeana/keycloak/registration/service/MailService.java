@@ -48,10 +48,10 @@ public class MailService {
 
   public String getMessageForSendingApikey(String apikey) {
     StringBuilder msg = new StringBuilder();
-    String firstName = userModel.getFirstName();
-    String lastName = userModel.getLastName();
+    String firstName = userModel.getFirstName()== null?"":userModel.getFirstName();
+    String lastName = userModel.getLastName()==null?"":userModel.getLastName();
     if(StringUtils.isEmpty(firstName) && StringUtils.isEmpty(lastName)){
-      firstName="";
+      firstName="User";
       lastName="";
     }
     msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
@@ -60,7 +60,7 @@ public class MailService {
         .append(SEPARATOR)
         .append(String.format("&emsp; &emsp; &emsp; %s <br>",apikey))
         .append(SEPARATOR).append("<br>")
-        .append(APIKEY_USAGE).append(".")
+        .append(APIKEY_USAGE)
         .append(MESSAGE_FOOTER);
     return msg.toString();
   }
