@@ -51,7 +51,7 @@ public class MailService {
     String firstName = userModel.getFirstName();
     String lastName = userModel.getLastName();
     if(StringUtils.isEmpty(firstName) && StringUtils.isEmpty(lastName)){
-      firstName="user";
+      firstName="";
       lastName="";
     }
     msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
