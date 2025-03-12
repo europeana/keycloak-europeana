@@ -2,6 +2,7 @@ package eu.europeana.keycloak.registration.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
@@ -47,8 +48,14 @@ public class MailService {
 
   public String getMessageForSendingApikey(String apikey) {
     StringBuilder msg = new StringBuilder();
+    String firstName = userModel.getFirstName();
+    String lastName = userModel.getLastName();
+    if(StringUtils.isEmpty(firstName) && StringUtils.isEmpty(lastName)){
+      firstName="";
+      lastName="";
+    }
     msg.append(String.format("<html><body>Dear %s %s,<br><br>Thank you for your interest in the Europeana APIs and registering for a key.",
-        userModel.getFirstName(),userModel.getLastName())).append("<br>")
+            firstName, lastName)).append("<br>")
         .append("You can now try out Europeana’s APIs with your very own API key: <br><br>")
         .append(SEPARATOR)
         .append(String.format("&emsp; &emsp; &emsp; %s <br>",apikey))
