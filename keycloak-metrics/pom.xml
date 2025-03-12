@@ -4,25 +4,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>eu.europeana</groupId>
         <artifactId>keycloak-europeana</artifactId>
+        <groupId>eu.europeana</groupId>
         <version>2.1</version>
     </parent>
 
     <artifactId>keycloak-metrics</artifactId>
+    <groupId>eu.europeana</groupId>
     <version>2.1</version>
 
     <name>Keycloak Metrics</name>
     <description>A Service Provider that adds a metrics endpoint to Keycloak</description>
 
     <packaging>jar</packaging>
-
-    <properties>
-        <snakeyaml.version>2.3</snakeyaml.version>
-        <jakarta.version>4.0.0</jakarta.version>
-        <jboss.logging.version>3.5.3.Final</jboss.logging.version>
-        <apache.httpclient.version>4.5.14</apache.httpclient.version>
-    </properties>
 
     <dependencies>
         <!-- fix the critical dependency of the older transitive dependency in Keycloak-services v23.0.7 -->
@@ -80,7 +74,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>${apache.httpclient.version}</version>
+            <version>${httpclient.version}</version>
         </dependency>
     </dependencies>
 

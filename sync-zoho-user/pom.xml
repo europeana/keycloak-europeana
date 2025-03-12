@@ -3,34 +3,21 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
-    <groupId>eu.europeana</groupId>
     <artifactId>keycloak-europeana</artifactId>
-    <version>2.0</version>
+    <groupId>eu.europeana</groupId>
+    <version>2.1</version>
   </parent>
 
-  <name>Sync Zoho Users</name>
   <artifactId>sync-zoho-user</artifactId>
+  <groupId>eu.europeana</groupId>
+  <version>2.1</version>
+
+  <name>Sync Zoho Users</name>
 
   <properties>
-    <snakeyaml.version>2.3</snakeyaml.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jakarta.version>4.0.0</jakarta.version>
-    <jboss.logging.version>3.4.1.Final</jboss.logging.version>
     <zohocrmsdk.version>2.0.0</zohocrmsdk.version>
-    <httpclient.version>4.5.14</httpclient.version>
-    <httpcore.version>4.4.16</httpcore.version>
-    <httpmime.version>4.5.14</httpmime.version>
-    <json.version>20240205</json.version>
-<!--    <mysql-connector-j.version>8.3.0</mysql-connector-j.version>-->
-    <opencsv.version>5.9</opencsv.version>
-    <commons-io.version>2.16.1</commons-io.version>
-    <commons-compress.version>1.26.1</commons-compress.version>
-    <commons-lang3.version>3.14.0</commons-lang3.version>
-    <commons-logging.version>1.3.0</commons-logging.version>
-    <commons-beanutils.version>1.9.4</commons-beanutils.version>
-    <commons-text.version>1.12.0</commons-text.version>
-    <commons-collections4.version>4.5.0-M1</commons-collections4.version>
   </properties>
 
   <repositories>
