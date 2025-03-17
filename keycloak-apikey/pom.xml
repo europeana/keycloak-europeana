@@ -65,10 +65,10 @@
     </dependency>
 
     <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-model-jpa</artifactId>
-      <version>${keycloak.version}</version>
-      <scope>provided</scope>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang3.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
