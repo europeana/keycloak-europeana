@@ -14,8 +14,8 @@
   <groupId>eu.europeana</groupId>
   <version>2.1</version>
 
-  <name>Keycloak persistent session SPI</name>
-  <description>A Service Provider that adds a session history entity to Keycloak and provides API key functionality
+  <name>Keycloak Apikey</name>
+  <description>A Service Provider that provides API key functionality
   </description>
 
   <packaging>jar</packaging>
@@ -51,6 +51,17 @@
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-services</artifactId>
       <version>${keycloak.version}</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.yaml</groupId>
+          <artifactId>snakeyaml</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-multipart-provider</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
