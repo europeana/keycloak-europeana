@@ -27,6 +27,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   @Override
   public void close() {
+    //specific implementation not required . e.g resource or connection cleanup
   }
 
   @Path("")

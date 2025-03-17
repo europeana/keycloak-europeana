@@ -1,13 +1,11 @@
 package eu.europeana.keycloak.validation.datamodel;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.Getter;
-import org.hibernate.jpa.internal.util.LogHelper;
 
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
