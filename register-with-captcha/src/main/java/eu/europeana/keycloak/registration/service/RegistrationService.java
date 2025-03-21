@@ -43,6 +43,7 @@ public class RegistrationService {
   public static final String ACCOUNT_NOT_FOUND_FOR_EMAIL = "An Europeana account was not found associated to the email address %s, please register for one in the Europeana website first before filling in this form";
   public static final String EMAIL_NOT_VERIFIED ="Please confirm your account by clicking on the link that was sent to you when registering for an Europeana account";
   public static final String ACCOUNT_DISABLED="Please contact Europeana customer support for further information";
+  public static final String CLIENT_OWNER_ROLE_DESCRIPTION = "Ownership of this client";
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
@@ -184,12 +185,16 @@ public class RegistrationService {
     }
 
   private RoleModel getOrCeateNewRoleForClient(ClientModel client) {
-      RoleProvider roles = session.roles();
-      if (client.getRole(CLIENT_OWNER) != null) {
-       return client.getRole(CLIENT_OWNER);
-      }
-      LOG.info("New owner role will be added for client : " + client.getId());
-      return roles.addClientRole(client, CLIENT_OWNER);
+    RoleProvider roles = session.roles();
+    if (client.getRole(CLIENT_OWNER) != null) {
+      return client.getRole(CLIENT_OWNER);
+    }
+    LOG.info("New owner role will be added for client : " + client.getId());
+    RoleModel roleModel = roles.addClientRole(client, CLIENT_OWNER);
+    if (roleModel != null) {
+      roleModel.setDescription(CLIENT_OWNER_ROLE_DESCRIPTION);
+    }
+    return roleModel;
   }
 
   private ClientModel createClientWithNewKey(UserModel user) {
