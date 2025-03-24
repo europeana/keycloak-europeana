@@ -1,14 +1,15 @@
 package eu.europeana.keycloak.registration.service;
 
+import eu.europeana.keycloak.registration.provider.CustomEmailSenderProvider;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 
 public class MailService {
+  public static final String MAIL_API_EUROPEANA_ADDRESS = "api@europeana.eu";
   private final KeycloakSession session;
   private final UserModel userModel;
 
@@ -29,9 +30,10 @@ public class MailService {
   }
 
   public void sendEmailToUserWithApikey(String apikey) throws EmailException {
-    DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+    CustomEmailSenderProvider senderProvider = new CustomEmailSenderProvider(session);
     String messageSubject = "Your Europeana API key";
     String messageBody = getMessageForSendingApikey(apikey);
+    senderProvider.setAddressForBCC(MAIL_API_EUROPEANA_ADDRESS);
     senderProvider.send(getSmtpConfig(),userModel, messageSubject, null,messageBody);
   }
 
