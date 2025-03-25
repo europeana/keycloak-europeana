@@ -4,10 +4,10 @@
   <parent>
     <groupId>eu.europeana</groupId>
     <artifactId>keycloak-europeana</artifactId>
-    <version>2.3-SNAPSHOT</version>
+    <version>2.2.1</version>
   </parent>
   <artifactId>register-with-captcha</artifactId>
-  <version>2.3-SNAPSHOT</version>
+  <version>2.2.1</version>
 
   <name>Register with captcha</name>
   <description>Addon package to Register the api-key for the given user</description>
