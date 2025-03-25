@@ -17,14 +17,17 @@ public class CustomEmailSenderProviderFactory implements EmailSenderProviderFact
 
   @Override
   public void init(Scope scope) {
+    // not required
   }
 
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
+    // not required
   }
 
   @Override
   public void close() {
+    // not required
   }
 
   @Override

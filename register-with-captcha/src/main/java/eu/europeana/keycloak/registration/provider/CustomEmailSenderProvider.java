@@ -56,10 +56,10 @@ public class CustomEmailSenderProvider implements EmailSenderProvider {
       String htmlBody) throws EmailException {
     boolean auth = "true".equals(config.get("auth"));
     Properties props = getMailProperties(config, auth);
-    Session session = Session.getInstance(props);
-    try (Transport transport = session.getTransport("smtp")) {
+    Session sessionInstance = Session.getInstance(props);
+    try (Transport transport = sessionInstance.getTransport("smtp")) {
       Multipart multipart = getMultipartMessageBody(textBody, htmlBody);
-      Message msg = getMessage(config, address, subject, session, multipart);
+      Message msg = getMessage(config, address, subject, sessionInstance, multipart);
       if (auth) {
         connectWithAuth(config, transport);
       } else {
@@ -156,5 +156,6 @@ public class CustomEmailSenderProvider implements EmailSenderProvider {
 
   @Override
   public void close() {
+    // not required
   }
 }
