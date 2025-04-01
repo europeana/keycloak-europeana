@@ -33,7 +33,6 @@ import org.keycloak.models.RoleContainerModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
-
 import static eu.europeana.keycloak.user.UserRemovedConfig.*;
 
 //import org.keycloak.representations.
@@ -83,7 +82,7 @@ public class UserRemovedMessageHandler {
         UserModel  slackUserModel  = session.users().getUserByUsername(realm, SLACK_USERNAME);
 
         //Remove the personal apikey associated to the user
-        String projectKey = removeKeysAssociatedToUser(session, slackUserModel, realm);
+        String msg_projectKeyStatus = removeKeysAssociatedToUser(session, slackUserModel, realm);
 
         if (getUserSetToken()){
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
@@ -95,13 +94,13 @@ public class UserRemovedMessageHandler {
         }
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
-            String message = formatUserRemovedMessage(deleteEvent, true,String.format(MSG_PROJECT_KEY_WITH_NO_USER,projectKey));
+            String message = formatUserRemovedMessage(deleteEvent, true, msg_projectKeyStatus);
             slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
         }
 
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
-             String message = formatUserRemovedMessage(deleteEvent, false,String.format(MSG_PROJECT_KEY_WITH_NO_USER,projectKey));
+             String message = formatUserRemovedMessage(deleteEvent, false, msg_projectKeyStatus);
              slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
         }
 
@@ -131,7 +130,7 @@ public class UserRemovedMessageHandler {
                         Stream<UserModel> UsersInRole = session.users().getRoleMembersStream(realm, rolemodel);
                         //check if it was the last user associated to that project key
                         if (UsersInRole.findAny().isEmpty()) {
-                             return client.getClientId();
+                            String.format(MSG_PROJECT_KEY_WITH_NO_USER, client.getClientId());
                         }
                     }
                 }
