@@ -9,6 +9,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import java.util.List;
+import java.util.stream.Stream;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -24,8 +26,11 @@ import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
+import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.RoleContainerModel;
+import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
 
@@ -45,6 +50,9 @@ public class UserRemovedMessageHandler {
     private boolean setsDeleteOK       = false;
     private boolean slackHttpMessageOK  = false;
     private boolean slackEmailMessageOK = false;
+
+    public static final String CLIENT_OWNER = "client_owner";
+    public static final String SHARED_OWNER ="shared_owner";
 
     private String userSetToken;
 
@@ -74,6 +82,9 @@ public class UserRemovedMessageHandler {
         RealmModel realm      = deleteEvent.getRealm();
         UserModel  slackUserModel  = session.users().getUserByUsername(realm, SLACK_USERNAME);
 
+        //Remove the personal apikey associated to the user
+        String projectKey = removeKeysAssociatedToUser(session, slackUserModel, realm);
+
         if (getUserSetToken()){
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
         }
@@ -84,12 +95,14 @@ public class UserRemovedMessageHandler {
         }
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
-            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent);
+            String message = formatUserRemovedMessage(deleteEvent, true,String.format(MSG_PROJECT_KEY_WITH_NO_USER,projectKey));
+            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
         }
 
         if (!slackHttpMessageOK) {
-            if (DEBUG_LOGS) LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
-            slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent);
+            if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
+             String message = formatUserRemovedMessage(deleteEvent, false,String.format(MSG_PROJECT_KEY_WITH_NO_USER,projectKey));
+             slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -97,6 +110,58 @@ public class UserRemovedMessageHandler {
         } else {
             LOG.error(formatMessage(deleteEvent, HTTP_AND_EMAIL_FAILED));
         }
+    }
+
+    private static String removeKeysAssociatedToUser(KeycloakSession session, UserModel userModel,
+        RealmModel realm) {
+        List<RoleModel> rolesAssociatedToUser = userModel.getRoleMappingsStream().filter(
+            roleModel -> (CLIENT_OWNER.equals(roleModel.getName()) || SHARED_OWNER.equals(
+                roleModel.getName()))).toList();
+
+        for (RoleModel rolemodel : rolesAssociatedToUser) {
+            if (rolemodel.isClientRole()) {
+                RoleContainerModel container = rolemodel.getContainer();
+                ClientModel client = (ClientModel) container;
+                if (CLIENT_OWNER.equals(rolemodel.getName())) {
+                   dissociatePrivateKey(session, userModel, realm, client);
+                }
+                if (SHARED_OWNER.equals(rolemodel.getName())) {
+                    if (dissociateProjectKey(userModel,rolemodel)) {
+                        //get All users to whom the client(project key) is associated
+                        Stream<UserModel> UsersInRole = session.users().getRoleMembersStream(realm, rolemodel);
+                        //check if it was the last user associated to that project key
+                        if (UsersInRole.findAny().isEmpty()) {
+                             return client.getClientId();
+                        }
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    private static boolean dissociateProjectKey(UserModel userModel, RoleModel rolemodel) {
+        //Remove shared_owner role assigned to user
+        userModel.deleteRoleMapping(rolemodel);
+        if (!userModel.hasRole(rolemodel)) {
+            LOG.info("Removed project key association for user-"+ userModel.getUsername());
+            return  true;
+        }
+        return false;
+    }
+
+    private static void  dissociatePrivateKey(KeycloakSession session, UserModel userModel, RealmModel realm,
+        ClientModel client) {
+        if (client != null){
+           //Remove Private key associated to user
+           if (session.clients().removeClient(realm, client.getId())) {
+               LOG.info("Removed the private key associated to user-" + userModel.getUsername());
+           }
+        }
+        else {
+            LOG.error("Unable to remove private key associated to user");
+        }
+
     }
 
     /**
@@ -209,7 +274,7 @@ public class UserRemovedMessageHandler {
         }
     }
 
-    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon) {
+    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon,String msg_projectKeyStatus) {
         UserModel  deleteUser = deleteEvent.getUser();
         String okString    = useIcon ? OK_ICON : OK_ASCII;
         String errorString = useIcon ? ERROR_ICON : ERROR_ASCII;
@@ -218,7 +283,8 @@ public class UserRemovedMessageHandler {
                              deleteUser.getEmail(),
                              okString,
                              setsDeleteOK ? okString : errorString,
-                             LocalDate.now().plusDays(30));
+                             LocalDate.now().plusDays(30),
+                             msg_projectKeyStatus);
     }
 
     /**
@@ -228,9 +294,9 @@ public class UserRemovedMessageHandler {
      * @return boolean: TRUE  if HTTP 200 was received after sending the message
      *                  FALSE in case of any other status or an error occurring
      */
-    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent) {
+    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message) {
 
-        String message = formatUserRemovedMessage(deleteEvent, true);
+       // String message = formatUserRemovedMessage(deleteEvent, true,message);
 
         StringEntity entity;
         HttpPost     httpPost = new HttpPost(SLACK_WEBHOOK);
@@ -276,9 +342,9 @@ public class UserRemovedMessageHandler {
      * @return boolean TRUE  if the email was sent without an error
      *                 FALSE if an EmailException error occurred
      */
-    private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUserModel, UserRemovedEvent deleteEvent) {
+    private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUserModel, UserRemovedEvent deleteEvent,String message) {
 
-        String message = formatUserRemovedMessage(deleteEvent, false);
+
         DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
         UserModel deleteUser = deleteEvent.getUser();
 
