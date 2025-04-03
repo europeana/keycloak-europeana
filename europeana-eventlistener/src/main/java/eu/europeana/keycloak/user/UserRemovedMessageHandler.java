@@ -1,6 +1,5 @@
 package eu.europeana.keycloak.user;
 
-import eu.europeana.keycloak.transaction.ClientTransaction;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -11,7 +10,6 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import java.util.List;
-import java.util.stream.Stream;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -82,8 +80,8 @@ public class UserRemovedMessageHandler {
         RealmModel realm      = deleteEvent.getRealm();
         UserModel  slackUserModel  = session.users().getUserByUsername(realm, SLACK_USERNAME);
 
-        //Remove the personal apikey associated to the user
-        String msg_projectKeyStatus = removeKeysAssociatedToUser(session, slackUserModel, realm);
+        //Remove the personal apikey associated to the user & check if
+        String msg_projectKeyStatus = removeKeysAssociatedToUser(session, deleteEvent.getUser(), realm);
 
         if (getUserSetToken()){
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
@@ -96,13 +94,14 @@ public class UserRemovedMessageHandler {
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
             String message = formatUserRemovedMessage(deleteEvent, true, msg_projectKeyStatus);
-            //slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
+            LOG.info("message " + message);
+            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
         }
 
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
              String message = formatUserRemovedMessage(deleteEvent, false, msg_projectKeyStatus);
-            // slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
+             slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -118,6 +117,7 @@ public class UserRemovedMessageHandler {
             roleModel -> (CLIENT_OWNER.equals(roleModel.getName()) || SHARED_OWNER.equals(
                 roleModel.getName()))).toList();
 
+        List<String> projectkeysWithoutUser = new ArrayList<>();
         for (RoleModel rolemodel : rolesAssociatedToUser) {
             if (rolemodel.isClientRole()) {
                 RoleContainerModel container = rolemodel.getContainer();
@@ -126,38 +126,23 @@ public class UserRemovedMessageHandler {
                    dissociatePrivateKey(session, userModel, realm, client);
                 }
                 if (SHARED_OWNER.equals(rolemodel.getName())) {
-                    if (dissociateProjectKey(userModel,rolemodel)) {
-                        //get All users to whom the client(project key) is associated
-                        Stream<UserModel> UsersInRole = session.users().getRoleMembersStream(realm, rolemodel);
-                        //check if it was the last user associated to that project key
-                        if (UsersInRole.findAny().isEmpty()) {
-                            String.format(MSG_PROJECT_KEY_WITH_NO_USER, client.getClientId());
-                        }
+                    //get All users to whom the client(project key) is associated and check if it was the last user associated to that project key
+                    LOG.info("Nr. Users associated to project key "+ client.getClientId()+" : " + session.users().getRoleMembersStream(realm, rolemodel).count());
+                    if (session.users().getRoleMembersStream(realm, rolemodel).findAny().isEmpty()) {
+                       projectkeysWithoutUser.add(client.getClientId());
                     }
                 }
             }
         }
-        return "";
-    }
-
-    private static boolean dissociateProjectKey(UserModel userModel, RoleModel rolemodel) {
-        //Remove shared_owner role assigned to user
-        userModel.deleteRoleMapping(rolemodel);
-        if (!userModel.hasRole(rolemodel)) {
-            LOG.info("Removed project key association for user-"+ userModel.getUsername());
-            return  true;
-        }
-        return false;
+        return !projectkeysWithoutUser.isEmpty() ? String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser)) : "";
     }
 
     private static void  dissociatePrivateKey(KeycloakSession session, UserModel userModel, RealmModel realm,
-        ClientModel client) {
-        ClientTransaction transaction = new ClientTransaction(realm,session.clients(),client);
-        session.getTransactionManager().enlistPrepare(transaction);
-        if (client != null){
+        ClientModel clientModel) {
+        if (clientModel != null){
            //Remove Private key associated to user
-           if (session.clients().removeClient(realm, client.getId())) {
-               LOG.info("Removed the private key associated to user-" + userModel.getUsername());
+           if (session.clients().removeClient(realm, clientModel.getId())) {
+               LOG.info("Removed the private key "+clientModel.getClientId()+" associated to user-" + userModel.getUsername());
            }
         }
         else {
@@ -296,8 +281,6 @@ public class UserRemovedMessageHandler {
      *                  FALSE in case of any other status or an error occurring
      */
     private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message) {
-
-       // String message = formatUserRemovedMessage(deleteEvent, true,message);
 
         StringEntity entity;
         HttpPost     httpPost = new HttpPost(SLACK_WEBHOOK);
