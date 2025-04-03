@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.user;
 
+import eu.europeana.keycloak.transaction.ClientTransaction;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -95,13 +96,13 @@ public class UserRemovedMessageHandler {
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
             String message = formatUserRemovedMessage(deleteEvent, true, msg_projectKeyStatus);
-            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
+            //slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
         }
 
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
              String message = formatUserRemovedMessage(deleteEvent, false, msg_projectKeyStatus);
-             slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
+            // slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -151,6 +152,8 @@ public class UserRemovedMessageHandler {
 
     private static void  dissociatePrivateKey(KeycloakSession session, UserModel userModel, RealmModel realm,
         ClientModel client) {
+        ClientTransaction transaction = new ClientTransaction(realm,session.clients(),client);
+        session.getTransactionManager().enlistPrepare(transaction);
         if (client != null){
            //Remove Private key associated to user
            if (session.clients().removeClient(realm, client.getId())) {
@@ -160,7 +163,6 @@ public class UserRemovedMessageHandler {
         else {
             LOG.error("Unable to remove private key associated to user");
         }
-
     }
 
     /**
