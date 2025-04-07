@@ -30,6 +30,7 @@ public class ApiKeyValidationService {
 
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
+  public static final String ROLE_ATTRIBUTE_CREATION_DATE = "creationDate";
 
   private final KeycloakSession session;
 
@@ -187,7 +188,7 @@ public class ApiKeyValidationService {
 
   private static void gatherApiKeyInfo(RoleModel rolemodel, List<Apikey> clientList) {
     RoleContainerModel container = rolemodel.getContainer();
-    String creationDate = rolemodel.getFirstAttribute("creationDate");
+    String creationDate = rolemodel.getFirstAttribute(ROLE_ATTRIBUTE_CREATION_DATE);
     ClientModel client = (ClientModel) container;
     if (CLIENT_OWNER.equals(rolemodel.getName())) {
       clientList.add(new Apikey(client.getId(), client.getClientId(),"PersonalKey",creationDate, null,null));

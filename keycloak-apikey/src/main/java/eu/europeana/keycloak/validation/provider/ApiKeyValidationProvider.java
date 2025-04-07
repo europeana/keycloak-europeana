@@ -4,6 +4,7 @@ import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -59,11 +60,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
 
   @Path("/{client_id}")
-  @POST
+  @DELETE
   public Response disableApikey(@PathParam("client_id") String clientId){
-    //validate token and get user
-    //check if key owned by user if not return 403
-    //disable the key
+
     ValidationResult result = service.validateAuthToken();
     if (result.getErrorResponse() == null) {
       UserModel userModel = result.getUser();
@@ -76,19 +75,23 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         return Response.status(result.getHttpStatus()).entity(errorResponse).build();
       }
 
-      //check if key owned by authenticated user
-      List<Apikey> clientList = service.getPrivateAndProjectkeys(userModel);
-      ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
-      if(client!= null && clientList.stream().anyMatch(apikey -> apikey.getId().equals(client.getId()))){
-       //disable the key
-        client.setEnabled(false);
-        LOG.info("Key "+clientId+" is disabled.");
-      }
-      else{
-        LOG.error("Error disabling the key "+clientId);
-      }
+      disableKey(clientId, userModel);
     }
     return Response.status(Status.NO_CONTENT).build();
+  }
+
+  private void disableKey(String clientId, UserModel userModel) {
+    List<Apikey> clientList = service.getPrivateAndProjectkeys(userModel);
+    ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(),
+        clientId);
+    if(client!= null && clientList.stream().anyMatch(apikey -> apikey.getId().equals(client.getId()))){
+     //disable the key
+      client.setEnabled(false);
+      LOG.info("Key "+ clientId +" is disabled.");
+    }
+    else{
+      LOG.error("Error disabling the key "+ clientId);
+    }
   }
 
 }
