@@ -8,7 +8,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 
 public class UserApiKeysProviderFactory implements RealmResourceProviderFactory {
 
-  public static final String PROVIDER_ID="users";
+  public static final String PROVIDER_ID="user";
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
     return new UserApiKeysProvider(keycloakSession);
