@@ -31,6 +31,9 @@ public class ApiKeyValidationService {
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "creationDate";
+  public static final String CLIENT_STATE_DISABLED = "Disabled";
+  public static final String PERSONAL_KEY = "PersonalKey";
+  public static final String PROJECT_KEY = "ProjectKey";
 
   private final KeycloakSession session;
 
@@ -66,6 +69,7 @@ public class ApiKeyValidationService {
       if(!authResult.getToken().isActive()) {
         return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_EXPIRED_401);
       }
+      LOG.info("Token sub : "+authResult.getToken().getSubject() + "  email: "+authResult.getToken().getEmail());
       return validateClientScope(authResult);
   }
 
@@ -98,19 +102,26 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  public ValidationResult validateApikey(String apikey)
-  {
+  public ValidationResult validateApikey(String apikey){
     //validate if key exists . The clientID we receive in request parameter is actually the apikey.
-    ClientProvider clientProvider = session.clients();
-    ClientModel client = clientProvider.getClientByClientId(realm, apikey);
-    if(client ==null ){
-      return new ValidationResult( Status.BAD_REQUEST,ErrorMessage.KEY_INVALID_401);
+    ClientModel client = session.clients().getClientByClientId(realm, apikey);
+    return validateClient(client);
+  }
+
+  public ValidationResult validateClientById(String clientPublicId) {
+    ClientModel client =session.clients().getClientById(realm,clientPublicId);
+    return validateClient(client);
+  }
+
+  private static ValidationResult validateClient(ClientModel client) {
+    if(client ==null){
+      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
     }
     //check if key not deprecated and currently active
     if(!client.isEnabled()){
-      return new ValidationResult( Status.BAD_REQUEST,ErrorMessage.KEY_DISABLED_401);
+      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
     }
-    return null;
+    return new ValidationResult(Status.OK,null);
   }
 
   public String extractApikeyFromAuthorizationHeader(HttpRequest httpRequest){
@@ -190,14 +201,14 @@ public class ApiKeyValidationService {
     RoleContainerModel container = rolemodel.getContainer();
     String creationDate = rolemodel.getFirstAttribute(ROLE_ATTRIBUTE_CREATION_DATE);
     ClientModel client = (ClientModel) container;
+    String clientState = client.isEnabled()?null: CLIENT_STATE_DISABLED;
     if (CLIENT_OWNER.equals(rolemodel.getName())) {
-      clientList.add(new Apikey(client.getId(), client.getClientId(),"PersonalKey",creationDate, null,null));
+      clientList.add(new Apikey(client.getId(), client.getClientId(), PERSONAL_KEY,creationDate, null,null,clientState));
     }
     if (SHARED_OWNER.equals(rolemodel.getName())) {
-      clientList.add( new Apikey(client.getId(), client.getClientId(),"ProjectKey",creationDate, client.getName(),
-          client.getDescription()));
+      clientList.add( new Apikey(client.getId(), client.getClientId(), PROJECT_KEY,creationDate, client.getName(),
+          client.getDescription(),clientState));
     }
   }
-
 
 }

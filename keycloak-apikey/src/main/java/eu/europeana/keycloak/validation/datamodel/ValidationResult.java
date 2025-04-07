@@ -6,7 +6,6 @@ import org.keycloak.models.UserModel;
 public class ValidationResult {
   private final Status httpStatus;
   private final ErrorMessage response;
-
   private  UserModel user;
 
   public ValidationResult(Status httpStatus, ErrorMessage response) {
