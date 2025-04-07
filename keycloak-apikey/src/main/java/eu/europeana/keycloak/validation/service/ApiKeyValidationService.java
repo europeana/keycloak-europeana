@@ -1,9 +1,12 @@
 package eu.europeana.keycloak.validation.service;
 
+import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +19,9 @@ import org.keycloak.models.ClientProvider;
 import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.RoleContainerModel;
+import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
@@ -33,6 +39,10 @@ public class ApiKeyValidationService {
   public static final String APIKEY_NOT_ACTIVE = "API key %s is not active";
   public static final String APIKEY_PATTERN = "APIKEY\\s+([^\\s]+)";
 
+
+  public static final String CLIENT_OWNER = "client_owner";
+  public static final String SHARED_OWNER ="shared_owner";
+
   public ApiKeyValidationService(KeycloakSession session) {
     this.session = session;
     this.realm =  session.getContext().getRealm();
@@ -44,28 +54,30 @@ public class ApiKeyValidationService {
    * @return ValidationResult  or null
    */
   public ValidationResult isAuthorized(String tokenString) {
-
       //As we want to send different message when the token is inactive , first get the token verified without the ifActive check.
       AuthResult authResult=  AuthenticationManager.verifyIdentityToken(
           this.session, this.realm, session.getContext().getUri(),
           session.getContext().getConnection(), false, true,null, false,
           tokenString, session.getContext().getRequestHeaders(), new TokenVerifier.Predicate[0]);
       if (authResult == null || authResult.getClient() == null) {
-        return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
+        return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
       }
       if(!authResult.getToken().isActive()) {
         return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_EXPIRED_401);
       }
-      return validateClientScope(authResult.getClient());
+      return validateClientScope(authResult);
   }
 
-  private ValidationResult validateClientScope(ClientModel client) {
+  private ValidationResult validateClientScope(AuthResult authResult) {
+    ClientModel client =authResult.getClient();
     Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
     if (clientScopes == null || !clientScopes.containsKey(CLIENT_SCOPE_APIKEYS)) {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
-      return new ValidationResult(Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
+      return new ValidationResult( Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
-    return null;
+    ValidationResult result = new ValidationResult(Status.OK,null);
+    result.setUser(authResult.getUser());
+    return result;
   }
 
    public boolean validateApikeyLegacy(String apikey)
@@ -91,11 +103,11 @@ public class ApiKeyValidationService {
     ClientProvider clientProvider = session.clients();
     ClientModel client = clientProvider.getClientByClientId(realm, apikey);
     if(client ==null ){
-      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.KEY_INVALID_401);
+      return new ValidationResult( Status.BAD_REQUEST,ErrorMessage.KEY_INVALID_401);
     }
     //check if key not deprecated and currently active
     if(!client.isEnabled()){
-      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.KEY_DISABLED_401);
+      return new ValidationResult( Status.BAD_REQUEST,ErrorMessage.KEY_DISABLED_401);
     }
     return null;
   }
@@ -125,7 +137,7 @@ public class ApiKeyValidationService {
     HttpHeaders headers = session.getContext().getHttpRequest().getHttpHeaders();
     String authHeader = AppAuthManager.extractAuthorizationHeaderToken(headers);
     if(StringUtils.isEmpty(authHeader)) {
-     return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
+     return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
     }
     return isAuthorized(authHeader);
   }
@@ -158,6 +170,33 @@ public class ApiKeyValidationService {
     return  matcher.matches();
   }
 
+
+  public List<Apikey> getPrivateAndProjectkeys(UserModel userModel) {
+    List<RoleModel> rolesAssociatedToUser = userModel.getRoleMappingsStream().filter(
+        roleModel -> (CLIENT_OWNER.equals(roleModel.getName()) || SHARED_OWNER.equals(
+            roleModel.getName()))).toList();
+    List<Apikey> clientList = new ArrayList<>();
+
+    for (RoleModel rolemodel : rolesAssociatedToUser) {
+      if (rolemodel.isClientRole()) {
+        gatherApiKeyInfo(rolemodel, clientList);
+      }
+    }
+    return clientList;
+  }
+
+  private static void gatherApiKeyInfo(RoleModel rolemodel, List<Apikey> clientList) {
+    RoleContainerModel container = rolemodel.getContainer();
+    String creationDate = rolemodel.getFirstAttribute("creationDate");
+    ClientModel client = (ClientModel) container;
+    if (CLIENT_OWNER.equals(rolemodel.getName())) {
+      clientList.add(new Apikey(client.getId(), client.getClientId(),"PersonalKey",creationDate, null,null));
+    }
+    if (SHARED_OWNER.equals(rolemodel.getName())) {
+      clientList.add( new Apikey(client.getId(), client.getClientId(),"ProjectKey",creationDate, client.getName(),
+          client.getDescription()));
+    }
+  }
 
 
 }
