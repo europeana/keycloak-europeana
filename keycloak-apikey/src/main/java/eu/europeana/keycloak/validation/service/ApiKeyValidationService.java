@@ -262,6 +262,7 @@ public class ApiKeyValidationService {
       return Date.from(zonedDateTime.toInstant());
     }
     catch (DateTimeParseException ex) {
+      LOG.error("Exception occurred while parsing date : "+creationDate+" returning null date");
       return null;
     }
   }
