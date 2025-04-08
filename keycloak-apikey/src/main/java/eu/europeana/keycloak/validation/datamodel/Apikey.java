@@ -3,8 +3,9 @@ package eu.europeana.keycloak.validation.datamodel;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.util.Date;
 import lombok.Getter;
-@JsonPropertyOrder({"id","type","client_id","name","description","creationDate"})
+@JsonPropertyOrder({"id","type","client_id","name","description","state","creationDate"})
 @JsonInclude(Include.NON_EMPTY)
 public class Apikey {
   @Getter
@@ -20,9 +21,9 @@ public class Apikey {
   @Getter
   private final String state;
   @Getter
-  private final String  creationDate;
+  private final Date creationDate;
 
-  public Apikey(String id ,String clientId, String type,String creationDate,String name,String description,
+  public Apikey(String id ,String clientId, String type,Date creationDate,String name,String description,
       String state) {
     this.id = id;
     this.client_id = clientId;
