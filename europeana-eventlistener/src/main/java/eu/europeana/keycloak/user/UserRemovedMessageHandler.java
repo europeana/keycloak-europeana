@@ -142,7 +142,7 @@ public class UserRemovedMessageHandler {
                 }
             }
         }
-        return  projectkeysWithoutUser;// ? String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser)) : "";
+        return  projectkeysWithoutUser;
     }
 
     private static void  dissociatePrivateKey(KeycloakSession session, UserModel userModel, RealmModel realm,
