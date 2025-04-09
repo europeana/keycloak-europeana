@@ -79,10 +79,10 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     return Response.status(Status.NO_CONTENT).build();
   }
 
-  private boolean disableKey(String clientId, UserModel userModel) {
+  private boolean disableKey(String clientPublicId, UserModel userModel) {
     List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(userModel);
-    ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(),
-        clientId);
+    ClientModel client = session.clients().getClientById(session.getContext().getRealm(),
+        clientPublicId);
     if(client!= null && clientList.stream().anyMatch(apikey -> apikey.getId().equals(client.getId()))){
       //disable the key
       client.setEnabled(false);
