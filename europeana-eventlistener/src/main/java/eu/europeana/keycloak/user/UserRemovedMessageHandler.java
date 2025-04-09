@@ -93,15 +93,17 @@ public class UserRemovedMessageHandler {
         }
 
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
-            String message = formatUserRemovedMessage(deleteEvent, true, msg_projectKeyStatus);
+            String message = formatUserRemovedMessage(deleteEvent, true);
             LOG.info("message " + message);
             slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
+            sendSlackHttpMessageForKeyStatus(deleteEvent,msg_projectKeyStatus);
         }
 
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
-             String message = formatUserRemovedMessage(deleteEvent, false, msg_projectKeyStatus);
+             String message = formatUserRemovedMessage(deleteEvent, false);
              slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
+
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -109,6 +111,9 @@ public class UserRemovedMessageHandler {
         } else {
             LOG.error(formatMessage(deleteEvent, HTTP_AND_EMAIL_FAILED));
         }
+    }
+
+    private void sendSlackHttpMessageForKeyStatus(UserRemovedEvent deleteEvent, String msgProjectKeyStatus) {
     }
 
     private static String removeKeysAssociatedToUser(KeycloakSession session, UserModel userModel,
@@ -260,7 +265,7 @@ public class UserRemovedMessageHandler {
         }
     }
 
-    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon,String msg_projectKeyStatus) {
+    private String formatUserRemovedMessage(UserRemovedEvent deleteEvent, boolean useIcon) {
         UserModel  deleteUser = deleteEvent.getUser();
         String okString    = useIcon ? OK_ICON : OK_ASCII;
         String errorString = useIcon ? ERROR_ICON : ERROR_ASCII;
@@ -269,8 +274,7 @@ public class UserRemovedMessageHandler {
                              deleteUser.getEmail(),
                              okString,
                              setsDeleteOK ? okString : errorString,
-                             LocalDate.now().plusDays(30),
-                             msg_projectKeyStatus);
+                             LocalDate.now().plusDays(30));
     }
 
     /**
