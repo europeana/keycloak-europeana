@@ -45,8 +45,8 @@ public class ListApiKeysService {
 
     gatherPersonalAndProjectKeys(roleModelList, personalKeys, projectKeys);
 
-    personalKeys.sort(Comparator.comparing(Apikey::getCreated,Comparator.nullsLast(Comparator.naturalOrder())).reversed());
-    projectKeys.sort(Comparator.comparing(Apikey::getCreated,Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+    personalKeys.sort(Comparator.comparing(Apikey::getCreated,Comparator.nullsLast(Comparator.reverseOrder())).reversed());
+    projectKeys.sort(Comparator.comparing(Apikey::getCreated,Comparator.nullsLast(Comparator.reverseOrder())).reversed());
 
     personalKeys.addAll(projectKeys);
 
