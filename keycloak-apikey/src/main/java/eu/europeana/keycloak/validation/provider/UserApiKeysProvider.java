@@ -3,6 +3,7 @@ package eu.europeana.keycloak.validation.provider;
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
+import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -31,7 +32,7 @@ public class UserApiKeysProvider implements RealmResourceProvider {
   @GET
   @Produces("application/json")
   public Response getKeysAssociatedToUser(){
-    ValidationResult result = service.validateAuthToken();
+    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if(result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
