@@ -80,30 +80,25 @@ public class UserRemovedMessageHandler {
         RealmModel realm      = deleteEvent.getRealm();
         UserModel  slackUserModel  = session.users().getUserByUsername(realm, SLACK_USERNAME);
 
-        //Remove the personal apikey associated to the user & check if
-        String msg_projectKeyStatus = removeKeysAssociatedToUser(session, deleteEvent.getUser(), realm);
+        //Remove the personal apikey associated to the user
+        removeKeysAndNotify(session, deleteEvent, realm);
 
         if (getUserSetToken()){
             setsDeleteOK = sendUserSetDeleteRequest(deleteEvent, userSetToken);
         }
-
         if (DEBUG_LOGS) {
             LOG.info(formatMessage(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
             LOG.info(formatMessage(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
         }
-
         if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
             String message = formatUserRemovedMessage(deleteEvent, true);
             LOG.info("message " + message);
-            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message);
-            sendSlackHttpMessageForKeyStatus(deleteEvent,msg_projectKeyStatus);
+            slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message,SLACK_WEBHOOK);
         }
-
         if (!slackHttpMessageOK) {
             if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
              String message = formatUserRemovedMessage(deleteEvent, false);
              slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
-
         }
 
         if (slackHttpMessageOK || slackEmailMessageOK) {
@@ -113,10 +108,18 @@ public class UserRemovedMessageHandler {
         }
     }
 
-    private void sendSlackHttpMessageForKeyStatus(UserRemovedEvent deleteEvent, String msgProjectKeyStatus) {
+    private void removeKeysAndNotify(KeycloakSession session, UserRemovedEvent deleteEvent,
+        RealmModel realm) {
+        List<String> projectkeysWithoutUser = removeKeysAssociatedToUser(session, deleteEvent.getUser(),
+            realm);
+        if(!projectkeysWithoutUser.isEmpty()){
+            String msg = String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser));
+            if(!sendSlackHttpMessage(deleteEvent,msg,SLACK_WEBHOOK_API_AUTOMATION)){
+                LOG.error(formatMessage(deleteEvent,"Failed slack message is - "+ msg));
+            }
+        }
     }
-
-    private static String removeKeysAssociatedToUser(KeycloakSession session, UserModel userModel,
+    private static List<String> removeKeysAssociatedToUser(KeycloakSession session, UserModel userModel,
         RealmModel realm) {
         List<RoleModel> rolesAssociatedToUser = userModel.getRoleMappingsStream().filter(
             roleModel -> (CLIENT_OWNER.equals(roleModel.getName()) || SHARED_OWNER.equals(
@@ -139,7 +142,7 @@ public class UserRemovedMessageHandler {
                 }
             }
         }
-        return !projectkeysWithoutUser.isEmpty() ? String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser)) : "";
+        return  projectkeysWithoutUser;// ? String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser)) : "";
     }
 
     private static void  dissociatePrivateKey(KeycloakSession session, UserModel userModel, RealmModel realm,
@@ -284,10 +287,10 @@ public class UserRemovedMessageHandler {
      * @return boolean: TRUE  if HTTP 200 was received after sending the message
      *                  FALSE in case of any other status or an error occurring
      */
-    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message) {
+    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message,String slack_webhook) {
 
         StringEntity entity;
-        HttpPost     httpPost = new HttpPost(SLACK_WEBHOOK);
+        HttpPost     httpPost = new HttpPost(slack_webhook);
 
         try {
             entity = new StringEntity(message);
