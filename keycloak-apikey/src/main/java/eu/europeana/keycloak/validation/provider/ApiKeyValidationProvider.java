@@ -1,7 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
-import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
@@ -66,12 +65,11 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public Response disableApikey(@PathParam("client_public_id") String client_public_Id){
 
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+    if (result.getErrorResponse()==null) {
+      result = service.validateClientById(client_public_Id);
+    }
     if (result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
-    }
-    ErrorMessage errorResponse = service.validateClientById(client_public_Id).getErrorResponse();
-    if (errorResponse != null) {
-      return Response.status(result.getHttpStatus()).entity(errorResponse).build();
     }
     if(!disableKey(client_public_Id, result.getUser())){
       return Response.status(Status.FORBIDDEN).build();
