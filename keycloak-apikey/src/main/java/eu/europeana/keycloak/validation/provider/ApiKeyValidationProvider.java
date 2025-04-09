@@ -4,6 +4,7 @@ import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
+import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
@@ -13,7 +14,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
-import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
@@ -24,11 +24,12 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
-  private static final Logger LOG  = Logger.getLogger(ApiKeyValidationProvider.class);
+  private final ListApiKeysService listKeysService;
 
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
     service = new ApiKeyValidationService(session);
+    listKeysService = new ListApiKeysService(session);
   }
 
   @Override
@@ -72,22 +73,22 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     if (errorResponse != null) {
       return Response.status(result.getHttpStatus()).entity(errorResponse).build();
     }
-    disableKey(client_public_Id, result.getUser());
+    if(!disableKey(client_public_Id, result.getUser())){
+      return Response.status(Status.FORBIDDEN).build();
+    }
     return Response.status(Status.NO_CONTENT).build();
   }
 
-  private void disableKey(String clientId, UserModel userModel) {
-    List<Apikey> clientList = service.getPrivateAndProjectkeys(userModel);
+  private boolean disableKey(String clientId, UserModel userModel) {
+    List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(userModel);
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(),
         clientId);
     if(client!= null && clientList.stream().anyMatch(apikey -> apikey.getId().equals(client.getId()))){
       //disable the key
       client.setEnabled(false);
-      LOG.info("Key "+ clientId +" is disabled.");
+      return true;
     }
-    else{
-      LOG.error("Error disabling the key "+ clientId);
-    }
+    return false;
   }
 
 }
