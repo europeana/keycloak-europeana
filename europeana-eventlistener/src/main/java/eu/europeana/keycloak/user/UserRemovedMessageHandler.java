@@ -54,7 +54,7 @@ public class UserRemovedMessageHandler {
 
     private String userSetToken;
 
-    public UserRemovedMessageHandler(Logger logger, String prefix) {
+    public UserRemovedMessageHandler(String prefix) {
         this.prefix        = prefix;
         httpClient         = HttpClients.createDefault();
     }
@@ -286,10 +286,10 @@ public class UserRemovedMessageHandler {
      * @return boolean: TRUE  if HTTP 200 was received after sending the message
      *                  FALSE in case of any other status or an error occurring
      */
-    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message,String slack_webhook) {
+    private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message,String slackWebhook) {
 
         StringEntity entity;
-        HttpPost     httpPost = new HttpPost(slack_webhook);
+        HttpPost     httpPost = new HttpPost(slackWebhook);
 
         try {
             entity = new StringEntity(message);

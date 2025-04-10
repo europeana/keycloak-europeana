@@ -28,7 +28,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
     service = new ApiKeyValidationService(session);
-    listKeysService = new ListApiKeysService(session);
+    listKeysService = new ListApiKeysService();
   }
 
   @Override
@@ -60,9 +60,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   }
 
 
-  @Path("/{client_public_id}")
+  @Path("/{clientPublicId}")
   @DELETE
-  public Response disableApikey(@PathParam("client_public_id") String client_public_Id){
+  public Response disableApikey(@PathParam("clientPublicId") String client_public_Id){
 
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     UserModel user = result.getUser();

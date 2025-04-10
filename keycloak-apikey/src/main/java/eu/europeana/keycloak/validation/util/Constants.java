@@ -1,6 +1,8 @@
 package eu.europeana.keycloak.validation.util;
 
 public class Constants {
+  private Constants() {
+  }
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "creationDate";
   public static final String CLIENT_STATE_DISABLED = "Disabled";

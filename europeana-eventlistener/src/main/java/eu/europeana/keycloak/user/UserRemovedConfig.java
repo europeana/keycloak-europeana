@@ -4,6 +4,8 @@ package eu.europeana.keycloak.user;
  * Created by luthien on 01/11/2021.
  */
 public class UserRemovedConfig {
+    private UserRemovedConfig() {
+    }
     public static final String LOG_PREFIX = "[KEYCLOAK_EVENT] ";
 
     protected static final String ERROR_ICON = ":x:";

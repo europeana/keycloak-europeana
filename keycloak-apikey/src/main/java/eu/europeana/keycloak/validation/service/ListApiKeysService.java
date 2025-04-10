@@ -13,18 +13,11 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
-import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 
 public class ListApiKeysService {
   private static final Logger LOG  = Logger.getLogger(ListApiKeysService.class);
-  private final KeycloakSession session;
-
-  public ListApiKeysService(KeycloakSession session) {
-    this.session = session;
-
-  }
 
   public List<Apikey> getPrivateAndProjectkeys(UserModel userModel) {
     List<RoleModel> rolesAssociatedToUser = userModel.getRoleMappingsStream().filter(

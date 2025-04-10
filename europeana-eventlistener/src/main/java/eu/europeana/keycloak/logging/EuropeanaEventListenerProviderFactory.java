@@ -29,7 +29,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
 
     @Override
     public void init(Config.Scope scope) {
-        this.userRemovedMessageHandler = new UserRemovedMessageHandler(LOG, LOG_PREFIX);
+        this.userRemovedMessageHandler = new UserRemovedMessageHandler(LOG_PREFIX);
     }
 
     @Override

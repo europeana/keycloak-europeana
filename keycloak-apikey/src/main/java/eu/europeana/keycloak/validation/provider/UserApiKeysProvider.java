@@ -18,7 +18,7 @@ public class UserApiKeysProvider implements RealmResourceProvider {
 
   public UserApiKeysProvider(KeycloakSession keycloakSession) {
     this.validationService = new ApiKeyValidationService(keycloakSession);
-    this.listKeysService = new ListApiKeysService(keycloakSession);
+    this.listKeysService = new ListApiKeysService();
   }
   @Override
   public Object getResource() {
@@ -26,6 +26,7 @@ public class UserApiKeysProvider implements RealmResourceProvider {
   }
   @Override
   public void close() {
+    //specific implementation not required . e.g resource or connection cleanup
   }
 
   @Path("/clients")
