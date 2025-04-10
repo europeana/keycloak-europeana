@@ -65,13 +65,14 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public Response disableApikey(@PathParam("client_public_id") String client_public_Id){
 
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+    UserModel user = result.getUser();
     if (result.getErrorResponse()==null) {
       result = service.validateClientById(client_public_Id);
     }
     if (result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
-    if(!disableKey(client_public_Id, result.getUser())){
+    if(!disableKey(client_public_Id,user)){
       return Response.status(Status.FORBIDDEN).build();
     }
     return Response.status(Status.NO_CONTENT).build();

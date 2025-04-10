@@ -135,8 +135,7 @@ public class UserRemovedMessageHandler {
                 }
                 if (SHARED_OWNER.equals(rolemodel.getName())) {
                     //get All users to whom the client(project key) is associated and check if it was the last user associated to that project key
-                    LOG.info("Nr. Users associated to project key "+ client.getClientId()+" : " + session.users().getRoleMembersStream(realm, rolemodel).count());
-                    if (session.users().getRoleMembersStream(realm, rolemodel).findAny().isEmpty()) {
+                     if (session.users().getRoleMembersStream(realm, rolemodel).findAny().isEmpty()) {
                        projectkeysWithoutUser.add(client.getClientId());
                     }
                 }
