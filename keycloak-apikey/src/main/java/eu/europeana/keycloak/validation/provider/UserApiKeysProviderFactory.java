@@ -6,19 +6,17 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
 
-public class ApiKeyValidationProviderFactory implements RealmResourceProviderFactory {
+public class UserApiKeysProviderFactory implements RealmResourceProviderFactory {
 
-  public static final String PROVIDER_ID="client";
+  public static final String PROVIDER_ID="user";
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
-    return new ApiKeyValidationProvider(keycloakSession);
+    return new UserApiKeysProvider(keycloakSession);
   }
-
   @Override
   public void init(Scope scope) {
     //specific init actions not required e.g. reading,parsing configuration parameters,establishing initial connections to external resources
   }
-
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
     //specific postInit actions not required e.g. establish connections to resources that other providers have instantiated

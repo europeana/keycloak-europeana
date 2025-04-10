@@ -1,7 +1,6 @@
 package eu.europeana.keycloak.validation.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"code", "error", "message"})
@@ -17,7 +16,9 @@ public enum ErrorMessage {
 
   SCOPE_MISSING_403("403_scope_missing",
       "Client not authorised due to missing scope access",
-      "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu");
+      "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu"),
+
+  USER_MISSING_403("403_user_missing","","");
 
   private final String code;
   private final String error;

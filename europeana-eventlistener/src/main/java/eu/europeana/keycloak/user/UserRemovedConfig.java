@@ -4,6 +4,8 @@ package eu.europeana.keycloak.user;
  * Created by luthien on 01/11/2021.
  */
 public class UserRemovedConfig {
+    private UserRemovedConfig() {
+    }
     public static final String LOG_PREFIX = "[KEYCLOAK_EVENT] ";
 
     protected static final String ERROR_ICON = ":x:";
@@ -24,13 +26,19 @@ public class UserRemovedConfig {
     static final String ERROR_ASCII = "✘";
     static final String OK_ICON = ":heavy_check_mark:";
     static final String OK_ASCII = "✓";
-    static final String SLACK_USER_DELETE_MESSAGEBODY = "{\"text\":\"On %s, user %s has requested to remove their " +
-            "account.\\nThis has just been done automatically for those " +
-            "systems marked with :heavy_check_mark: :\\n\\n[%s] " +
-            "Keycloak\\n[%s] The User Sets API\\n" + "[:x:] The " +
-            "recommendation engine\\n[:x:] Mailchimp\\n\\nFrom the " +
-            "remaining systems (marked with :x: above) their account " +
-            "should be removed within 30 days (before %s).\"}";
+    static final String SLACK_USER_DELETE_MESSAGEBODY;
+    static final String MSG_PROJECT_KEY_WITH_NO_USER = "{\"text\":\"Project key %s has no user associated to it.\"}";
+    static {
+        SLACK_USER_DELETE_MESSAGEBODY =
+            "{\"text\":\"On %s, user %s has requested to remove their " +
+                    "account.\\nThis has just been done automatically for those " +
+                    "systems marked with :heavy_check_mark: :\\n\\n[%s] " +
+                    "Keycloak\\n[%s] The User Sets API\\n" + "[:x:] The " +
+                    "recommendation engine\\n[:x:] Mailchimp\\n\\nFrom the " +
+                    "remaining systems (marked with :x: above) their account " +
+                "should be removed within 30 days (before %s).\"}";
+    }
+
     static final String REQUEST_RECEIVED = "A problem prevented sending a Delete User Account " +
             "notification for user ID %s to Slack.";
     static final String NO_ACTION_BUT_LOGGED = "carrying out this request.\\nNo action was taken.\\nThe " +
@@ -57,5 +65,7 @@ public class UserRemovedConfig {
             "and the deleted user, so they can handle the issue manually.";
 
     static final String SLACK_MSG_SENT = "Confirmation message was sent to Slack";
+
+    static final String SLACK_WEBHOOK_API_AUTOMATION = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
 
 }
