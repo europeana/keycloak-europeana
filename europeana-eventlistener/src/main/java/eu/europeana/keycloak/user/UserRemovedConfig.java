@@ -34,7 +34,7 @@ public class UserRemovedConfig {
                     "Keycloak\\n[%s] The User Sets API\\n" + "[:x:] The " +
                     "recommendation engine\\n[:x:] Mailchimp\\n\\nFrom the " +
                     "remaining systems (marked with :x: above) their account " +
-                "should be removed within 30 days (before %s).%s\"}";
+                "should be removed within 30 days (before %s).\"}";
     }
 
     static final String REQUEST_RECEIVED = "A problem prevented sending a Delete User Account " +
