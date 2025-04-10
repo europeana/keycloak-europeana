@@ -136,7 +136,7 @@ public class ApiKeyValidationService {
     }
     ValidationResult result = authorizeToken(authHeader);
 
-    if(Constants.GRANT_TYPE_PASSWORD.equals(grantType) && result.getUser()==null){
+    if(result.getErrorResponse()==null && Constants.GRANT_TYPE_PASSWORD.equals(grantType) && result.getUser()==null){
       return new ValidationResult(Status.FORBIDDEN,ErrorMessage.USER_MISSING_403);
     }
     return result;
