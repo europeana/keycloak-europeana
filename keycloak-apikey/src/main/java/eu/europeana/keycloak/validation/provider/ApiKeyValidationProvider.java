@@ -53,7 +53,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       result = service.validateIp(ip);
     }
     //TODO - Update Logic to consume the validated IP
-    if(result.getErrorResponse() != null) {
+    if(result!= null && result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
     return Response.status(Status.NO_CONTENT).build();
