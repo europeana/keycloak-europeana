@@ -36,7 +36,7 @@ public class ApiKeyValidationService {
    * @param tokenString  in form 'Bearer <TOKEN_VALUE>'
    * @return ValidationResult
    */
-  public ValidationResult authorizeToken(String tokenString) {
+  public ValidationResult authorizeToken(String tokenString,String grantType) {
       //As we want to send different message when the token is inactive , first get the token verified without the ifActive check.
       AuthResult authResult=  AuthenticationManager.verifyIdentityToken(
           this.session, this.realm, session.getContext().getUri(),
@@ -49,23 +49,39 @@ public class ApiKeyValidationService {
       if(!authResult.getToken().isActive()) {
         return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_EXPIRED_401);
       }
-      return validateClientScope(authResult);
+      return validateClientScope(authResult,grantType);
   }
 
-  private ValidationResult validateClientScope(AuthResult authResult) {
+  private ValidationResult validateClientScope(AuthResult authResult,String grantType) {
     ClientModel client =authResult.getClient();
     Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
     if (clientScopes == null || !clientScopes.containsKey(Constants.CLIENT_SCOPE_APIKEYS)) {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
       return new ValidationResult( Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
+    LOG.info("Token Other claims = ");
+    authResult.getToken().getOtherClaims().forEach((key, value) -> LOG.info(key + " -- " + value));
+
+    if(!isValidGrantType(authResult, grantType)){
+      return new ValidationResult(Status.FORBIDDEN,ErrorMessage.USER_MISSING_403);
+    }
     ValidationResult result = new ValidationResult(Status.OK,null);
     result.setUser(authResult.getUser());
-
     return result;
   }
 
-   public boolean validateApikeyLegacy(String apikey)
+  /** We get the client_id on token object  in case the token was issued with the grant_type 'client_credentials'
+   * this is used to verify against the requested grant_type of the controller method.
+   * e.g. for disabling the apikeys, we allow access with tokens who have grant_type 'password'
+   * @param authResult result
+   * @param grantType client_credentials or password
+   * @return boolean
+   */
+  private static boolean isValidGrantType(AuthResult authResult, String grantType) {
+    return (Constants.GRANT_TYPE_PASSWORD.equals(grantType) && authResult.getToken().getOtherClaims().get("client_id") == null);
+  }
+
+  public boolean validateApikeyLegacy(String apikey)
    {
      //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientProvider clientProvider = session.clients();
@@ -134,12 +150,7 @@ public class ApiKeyValidationService {
     if(StringUtils.isEmpty(authHeader)) {
      return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
     }
-    ValidationResult result = authorizeToken(authHeader);
-
-    if(result.getErrorResponse()==null && Constants.GRANT_TYPE_PASSWORD.equals(grantType) && result.getUser()==null){
-      return new ValidationResult(Status.FORBIDDEN,ErrorMessage.USER_MISSING_403);
-    }
-    return result;
+    return authorizeToken(authHeader,grantType);
   }
 
   public ValidationResult validateIp(String ip) {

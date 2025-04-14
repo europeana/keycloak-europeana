@@ -26,4 +26,8 @@ public class ValidationResult {
   public void setUser(UserModel user) {
     this.user = user;
   }
+
+  public boolean isSuccess(){
+   return Status.OK.equals(httpStatus);
+  }
 }
