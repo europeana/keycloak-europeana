@@ -59,9 +59,6 @@ public class ApiKeyValidationService {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
       return new ValidationResult( Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
-    LOG.info("Token Other claims = ");
-    authResult.getToken().getOtherClaims().forEach((key, value) -> LOG.info(key + " -- " + value));
-
     if(!isValidGrantType(authResult, grantType)){
       return new ValidationResult(Status.FORBIDDEN,ErrorMessage.USER_MISSING_403);
     }
