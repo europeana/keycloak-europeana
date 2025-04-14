@@ -104,11 +104,6 @@ public class ApiKeyValidationService {
     return validateClient(client);
   }
 
-  public ValidationResult validateClientById(String clientPublicId) {
-    ClientModel client =session.clients().getClientById(realm,clientPublicId);
-    return validateClient(client);
-  }
-
   private static ValidationResult validateClient(ClientModel client) {
     if(client ==null){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);

@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
+import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
@@ -62,32 +63,29 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   @Path("/{clientPublicId}")
   @DELETE
-  public Response disableApikey(@PathParam("clientPublicId") String client_public_Id){
+  public Response disableApikey(@PathParam("clientPublicId") String clientPublicID){
 
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
-    UserModel user = result.getUser();
-    if (result.getErrorResponse()==null) {
-      result = service.validateClientById(client_public_Id);
-    }
-    if (result.getErrorResponse() != null) {
+    if (!result.isSuccess()) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
-    if(!disableKey(client_public_Id,user)){
-      return Response.status(Status.FORBIDDEN).build();
+    return checkAndDisableApiKey(clientPublicID, result.getUser());
+  }
+
+  private Response checkAndDisableApiKey(String clientPublicID, UserModel user) {
+    //Get Clients Associated to User
+    List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(user);
+    ClientModel clientToBeDisabled = session.clients().getClientById(session.getContext().getRealm(),
+        clientPublicID);
+    if(clientToBeDisabled==null){
+      return Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404).build();
     }
+    //check if requested client is part of clients associated to authorized user
+    if (clientList.stream().noneMatch(apikey -> apikey.getId().equals(clientToBeDisabled.getId()))) {
+      return Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403).build();
+    }
+    //disable the key
+    clientToBeDisabled.setEnabled(false);
     return Response.status(Status.NO_CONTENT).build();
   }
-
-  private boolean disableKey(String clientPublicId, UserModel userModel) {
-    List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(userModel);
-    ClientModel client = session.clients().getClientById(session.getContext().getRealm(),
-        clientPublicId);
-    if(client!= null && clientList.stream().anyMatch(apikey -> apikey.getId().equals(client.getId()))){
-      //disable the key
-      client.setEnabled(false);
-      return true;
-    }
-    return false;
-  }
-
 }
