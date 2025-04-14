@@ -62,6 +62,7 @@ public class ApiKeyValidationService {
     ValidationResult result = new ValidationResult(Status.OK,null);
     result.setUser(authResult.getUser());
 
+    LOG.info("Token Grant Type = "+ authResult.getToken().getOtherClaims().get("grant_type"));
     return result;
   }
 

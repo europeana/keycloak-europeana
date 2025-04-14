@@ -5,7 +5,7 @@ public class Constants {
   }
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "creationDate";
-  public static final String CLIENT_STATE_DISABLED = "Disabled";
+  public static final String CLIENT_STATE_DISABLED = "disabled";
   public static final String PERSONAL_KEY = "PersonalKey";
   public static final String PROJECT_KEY = "ProjectKey";
   public static final String GRANT_TYPE_PASSWORD = "password";
