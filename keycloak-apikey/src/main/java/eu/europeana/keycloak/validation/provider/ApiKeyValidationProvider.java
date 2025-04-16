@@ -15,8 +15,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -112,9 +112,15 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     UserModel userModel = result.getUser();
-    //check if user already owns any personal key
-    if (getPersonalKey(userModel) != null) {
-      return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
+    List<ClientModel> personalKeys = getPersonalKeys(userModel);
+    if (!personalKeys.isEmpty()) {
+      if(personalKeys.stream().anyMatch(ClientModel::isEnabled)){
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
+      }
+      //check if user owns 3 disabled personal keys
+      if(personalKeys.stream().filter(p-> !p.isEnabled()).count() == 3){
+        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.KEY_LIMIT_REACHED_400)).build();
+      }
     }
     //Create new key and associate it to user
     KeyCloakClientCreationService service = new KeyCloakClientCreationService(session,
@@ -132,10 +138,15 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
           .preflight().build();
   }
 
-  private static ClientModel getPersonalKey(UserModel userModel) {
-    Optional<RoleModel> clientOwnerRole = userModel.getRoleMappingsStream().filter(
-        roleModel -> (Constants.CLIENT_OWNER.equals(roleModel.getName()))).findFirst();
-     return (clientOwnerRole.map(roleModel -> (ClientModel) roleModel.getContainer()).orElse(null));
+
+
+  private static List<ClientModel> getPersonalKeys(UserModel userModel) {
+    List<RoleModel> clientOwnerRoles = userModel.getRoleMappingsStream().filter(
+            roleModel -> (Constants.CLIENT_OWNER.equals(roleModel.getName()))).toList();
+    List<ClientModel> clientList = new ArrayList<>();
+    clientOwnerRoles.forEach(p-> clientList.add((ClientModel) p.getContainer()));
+   return clientList;
+
   }
 
   private void setupCors(String allowedMethod) {
