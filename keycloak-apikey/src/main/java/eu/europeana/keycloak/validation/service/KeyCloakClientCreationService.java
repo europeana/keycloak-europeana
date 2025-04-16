@@ -73,7 +73,7 @@ public class KeyCloakClientCreationService {
       RoleProvider roles = session.roles();
       RoleModel roleModel = roles.addClientRole(client, Constants.CLIENT_OWNER);
       roleModel.setDescription(Constants.CLIENT_OWNER_ROLE_DESCRIPTION);
-      roleModel.setAttribute("",List.of(getDateString(roleCreationDate)));
+      roleModel.setAttribute(Constants.ROLE_ATTRIBUTE_CREATION_DATE,List.of(getDateString(roleCreationDate)));
       return roleModel;
     }catch (Exception e){
       LOG.error("Unable to create new role for client !! " +client.getClientId()+ e.getMessage());

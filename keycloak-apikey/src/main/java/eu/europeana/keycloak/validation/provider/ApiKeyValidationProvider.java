@@ -8,6 +8,7 @@ import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -21,6 +22,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
+import org.keycloak.services.resources.Cors;
 
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
@@ -28,6 +30,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   private final ApiKeyValidationService service;
 
   private final ListApiKeysService listKeysService;
+  private Cors cors;
 
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
@@ -67,12 +70,20 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/{clientPublicId}")
   @DELETE
   public Response disableApikey(@PathParam("clientPublicId") String clientPublicID){
-
+    setupCors("DELETE");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
     return checkAndDisableApiKey(clientPublicID, result.getUser());
+  }
+
+  @Path("/{clientPublicId}")
+  @OPTIONS
+  public Response disableApikeyPreflight() {
+    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
+        .auth().allowedMethods("DELETE","OPTIONS")
+        .auth().preflight().build();
   }
 
   private Response checkAndDisableApiKey(String clientPublicID, UserModel user) {
@@ -95,25 +106,42 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("")
   @POST
   public Response registerPersonalKey() {
+    setupCors("POST");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
-      return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
+      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     UserModel userModel = result.getUser();
     //check if user already owns any personal key
     if (getPersonalKey(userModel) != null) {
-      return Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400).build();
+      return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
     }
     //Create new key and associate it to user
     KeyCloakClientCreationService service = new KeyCloakClientCreationService(session,
         null, userModel.getUsername());
     Apikey apikey = service.registerPersonalKey(userModel);
-    return Response.status(Status.OK).entity(apikey).build();
+    return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
+  }
+
+  @Path("")
+  @OPTIONS
+  public Response registerPersonalKeyPreflight() {
+    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
+          .auth().allowedMethods("POST","OPTIONS")
+          .exposedHeaders("Allow")
+          .preflight().build();
   }
 
   private static ClientModel getPersonalKey(UserModel userModel) {
     Optional<RoleModel> clientOwnerRole = userModel.getRoleMappingsStream().filter(
         roleModel -> (Constants.CLIENT_OWNER.equals(roleModel.getName()))).findFirst();
      return (clientOwnerRole.map(roleModel -> (ClientModel) roleModel.getContainer()).orElse(null));
+  }
+
+  private void setupCors(String allowedMethod) {
+    this.cors = Cors.add(session.getContext().getHttpRequest())
+        .auth().allowedMethods(allowedMethod)
+        .exposedHeaders("Allow")
+        .allowAllOrigins();
   }
 }

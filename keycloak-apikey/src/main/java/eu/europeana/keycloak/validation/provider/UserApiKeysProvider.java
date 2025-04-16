@@ -10,13 +10,19 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
+import org.keycloak.services.resources.Cors;
 
 public class UserApiKeysProvider implements RealmResourceProvider {
 
   private final ApiKeyValidationService validationService;
   private final ListApiKeysService listKeysService;
 
+  private final KeycloakSession session;
+
+  private Cors cors;
+
   public UserApiKeysProvider(KeycloakSession keycloakSession) {
+    this.session = keycloakSession;
     this.validationService = new ApiKeyValidationService(keycloakSession);
     this.listKeysService = new ListApiKeysService();
   }
@@ -33,11 +39,18 @@ public class UserApiKeysProvider implements RealmResourceProvider {
   @GET
   @Produces("application/json")
   public Response getKeysAssociatedToUser(){
+    setupCors();
     ValidationResult result = validationService.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if(result.getErrorResponse() != null) {
-      return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
+      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
-    return Response.ok().entity(listKeysService.getPrivateAndProjectkeys(result.getUser())).build();
+    return this.cors.builder(Response.ok().entity(listKeysService.getPrivateAndProjectkeys(result.getUser()))).build();
   }
 
+  private void setupCors() {
+    this.cors = Cors.add(session.getContext().getHttpRequest())
+        .auth().allowedMethods("GET")
+        .exposedHeaders("Allow")
+        .allowAllOrigins();
+  }
 }
