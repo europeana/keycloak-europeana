@@ -50,7 +50,7 @@ public class RegistrationService {
   public static final String ACCOUNT_DISABLED="Please contact Europeana customer support for further information";
   public static final String CLIENT_OWNER_ROLE_DESCRIPTION = "Ownership of this client";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "created";
-  public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
+  public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
