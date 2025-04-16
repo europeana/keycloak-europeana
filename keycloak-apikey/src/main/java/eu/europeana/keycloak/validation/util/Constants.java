@@ -5,7 +5,7 @@ public class Constants {
   }
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "created";
-  public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
+  public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
   public static final String CLIENT_STATE_DISABLED = "disabled";
   public static final String PERSONAL_KEY = "PersonalKey";
   public static final String PROJECT_KEY = "ProjectKey";

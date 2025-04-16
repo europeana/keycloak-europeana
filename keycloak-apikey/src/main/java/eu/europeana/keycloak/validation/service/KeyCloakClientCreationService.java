@@ -83,8 +83,7 @@ public class KeyCloakClientCreationService {
 
   private String getDateString(Date  now) {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(ZoneOffset.UTC);
-    Instant instant = now.toInstant();
-    return formatter.format(instant);
+    return formatter.format(now.toInstant());
   }
 
   private String generateApikeyName() {
