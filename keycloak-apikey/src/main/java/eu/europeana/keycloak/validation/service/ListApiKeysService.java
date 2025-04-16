@@ -85,7 +85,7 @@ public class ListApiKeysService {
     return null;
   }
 
-  private static Date getRoleCreationDate(String creationDate) {
+  public static Date getRoleCreationDate(String creationDate) {
     if(StringUtils.isEmpty(creationDate)) return null;
     try {
       ZonedDateTime zonedDateTime = ZonedDateTime.parse(creationDate, DateTimeFormatter.ISO_INSTANT.withZone(

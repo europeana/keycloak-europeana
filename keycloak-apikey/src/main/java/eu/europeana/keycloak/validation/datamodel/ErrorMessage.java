@@ -9,6 +9,7 @@ public enum ErrorMessage {
 
   IP_MISSING_400("400_ip_missing","",""),
   IP_INVALID_400("400_ip_invalid","",""),
+  DUPLICATE_KEY_400("400_duplicate_key","You already own a personal key","Users can only own one personal key which is intended for personal use."),
   TOKEN_INVALID_401("401_token_invalid","Token is invalid","Please acquire a new token or get in contact with the Europeana APIs customer support via api@europeana.eu"),
   TOKEN_MISSING_401("401_token_missing","Token is missing","Please issue a token and supply it within the Authorization header."),
   TOKEN_EXPIRED_401("401_token_expired","Token has expired","Please acquire a new token by either log-in or refreshing using the refresh token"),
