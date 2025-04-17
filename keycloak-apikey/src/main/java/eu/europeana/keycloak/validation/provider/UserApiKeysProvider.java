@@ -5,6 +5,7 @@ import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
@@ -45,6 +46,14 @@ public class UserApiKeysProvider implements RealmResourceProvider {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     return this.cors.builder(Response.ok().entity(listKeysService.getPrivateAndProjectkeys(result.getUser()))).build();
+  }
+
+  @Path("/clients")
+  @OPTIONS
+  public Response getKeysAssociatedToUserPreflight(){
+    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
+        .auth().allowedMethods("GET")
+        .preflight().build();
   }
 
   private void setupCors() {
