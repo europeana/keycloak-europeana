@@ -21,7 +21,8 @@ public enum ErrorMessage {
       "Client not authorised due to missing scope access",
       "The client does not have access to this service. Please get in contact with the Europeana APIs customer support via api@europeana.eu"),
   USER_MISSING_403("403_user_missing","",""),
-  CLIENT_UNKNOWN_404("404_client_unknown","The client being requested is not known","The client id that was indicated in the request was not found in our records. Please confirm if the identifier corresponds to the public identifier for the client and its respective key.");
+  CLIENT_UNKNOWN_404("404_client_unknown","The client being requested is not known","The client id that was indicated in the request was not found in our records. Please confirm if the identifier corresponds to the public identifier for the client and its respective key."),
+  CLIENT_ALREADY_DISABLED_410("410_client_disabled","The client has already disabled","The client has already been previously disabled.");
 
   private final String code;
   private final String error;

@@ -52,7 +52,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
     //validate token,apikey then IP in that order
-    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_CLIENT_CRED);
+    ValidationResult result = service.validateAuthToken(null);
     if (result.getErrorResponse() == null) {
       result = service.validateApikey(clientId);
     }
@@ -73,7 +73,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     setupCors("DELETE");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
-      return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
+      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     return checkAndDisableApiKey(clientPublicID, result.getUser());
   }
@@ -82,8 +82,8 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @OPTIONS
   public Response disableApikeyPreflight() {
     return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-        .auth().allowedMethods("DELETE","OPTIONS")
-        .auth().preflight().build();
+        .auth().allowedMethods("DELETE")
+        .preflight().build();
   }
 
   private Response checkAndDisableApiKey(String clientPublicID, UserModel user) {
@@ -92,15 +92,19 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     ClientModel clientToBeDisabled = session.clients().getClientById(session.getContext().getRealm(),
         clientPublicID);
     if(clientToBeDisabled==null){
-      return Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404).build();
+      return this.cors.builder(Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404)).build();
     }
     //check if requested client is part of clients associated to authorized user
     if (clientList.stream().noneMatch(apikey -> apikey.getId().equals(clientToBeDisabled.getId()))) {
-      return Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403).build();
+      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+    }
+    //check if key already disabled
+    if(!clientToBeDisabled.isEnabled()){
+      return this.cors.builder(Response.status(Status.GONE).entity(ErrorMessage.CLIENT_ALREADY_DISABLED_410)).build();
     }
     //disable the key
     clientToBeDisabled.setEnabled(false);
-    return Response.status(Status.NO_CONTENT).build();
+    return this.cors.builder(Response.status(Status.NO_CONTENT)).build();
   }
 
   @Path("")
@@ -133,8 +137,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @OPTIONS
   public Response registerPersonalKeyPreflight() {
     return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-          .auth().allowedMethods("POST","OPTIONS")
-          .exposedHeaders("Allow")
+          .auth().allowedMethods("POST")
           .preflight().build();
   }
 
