@@ -74,12 +74,19 @@ public class ApiKeyValidationService {
   /** We get the client_id on token object  in case the token was issued with the grant_type 'client_credentials'
    * this is used to verify against the requested grant_type of the controller method.
    * e.g. for disabling the apikeys, we allow access with tokens who have grant_type 'password'
+   * If not specific gran_type check is requested then method return true.
    * @param authResult result
    * @param grantType client_credentials or password
    * @return boolean
    */
   private static boolean isValidGrantType(AuthResult authResult, String grantType) {
-    return (Constants.GRANT_TYPE_PASSWORD.equals(grantType) && authResult.getToken().getOtherClaims().get("client_id") == null);
+   if (Constants.GRANT_TYPE_PASSWORD.equals(grantType) ){
+    return authResult.getToken().getOtherClaims().get("client_id") == null;
+   }
+   if (Constants.GRANT_TYPE_CLIENT_CRED.equals(grantType) ){
+     return authResult.getToken().getOtherClaims().get("client_id") != null;
+   }
+   return true;
   }
 
   public boolean validateApikeyLegacy(String apikey)
