@@ -50,6 +50,9 @@ spec:
               value: "${BCRYPT_PEPPER}"
             - name: SLACK_WEBHOOK
               value: "${SLACK_WEBHOOK}"
+            #This webhook is used for sending messages to slack channel #api_automation for project keys having no users
+            - name: SLACK_WEBHOOK_ORPHAN_PROJECT_KEY
+              value: "${SLACK_WEBHOOK_ORPHAN_PROJECT_KEY}"
             #This webhook is used for sending messages to slack channel #api_automation for zoho sync job
             - name: SLACK_WEBHOOK_API_AUTOMATION
               value: "${SLACK_WEBHOOK_API_AUTOMATION}"

@@ -115,7 +115,7 @@ public class UserRemovedMessageHandler {
             realm);
         if(!projectkeysWithoutUser.isEmpty()){
             String msg = String.format(MSG_PROJECT_KEY_WITH_NO_USER,user.getUsername(),user.getEmail(),String.join(",", projectkeysWithoutUser));
-            if(!sendSlackHttpMessage(deleteEvent,msg,SLACK_WEBHOOK_API_AUTOMATION)){
+            if(!sendSlackHttpMessage(deleteEvent,msg,SLACK_WEBHOOK_ORPHAN_PROJECT_KEY)){
                 LOG.error(formatMessage(deleteEvent,"Failed slack message is - "+ msg));
             }
         }

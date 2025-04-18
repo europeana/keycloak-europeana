@@ -65,7 +65,6 @@ public class UserRemovedConfig {
             "and the deleted user, so they can handle the issue manually.";
 
     static final String SLACK_MSG_SENT = "Confirmation message was sent to Slack";
-
-    static final String SLACK_WEBHOOK_API_AUTOMATION = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
+    static final String SLACK_WEBHOOK_ORPHAN_PROJECT_KEY = System.getenv("SLACK_WEBHOOK_ORPHAN_PROJECT_KEY");
 
 }
