@@ -27,7 +27,7 @@ public class UserRemovedConfig {
     static final String OK_ICON = ":heavy_check_mark:";
     static final String OK_ASCII = "✓";
     static final String SLACK_USER_DELETE_MESSAGEBODY;
-    static final String MSG_PROJECT_KEY_WITH_NO_USER = "{\"text\":\"Project key %s has no user associated to it.\"}";
+    static final String MSG_PROJECT_KEY_WITH_NO_USER = "{\"text\":\"User account with the name %s associated to the email address %s was removed and left the following project keys without owner: %s\"}";
     static {
         SLACK_USER_DELETE_MESSAGEBODY =
             "{\"text\":\"On %s, user %s has requested to remove their " +
