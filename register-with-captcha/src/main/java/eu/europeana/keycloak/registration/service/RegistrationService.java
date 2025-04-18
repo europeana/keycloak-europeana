@@ -15,6 +15,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +49,8 @@ public class RegistrationService {
   public static final String EMAIL_NOT_VERIFIED ="Please confirm your account by clicking on the link that was sent to you when registering for an Europeana account";
   public static final String ACCOUNT_DISABLED="Please contact Europeana customer support for further information";
   public static final String CLIENT_OWNER_ROLE_DESCRIPTION = "Ownership of this client";
+  public static final String ROLE_ATTRIBUTE_CREATION_DATE = "created";
+  public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
@@ -193,8 +200,16 @@ public class RegistrationService {
     RoleModel roleModel = roles.addClientRole(client, CLIENT_OWNER);
     if (roleModel != null) {
       roleModel.setDescription(CLIENT_OWNER_ROLE_DESCRIPTION);
+      roleModel.setAttribute(ROLE_ATTRIBUTE_CREATION_DATE, List.of(getCurrentDateString()));
     }
     return roleModel;
+  }
+
+  private String getCurrentDateString() {
+      Date currentDate = new Date();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(CREATION_DATE_PATTERN).withZone(ZoneOffset.UTC);
+      Instant instant = currentDate.toInstant();
+      return formatter.format(instant);
   }
 
   private ClientModel createClientWithNewKey(UserModel user) {
