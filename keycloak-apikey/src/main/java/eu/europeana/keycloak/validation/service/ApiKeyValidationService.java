@@ -59,8 +59,12 @@ public class ApiKeyValidationService {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
       return new ValidationResult( Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
+    return validateTokenGrant(authResult, grantType);
+  }
+
+  private static ValidationResult validateTokenGrant(AuthResult authResult, String grantType) {
     if(!isValidGrantType(authResult, grantType)){
-      return new ValidationResult(Status.FORBIDDEN,ErrorMessage.USER_MISSING_403);
+      return new ValidationResult(Status.FORBIDDEN, ErrorMessage.USER_MISSING_403);
     }
     ValidationResult result = new ValidationResult(Status.OK,null);
     result.setUser(authResult.getUser());
@@ -70,12 +74,19 @@ public class ApiKeyValidationService {
   /** We get the client_id on token object  in case the token was issued with the grant_type 'client_credentials'
    * this is used to verify against the requested grant_type of the controller method.
    * e.g. for disabling the apikeys, we allow access with tokens who have grant_type 'password'
+   * If not specific gran_type check is requested then method return true.
    * @param authResult result
    * @param grantType client_credentials or password
    * @return boolean
    */
   private static boolean isValidGrantType(AuthResult authResult, String grantType) {
-    return (Constants.GRANT_TYPE_PASSWORD.equals(grantType) && authResult.getToken().getOtherClaims().get("client_id") == null);
+   if (Constants.GRANT_TYPE_PASSWORD.equals(grantType) ){
+    return authResult.getToken().getOtherClaims().get("client_id") == null;
+   }
+   if (Constants.GRANT_TYPE_CLIENT_CRED.equals(grantType) ){
+     return authResult.getToken().getOtherClaims().get("client_id") != null;
+   }
+   return true;
   }
 
   public boolean validateApikeyLegacy(String apikey)
@@ -98,11 +109,6 @@ public class ApiKeyValidationService {
   public ValidationResult validateApikey(String apikey){
     //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientModel client = session.clients().getClientByClientId(realm, apikey);
-    return validateClient(client);
-  }
-
-  public ValidationResult validateClientById(String clientPublicId) {
-    ClientModel client =session.clients().getClientById(realm,clientPublicId);
     return validateClient(client);
   }
 

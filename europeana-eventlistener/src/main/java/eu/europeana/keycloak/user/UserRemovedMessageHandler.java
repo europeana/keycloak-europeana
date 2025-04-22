@@ -110,11 +110,12 @@ public class UserRemovedMessageHandler {
 
     private void removeKeysAndNotify(KeycloakSession session, UserRemovedEvent deleteEvent,
         RealmModel realm) {
-        List<String> projectkeysWithoutUser = removeKeysAssociatedToUser(session, deleteEvent.getUser(),
+        UserModel user = deleteEvent.getUser();
+        List<String> projectkeysWithoutUser = removeKeysAssociatedToUser(session, user,
             realm);
         if(!projectkeysWithoutUser.isEmpty()){
-            String msg = String.format(MSG_PROJECT_KEY_WITH_NO_USER,String.join(",", projectkeysWithoutUser));
-            if(!sendSlackHttpMessage(deleteEvent,msg,SLACK_WEBHOOK_API_AUTOMATION)){
+            String msg = String.format(MSG_PROJECT_KEY_WITH_NO_USER,user.getUsername(),user.getEmail(),String.join(",", projectkeysWithoutUser));
+            if(!sendSlackHttpMessage(deleteEvent,msg,SLACK_WEBHOOK_ORPHAN_PROJECT_KEY)){
                 LOG.error(formatMessage(deleteEvent,"Failed slack message is - "+ msg));
             }
         }

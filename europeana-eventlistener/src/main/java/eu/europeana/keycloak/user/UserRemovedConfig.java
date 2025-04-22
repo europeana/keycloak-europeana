@@ -27,7 +27,7 @@ public class UserRemovedConfig {
     static final String OK_ICON = ":heavy_check_mark:";
     static final String OK_ASCII = "✓";
     static final String SLACK_USER_DELETE_MESSAGEBODY;
-    static final String MSG_PROJECT_KEY_WITH_NO_USER = "{\"text\":\"Project key %s has no user associated to it.\"}";
+    static final String MSG_PROJECT_KEY_WITH_NO_USER = "{\"text\":\"User account with the name %s associated to the email address %s was removed and left the following project keys without owner: %s\"}";
     static {
         SLACK_USER_DELETE_MESSAGEBODY =
             "{\"text\":\"On %s, user %s has requested to remove their " +
@@ -65,7 +65,6 @@ public class UserRemovedConfig {
             "and the deleted user, so they can handle the issue manually.";
 
     static final String SLACK_MSG_SENT = "Confirmation message was sent to Slack";
-
-    static final String SLACK_WEBHOOK_API_AUTOMATION = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
+    static final String SLACK_WEBHOOK_ORPHAN_PROJECT_KEY = System.getenv("SLACK_WEBHOOK_ORPHAN_PROJECT_KEY");
 
 }
