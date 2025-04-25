@@ -1,7 +1,8 @@
 package eu.europeana.keycloak.metrics;
 
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Path;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -22,11 +23,7 @@ public class UserCountProvider implements RealmResourceProvider {
     public static final String CLIENT_OWNER = "client_owner";
     public static final String SHARED_OWNER = "shared_owner";
     private KeycloakSession session;
-
-    public UserCountProvider(KeycloakSession session) {
-        this.session = session;
-    }
-
+    public UserCountProvider(KeycloakSession session) {this.session = session;}
     @Override
     public Object getResource() {
         return this;
@@ -36,20 +33,16 @@ public class UserCountProvider implements RealmResourceProvider {
     @GET
     @Produces("application/json; charset=utf-8")
     public String get() {
-        //Iterate Over the keycloak clients(i.e apikeys) to generate the count of private and project keys
-        AtomicInteger privateKeyCount = new AtomicInteger(0);//Get clients with role client_owner
-        AtomicInteger projectKeyCount =new AtomicInteger(0);//Get clients with role shared_owner
+        return toJson(countUsers(session.getContext().getRealm()),
+            countKeysByRole(SHARED_OWNER),
+            countKeysByRole(CLIENT_OWNER));
+    }
 
-        RealmModel realm = session.getContext().getRealm();
-        session.clients().getClientsStream(realm).forEach(clientModel -> {
-            if (clientModel.getRole(CLIENT_OWNER) != null) {
-                privateKeyCount.getAndIncrement();
-            }
-            if (clientModel.getRole(SHARED_OWNER) != null) {
-                projectKeyCount.getAndIncrement();
-            }
-        });
-        return toJson(countUsers(realm),projectKeyCount.get(), privateKeyCount.get());
+    private int countKeysByRole(String roleName){
+        EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
+        CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
+        Long clientCount = clientRepo.findKeyByRoleName(roleName);
+        return clientCount.intValue();
     }
 
     private int countUsers(RealmModel realm) {
