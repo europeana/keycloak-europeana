@@ -2,7 +2,7 @@ package eu.europeana.keycloak.metrics;
 
 import jakarta.persistence.EntityManager;
 public class CustomClientRepository {
-  private EntityManager em;
+  private final EntityManager em;
   public CustomClientRepository(EntityManager em) {
     this.em = em;
   }

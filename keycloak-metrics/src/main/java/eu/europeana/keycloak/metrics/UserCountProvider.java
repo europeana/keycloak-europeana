@@ -22,7 +22,7 @@ public class UserCountProvider implements RealmResourceProvider {
 
     public static final String CLIENT_OWNER = "client_owner";
     public static final String SHARED_OWNER = "shared_owner";
-    private KeycloakSession session;
+    private final KeycloakSession session;
     public UserCountProvider(KeycloakSession session) {this.session = session;}
     @Override
     public Object getResource() {
