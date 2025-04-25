@@ -59,7 +59,7 @@ public class UserCountProvider implements RealmResourceProvider {
 
         obj.add("type", "OverallTotal");
         obj.add("created", Instant.now().toString());
-        obj.add("NumberOfUsers", String.valueOf(nrOfUsers));
+        obj.add("NumberOfUsers", nrOfUsers);
         obj.add("NumberOfProjectClients",nrOfProjectkeys);
         obj.add("NumberOfPersonalClients",nrOfPrivatekeys);
         return obj.build().toString();
