@@ -51,6 +51,7 @@ public class UserCountProvider implements RealmResourceProvider {
 
     @Override
     public void close() {
+        // do nothing
     }
 
 
