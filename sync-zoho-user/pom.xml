@@ -175,6 +175,13 @@
       <version>${json.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-jpa</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
 <!--    <dependency>-->
 <!--      <groupId>com.mysql</groupId>-->

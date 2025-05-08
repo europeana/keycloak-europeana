@@ -29,6 +29,16 @@ public class Contact {
     private String email;
 
     @CsvBindByPosition(position = 6)
+    private String secondaryEmail;
+
+
+    @CsvBindByPosition(position = 7)
+    private String leadSource;
+
+    @CsvBindByPosition(position = 8)
+    private String userAccountId;
+
+    @CsvBindByPosition(position = 9)
     private String modifiedTime;
 
     public String getID() {
@@ -79,6 +89,10 @@ public class Contact {
         this.email = email;
     }
 
+    public String getSecondaryEmail() { return secondaryEmail; }
+
+    public void setSecondaryEmail(String secondaryEmail) { this.secondaryEmail = secondaryEmail; }
+
     public OffsetDateTime getModifiedTime(){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
@@ -87,5 +101,15 @@ public class Contact {
     public void setModifiedTime(String modifiedTime){
         this.modifiedTime = modifiedTime;
     }
+
+    public String getLeadSource() { return leadSource; }
+
+    public void setLeadSource(String leadSource) { this.leadSource = leadSource; }
+
+    public String getUserAccountId() { return userAccountId; }
+
+    public void setUserAccountId(String userAccountId) { this.userAccountId = userAccountId; }
+
+
 
 }

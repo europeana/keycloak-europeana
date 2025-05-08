@@ -44,6 +44,9 @@ public class ZohoBatchJob {
             fieldAPINames.add("Full_Name");
             fieldAPINames.add("Account_Name");
             fieldAPINames.add("Email");
+            fieldAPINames.add("Secondary_Email");
+            fieldAPINames.add("Lead_Source");
+            fieldAPINames.add("User_Account_ID");
         } else {
             fieldAPINames.add("Account_Name");
             fieldAPINames.add("Europeana_org_ID");

@@ -41,7 +41,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
-    public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.\"}";
+     public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where:  %s accounts are shared and %s contacts were added to Zoho. \n"
+        + "\n"
+        + "The affiliation for %s accounts was changed or established.\"}";
 
     private final KeycloakSession session;
     private final RealmModel      realm;
@@ -82,6 +84,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         String accountsJob;
         String contactsJob;
         int    nrUpdatedUsers = 0;
+        int nrOfNewlyAddedContactsInZoho =0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
@@ -105,15 +108,16 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
-        publishStatusReport(generateStatusReport(nrUpdatedUsers));
+        publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 
-    private String generateStatusReport(int nrUpdatedUsers) {
+    private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
         return String.format(SYNC_REPORT_STATUS_MESSAGE,
                              contacts.size(),
                              userProvider.getUsersCount(realm),
                              modifiedUserMap.size(),
+                             nrOfNewlyAddedContactsInZoho,
                              nrUpdatedUsers);
     }
 
@@ -183,6 +187,13 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 }
             }
         }
+
+        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
+        Map<String,String> updatedContacts = new HashMap<>();
+
+        updatedContacts = kzSync.handleZohoUpdate(contacts,toThisTimeAgo);
+
+
         LOG.info(
             modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
     }
