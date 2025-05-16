@@ -101,6 +101,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
+                    nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
                     nrUpdatedUsers = updateKCUsers();
                 }
             } catch (Exception e) {
@@ -110,6 +111,12 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
         publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
+    }
+
+    private int createNewZohoContacts(List<Contact> contacts) {
+        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
+        int contactsCreated= kzSync.validateAndCreateZohoContact(contacts);
+        return contactsCreated;
     }
 
     private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
@@ -174,28 +181,32 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
         for (Contact contact : contacts) {
-            if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
-                //When zoho Modified Contact is associated to the Organization
-                if (StringUtils.isNotBlank(contact.getAccountID()) &&
-                    instituteMap.get(contact.getAccountID()) != null) {
-                    modifiedUserMap.put(contact.getEmail(),
-                                        instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
-                }
-                //When zoho Modified contact is  not associated to organization anymore
-                else if (StringUtils.isBlank(contact.getAccountID())) {
-                    modifiedUserMap.put(contact.getEmail(), null);
-                }
-            }
+            calculateModifiedZohoUsers(contact, toThisTimeAgo);
+            handleZohoUpdate(contact);
         }
-
-        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
-        Map<String,String> updatedContacts = new HashMap<>();
-
-        updatedContacts = kzSync.handleZohoUpdate(contacts,toThisTimeAgo);
-
-
         LOG.info(
             modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
+    }
+
+    private void handleZohoUpdate(Contact contact) {
+        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
+        Map<String,String> updatedContacts = new HashMap<>();
+        updatedContacts = kzSync.handleZohoUpdate(contact);
+    }
+
+    private void calculateModifiedZohoUsers(Contact contact, OffsetDateTime toThisTimeAgo) {
+        if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
+            //When zoho Modified Contact is associated to the Organization
+            if (StringUtils.isNotBlank(contact.getAccountID()) &&
+                instituteMap.get(contact.getAccountID()) != null) {
+                modifiedUserMap.put(contact.getEmail(),
+                                    instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+            }
+            //When zoho Modified contact is  not associated to organization anymore
+            else if (StringUtils.isBlank(contact.getAccountID())) {
+                modifiedUserMap.put(contact.getEmail(), null);
+            }
+        }
     }
 
     private int updateKCUsers() {
