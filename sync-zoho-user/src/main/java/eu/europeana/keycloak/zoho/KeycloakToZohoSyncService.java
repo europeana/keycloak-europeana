@@ -2,7 +2,6 @@ package eu.europeana.keycloak.zoho;
 
 import com.zoho.crm.api.exception.SDKException;
 import jakarta.persistence.EntityManager;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,7 +58,7 @@ public class KeycloakToZohoSyncService {
   /**This method is used to update a single contact of zoho with ID and print the response.
    * @param email - email for the new contact
    * @param lastName - Name for the contact.This can be keycloak username or the combination of first and last name from keycloak
-   * @throws Exception
+   * @throws Exception - SDKException, IllegalAccessException
    */
   public void createNewZohoContact(String email, String lastName,Set<String> partiCipationLevel) throws SDKException, IllegalAccessException {
     String moduleAPIName = "Contacts";
@@ -98,7 +97,7 @@ public class KeycloakToZohoSyncService {
     records.add(recordToUpdate);
     request.setData(records);
     HeaderMap headerInstance = new HeaderMap();
-    LOG.info("Update request :" + request);
+    LOG.info("Updating  zoho contact id :" + recordId);
     APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,
         headerInstance);
     processResponse(response);
