@@ -180,6 +180,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             instituteMap.put(account.getID(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
+        zohoConnect.getOrCreateAccessToZoho();
         for (Contact contact : contacts) {
             calculateModifiedZohoUsers(contact, toThisTimeAgo);
             handleZohoUpdate(contact);

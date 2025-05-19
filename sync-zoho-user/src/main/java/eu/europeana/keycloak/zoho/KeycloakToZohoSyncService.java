@@ -68,7 +68,7 @@ public class KeycloakToZohoSyncService {
     Record newRecord = new Record();
     newRecord.addFieldValue(Field.Contacts.LAST_NAME, lastName);
     newRecord.addKeyValue("Email",email);
-    newRecord.addKeyValue("Contact_Participation",partiCipationLevel);
+    newRecord.addKeyValue("Contact_Participation",new ArrayList<>(partiCipationLevel));
     records.add(newRecord);
     bodyWrapper.setData(records);
     HeaderMap headerInstance = new HeaderMap();
@@ -87,13 +87,13 @@ public class KeycloakToZohoSyncService {
    * @throws Exception - SDKException, IllegalAccessException
    */
   public void updateZohoContact(long recordId,String userAccountID,Set<String> participationLevel) throws SDKException, IllegalAccessException {
-    String moduleAPIName = "Contacts";
+    String moduleAPIName = "contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper request = new BodyWrapper();
     List<Record> records = new ArrayList<>();
     Record recordToUpdate = new Record();
     recordToUpdate.addKeyValue("User_Account_ID",userAccountID);
-    recordToUpdate.addKeyValue("Contact_Participation",participationLevel);
+    recordToUpdate.addKeyValue("Contact_Participation",new ArrayList<>(participationLevel));
     records.add(recordToUpdate);
     request.setData(records);
     HeaderMap headerInstance = new HeaderMap();
@@ -145,6 +145,7 @@ public class KeycloakToZohoSyncService {
 
   public Map<String, String> handleZohoUpdate(Contact contact) {
     try {
+      //updateZohoContact( 486281000013593001L, "1234",Set.of("API Customer"));
       String primaryMail = contact.getEmail();
       String secondaryMail= contact.getSecondaryEmail();
       //check if contact exists in keycloak , if not then disassociate it
@@ -153,7 +154,6 @@ public class KeycloakToZohoSyncService {
         //dissociate the contact i.e. set user_account_id as null
         //TODO- Uncomment for production
         //updateZohoContact(Long.parseLong(contact.getID()),null,null);
-
       } else {
         boolean isPartOfTestGroup = keycloakUser.getGroupsStream()
             .anyMatch(group -> "Europeana Test Users".equals(group.getName()));
@@ -174,7 +174,7 @@ public class KeycloakToZohoSyncService {
       }
     }
     catch (Exception e){
-      LOG.error("Exception occured while creating new contact. "+ e);
+      LOG.error("Exception occured while updating  contact. "+ e);
     }
     return null;
   }

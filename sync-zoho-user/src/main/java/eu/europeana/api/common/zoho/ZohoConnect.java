@@ -91,8 +91,8 @@ public class ZohoConnect {
 			Token tokenById = tokenStore.findTokenById(ZOHO_USER_NAME);
 			if (tokenById != null && tokenById instanceof OAuthToken) {
 				LOG.info("Token Expires in : -" + ((OAuthToken) tokenById).getExpiresIn());
+				return true;
 			}
-
 		} else {
 			tokenStore = new ZohoInMemoryTokenStore();
 		}
