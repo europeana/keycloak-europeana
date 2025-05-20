@@ -69,7 +69,7 @@ public class KeycloakToZohoSyncService {
    * @param email - email for the new contact
    * @param lastName - Name for the contact.This can be keycloak username or the combination of first and last name from keycloak
    */
-  public void createNewZohoContact(String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException, IllegalAccessException {
+  public void createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException, IllegalAccessException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper bodyWrapper = new BodyWrapper();
@@ -85,6 +85,7 @@ public class KeycloakToZohoSyncService {
 
     newRecord.addKeyValue("Contact_Participation",new ArrayList<>(participationLevelList));
     newRecord.addKeyValue("Lead_Source",new Choice<>("Europeana account sign-up form"));
+    newRecord.addKeyValue("User_Account_ID",userAccountID);
 
     List<Record> records = new ArrayList<>();
     records.add(newRecord);
@@ -253,7 +254,7 @@ public class KeycloakToZohoSyncService {
             lastName = user.getUsername();
           }
           Set<String> participationLevel = calculateParticipationLevel(user,repo);
-          createNewZohoContact(user.getEmail(), firstName, lastName,(participationLevel));
+          createNewZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel));
           newContacts.add(user.getLastName());
           count++;
         }
