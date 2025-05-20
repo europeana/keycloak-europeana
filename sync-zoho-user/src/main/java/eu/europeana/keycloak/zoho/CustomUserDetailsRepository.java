@@ -2,6 +2,7 @@ package eu.europeana.keycloak.zoho;
 
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import org.keycloak.models.jpa.entities.UserEntity;
 
 public class CustomUserDetailsRepository {
   private final EntityManager em;
@@ -9,10 +10,13 @@ public class CustomUserDetailsRepository {
     this.em = em;
   }
 
-  public List<KeycloakUser> findKeycloakUsers(){
-    String query ="SELECT  u.id,u.username,u.email,u.firstName ,u.lastName, GROUP_CONCAT(kr.NAME ORDER BY kr.NAME SEPARATOR ', ') AS roles FROM UserEntity u  JOIN UserRoleMappingEntity urm JOIN RoleEntity kr "
-        + "WHERE u.realmId ='europeana' and u.enabled = true "
-        + "GROUP BY u.id,u.username";
-    return em.createQuery(query,KeycloakUser.class).getResultList();
+  public List<UserEntity> findKeycloakUsers(){
+    String query ="SELECT u FROM UserEntity u WHERE u.realmId ='europeana' and u.enabled = true";
+    return em.createQuery(query, UserEntity.class).getResultList();
+  }
+
+  public List<String> findUserRoles(UserEntity userID){
+    String query ="SELECT re.name FROM UserRoleMappingEntity urm  JOIN RoleEntity re ON re.id = urm.roleId WHERE urm.user=:userID";
+    return  em.createQuery(query, String.class).setParameter("userID", userID).getResultList();
   }
 }

@@ -27,7 +27,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserManager;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -45,11 +44,11 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         + "\n"
         + "The affiliation for %s accounts was changed or established.\"}";
 
-    private final KeycloakSession session;
     private final RealmModel      realm;
     private final UserProvider    userProvider;
-    private final UserManager     userManager;
     private final ZohoConnect     zohoConnect = new ZohoConnect();
+
+    private final  KeycloakToZohoSyncService kzSync ;
 
     private List<Account> accounts;
     private List<Contact> contacts;
@@ -58,10 +57,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
-        this.session      = session;
         this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
-        this.userManager  = new UserManager(session);
+        this.kzSync = new KeycloakToZohoSyncService(session);
     }
 
     @Override
@@ -114,9 +112,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     private int createNewZohoContacts(List<Contact> contacts) {
-        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
-        int contactsCreated= kzSync.validateAndCreateZohoContact(contacts);
-        return contactsCreated;
+      return kzSync.validateAndCreateZohoContact(contacts);
     }
 
     private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
@@ -180,21 +176,13 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             instituteMap.put(account.getID(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
-        zohoConnect.getOrCreateAccessToZoho();
         for (Contact contact : contacts) {
             calculateModifiedZohoUsers(contact, toThisTimeAgo);
-            handleZohoUpdate(contact);
+            kzSync.handleZohoUpdate(contact);
         }
-        LOG.info(
-            modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
+        LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
+        LOG.info("Zoho Contacts Updated: " + kzSync.updatedContacts);
     }
-
-    private void handleZohoUpdate(Contact contact) {
-        KeycloakToZohoSyncService kzSync = new KeycloakToZohoSyncService(session);
-        Map<String,String> updatedContacts = new HashMap<>();
-        updatedContacts = kzSync.handleZohoUpdate(contact);
-    }
-
     private void calculateModifiedZohoUsers(Contact contact, OffsetDateTime toThisTimeAgo) {
         if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
             //When zoho Modified Contact is associated to the Organization
