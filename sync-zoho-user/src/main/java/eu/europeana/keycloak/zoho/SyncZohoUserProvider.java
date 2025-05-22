@@ -27,7 +27,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserManager;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -41,13 +40,15 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
-    public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where %s accounts are shared and the affiliation for %s accounts was changed or established.\"}";
+     public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where:  %s accounts are shared and %s contacts were added to Zoho. \n"
+        + "\n"
+        + "The affiliation for %s accounts was changed or established.\"}";
 
-    private final KeycloakSession session;
     private final RealmModel      realm;
     private final UserProvider    userProvider;
-    private final UserManager     userManager;
     private final ZohoConnect     zohoConnect = new ZohoConnect();
+
+    private final  KeycloakToZohoSyncService kzSync ;
 
     private List<Account> accounts;
     private List<Contact> contacts;
@@ -56,10 +57,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
 
     public SyncZohoUserProvider(KeycloakSession session) {
-        this.session      = session;
         this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
-        this.userManager  = new UserManager(session);
+        this.kzSync = new KeycloakToZohoSyncService(session);
     }
 
     @Override
@@ -82,12 +82,13 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         String accountsJob;
         String contactsJob;
         int    nrUpdatedUsers = 0;
+        int nrOfNewlyAddedContactsInZoho =0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
             try {
-                accountsJob = zohoBatchJob.ZohoBulkCreateJob("Accounts");
-                contactsJob = zohoBatchJob.ZohoBulkCreateJob("Contacts");
+                accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
+                contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
             } catch (Exception e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
@@ -98,6 +99,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
+                    nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
                     nrUpdatedUsers = updateKCUsers();
                 }
             } catch (Exception e) {
@@ -105,15 +107,20 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
-        publishStatusReport(generateStatusReport(nrUpdatedUsers));
+        publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 
-    private String generateStatusReport(int nrUpdatedUsers) {
+    private int createNewZohoContacts(List<Contact> contacts) {
+      return kzSync.validateAndCreateZohoContact(contacts);
+    }
+
+    private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
         return String.format(SYNC_REPORT_STATUS_MESSAGE,
                              contacts.size(),
                              userProvider.getUsersCount(realm),
                              modifiedUserMap.size(),
+                             nrOfNewlyAddedContactsInZoho,
                              nrUpdatedUsers);
     }
 
@@ -166,25 +173,29 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private void synchroniseContacts(int days) {
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
         for (Account account : accounts) {
-            instituteMap.put(account.getID(),
+            instituteMap.put(account.getId(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
         for (Contact contact : contacts) {
-            if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
-                //When zoho Modified Contact is associated to the Organization
-                if (StringUtils.isNotBlank(contact.getAccountID()) &&
-                    instituteMap.get(contact.getAccountID()) != null) {
-                    modifiedUserMap.put(contact.getEmail(),
-                                        instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
-                }
-                //When zoho Modified contact is  not associated to organization anymore
-                else if (StringUtils.isBlank(contact.getAccountID())) {
-                    modifiedUserMap.put(contact.getEmail(), null);
-                }
+            calculateModifiedZohoUsers(contact, toThisTimeAgo);
+            kzSync.handleZohoUpdate(contact);
+        }
+        LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
+        LOG.info("Zoho Contacts Updated: " + kzSync.updatedContacts);
+    }
+    private void calculateModifiedZohoUsers(Contact contact, OffsetDateTime toThisTimeAgo) {
+        if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
+            //When zoho Modified Contact is associated to the Organization
+            if (StringUtils.isNotBlank(contact.getAccountID()) &&
+                instituteMap.get(contact.getAccountID()) != null) {
+                modifiedUserMap.put(contact.getEmail(),
+                                    instituteMap.get(contact.getAccountID()).getEuropeanaOrgID());
+            }
+            //When zoho Modified contact is  not associated to organization anymore
+            else if (StringUtils.isBlank(contact.getAccountID())) {
+                modifiedUserMap.put(contact.getEmail(), null);
             }
         }
-        LOG.info(
-            modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
     }
 
     private int updateKCUsers() {

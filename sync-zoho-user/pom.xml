@@ -175,12 +175,12 @@
       <version>${json.version}</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-<!--    <dependency>-->
-<!--      <groupId>com.mysql</groupId>-->
-<!--      <artifactId>mysql-connector-j</artifactId>-->
-<!--      <version>${mysql-connector-j.version}</version>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-jpa</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -304,13 +304,6 @@
               <type>jar</type>
               <overWrite>true</overWrite>
             </artifactItem>
-<!--            <artifactItem>-->
-<!--              <groupId>com.mysql</groupId>-->
-<!--              <artifactId>mysql-connector-j</artifactId>-->
-<!--              <version>${mysql-connector-j.version}</version>-->
-<!--              <type>jar</type>-->
-<!--              <overWrite>true</overWrite>-->
-<!--            </artifactItem>-->
             <artifactItem>
               <groupId>com.opencsv</groupId>
               <artifactId>opencsv</artifactId>

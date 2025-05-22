@@ -26,7 +26,7 @@ public class ZohoBatchJob {
     private static final String ACCOUNTS = "Accounts";
 
 
-    public String ZohoBulkCreateJob(String moduleAPIName) throws Exception {
+    public String zohoBulkCreateJob(String moduleAPIName) throws Exception {
 
         String jobID = "";
         BulkReadOperations bulkReadOperations = new BulkReadOperations();
@@ -36,21 +36,8 @@ public class ZohoBatchJob {
 
         Query query = new Query();
         query.setModule(module);
-        List<String> fieldAPINames = new ArrayList<String>();
-
-        if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
-            fieldAPINames.add("First_Name");
-            fieldAPINames.add("Last_Name");
-            fieldAPINames.add("Full_Name");
-            fieldAPINames.add("Account_Name");
-            fieldAPINames.add("Email");
-        } else {
-            fieldAPINames.add("Account_Name");
-            fieldAPINames.add("Europeana_org_ID");
-        }
-
-        fieldAPINames.add("Modified_Time");
-        query.setFields(fieldAPINames);
+       List<String> fieldAPINames = populateFieldsList(moduleAPIName);
+      query.setFields(fieldAPINames);
         query.setPage(1);
         bodyWrapper.setQuery(query);
 
@@ -58,24 +45,21 @@ public class ZohoBatchJob {
         if (response != null) {
             if (response.isExpected()) {
                 ActionHandler actionHandler = response.getObject();
-                if (actionHandler instanceof ActionWrapper) {
-                    ActionWrapper        actionWrapper   = (ActionWrapper) actionHandler;
-                    List<ActionResponse> actionResponses = actionWrapper.getData();
+                if (actionHandler instanceof ActionWrapper actionWrapper) {
+                  List<ActionResponse> actionResponses = actionWrapper.getData();
 
                     for (ActionResponse actionResponse : actionResponses) {
-                        if (actionResponse instanceof SuccessResponse) {
-                            SuccessResponse successResponse = (SuccessResponse) actionResponse;
-                            for (Entry<String, Object> entry : successResponse.getDetails().entrySet()) {
-                                if (entry.getKey().equalsIgnoreCase("id")){
+                        if (actionResponse instanceof SuccessResponse successResponse) {
+                          for (Entry<String, Object> entry : successResponse.getDetails().entrySet()) {
+                                if ("id".equalsIgnoreCase(entry.getKey())){
                                     jobID = entry.getValue().toString();
                                 }
                             }
                             LOG.info(moduleAPIName + " batch download job " + successResponse.getMessage().getValue().toLowerCase());
                             return jobID;
 
-                        } else if (actionResponse instanceof APIException) {
-                            APIException exception = (APIException) actionResponse;
-                            LOG.error("Status: " + exception.getStatus().getValue());
+                        } else if (actionResponse instanceof APIException exception) {
+                          LOG.error("Status: " + exception.getStatus().getValue());
                             LOG.error("Code: " + exception.getCode().getValue());
                             LOG.error("Details: ");
                             for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
@@ -85,9 +69,8 @@ public class ZohoBatchJob {
 
                         }
                     }
-                } else if (actionHandler instanceof APIException) {
-                    APIException exception = (APIException) actionHandler;
-                    LOG.error("Status: " + exception.getStatus().getValue());
+                } else if (actionHandler instanceof APIException exception) {
+                  LOG.error("Status: " + exception.getStatus().getValue());
                     LOG.error("Code: " + exception.getCode().getValue());
                     LOG.error("Details: ");
                     for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
@@ -101,4 +84,26 @@ public class ZohoBatchJob {
         }
         return jobID;
     }
+
+  private static List<String> populateFieldsList(String moduleAPIName) {
+    List<String> fieldAPINames = new ArrayList<>();
+
+    if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
+        fieldAPINames.add("First_Name");
+        fieldAPINames.add("Last_Name");
+        fieldAPINames.add("Full_Name");
+        fieldAPINames.add("Account_Name");
+        fieldAPINames.add("Email");
+        fieldAPINames.add("Secondary_Email");
+        fieldAPINames.add("Lead_Source");
+        fieldAPINames.add("User_Account_ID");
+        fieldAPINames.add("Contact_Participation");
+    } else if(StringUtils.equalsIgnoreCase(moduleAPIName, ACCOUNTS)) {
+        fieldAPINames.add("Account_Name");
+        fieldAPINames.add("Europeana_org_ID");
+    }
+
+    fieldAPINames.add("Modified_Time");
+    return fieldAPINames;
+  }
 }

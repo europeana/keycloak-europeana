@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 public class Account {
 
     @CsvBindByPosition(position = 0)
-    private String ID;
+    private String id;
 
     @CsvBindByPosition(position = 1)
     private String accountName;
@@ -23,12 +23,12 @@ public class Account {
     @CsvBindByPosition(position = 3)
     private String modifiedTime;
 
-    public String getID() {
-        return ID;
+    public String getId() {
+        return id;
     }
 
-    public void setID(String ID) {
-        this.ID = ID;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getAccountName() {
