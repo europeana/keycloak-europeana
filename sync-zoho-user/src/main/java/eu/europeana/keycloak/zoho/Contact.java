@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 public class Contact {
 
     @CsvBindByPosition(position = 0)
-    private String ID;
+    private String id;
 
     @CsvBindByPosition(position = 1)
     private String firstName;
@@ -44,12 +44,12 @@ public class Contact {
     @CsvBindByPosition(position = 10)
     private String modifiedTime;
 
-    public String getID() {
-        return ID;
+    public String getId() {
+        return id;
     }
 
-    public void setID(String ID) {
-        this.ID = ID;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getFirstName() {

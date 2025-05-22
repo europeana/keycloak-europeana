@@ -11,8 +11,6 @@ import com.zoho.crm.api.util.StreamWrapper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -36,17 +34,14 @@ public class ZohoBatchDownload {
     private static final String COMPLETED = "COMPLETED";
 
     public String downloadResult(Long jobId) throws Exception {
-        String jobStatus = null;
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
         int maxLoops = 20;
         int loops = 0;
         while (loops < maxLoops) {
             APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
-            if (response != null) {
-                if (response.isExpected()) {
+            if (response != null && response.isExpected()) {
                     ResponseHandler responseHandler = response.getObject();
-                    if (responseHandler instanceof ResponseWrapper){
-                        ResponseWrapper responseWrapper = (ResponseWrapper) responseHandler;
+                    if (responseHandler instanceof ResponseWrapper responseWrapper){
                         List<JobDetail> jobDetails      = responseWrapper.getData();
                         for (JobDetail jobDetail : jobDetails){
                             if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
@@ -54,8 +49,6 @@ public class ZohoBatchDownload {
                             }
                         }
                     }
-
-                }
             }
             loops ++;
             LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
@@ -65,9 +58,7 @@ public class ZohoBatchDownload {
     }
 
     private String downloadCompleted(Long jobId) throws Exception {
-        String jobStatus = null;
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
-
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
             if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
@@ -76,9 +67,7 @@ public class ZohoBatchDownload {
             }
             if (response.isExpected()) {
                 ResponseHandler responseHandler = response.getObject();
-                if (responseHandler instanceof FileBodyWrapper) {
-
-                    FileBodyWrapper fileBodyWrapper = (FileBodyWrapper) responseHandler;
+                if (responseHandler instanceof FileBodyWrapper fileBodyWrapper) {
                     StreamWrapper   streamWrapper   = fileBodyWrapper.getFile();
                     File            file            = new File(streamWrapper.getName());
                     InputStream inputStream = streamWrapper.getStream();
@@ -89,8 +78,7 @@ public class ZohoBatchDownload {
                         LOG.error("Error downloading batch job: " + e.getMessage());
                     }
                     inputStream.close();
-                } else if (responseHandler instanceof APIException) {
-                    APIException exception = (APIException) responseHandler;
+                } else if (responseHandler instanceof APIException exception) {
                     LOG.error("Status: " + exception.getStatus().getValue());
                     LOG.error("Code: " + exception.getCode().getValue());
                     LOG.error("Details: ");
@@ -107,17 +95,12 @@ public class ZohoBatchDownload {
     }
 
     public static String unZipFile(String pathToZipFile) throws Exception {
-
         Path   zipFilePath = Paths.get(pathToZipFile);
         Path   zipDir      = zipFilePath.getParent();
-        String zipFileName = zipFilePath.toFile().getName();
 
         //Open the file
         try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
-
-            FileSystem                      fileSystem = FileSystems.getDefault();
             Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-
             //We will unzip files in this folder
             if (!zipDir.toFile().isDirectory()
                 && !zipDir.toFile().mkdirs()) {

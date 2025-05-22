@@ -26,7 +26,7 @@ public class ZohoBatchJob {
     private static final String ACCOUNTS = "Accounts";
 
 
-    public String ZohoBulkCreateJob(String moduleAPIName) throws Exception {
+    public String zohoBulkCreateJob(String moduleAPIName) throws Exception {
 
         String jobID = "";
         BulkReadOperations bulkReadOperations = new BulkReadOperations();
@@ -36,25 +36,8 @@ public class ZohoBatchJob {
 
         Query query = new Query();
         query.setModule(module);
-        List<String> fieldAPINames = new ArrayList<>();
-
-        if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
-            fieldAPINames.add("First_Name");
-            fieldAPINames.add("Last_Name");
-            fieldAPINames.add("Full_Name");
-            fieldAPINames.add("Account_Name");
-            fieldAPINames.add("Email");
-            fieldAPINames.add("Secondary_Email");
-            fieldAPINames.add("Lead_Source");
-            fieldAPINames.add("User_Account_ID");
-            fieldAPINames.add("Contact_Participation");
-        } else {
-            fieldAPINames.add("Account_Name");
-            fieldAPINames.add("Europeana_org_ID");
-        }
-
-        fieldAPINames.add("Modified_Time");
-        query.setFields(fieldAPINames);
+       List<String> fieldAPINames = populateFieldsList(moduleAPIName);
+      query.setFields(fieldAPINames);
         query.setPage(1);
         bodyWrapper.setQuery(query);
 
@@ -101,4 +84,26 @@ public class ZohoBatchJob {
         }
         return jobID;
     }
+
+  private static List<String> populateFieldsList(String moduleAPIName) {
+    List<String> fieldAPINames = new ArrayList<>();
+
+    if (StringUtils.equalsIgnoreCase(moduleAPIName, CONTACTS)){
+        fieldAPINames.add("First_Name");
+        fieldAPINames.add("Last_Name");
+        fieldAPINames.add("Full_Name");
+        fieldAPINames.add("Account_Name");
+        fieldAPINames.add("Email");
+        fieldAPINames.add("Secondary_Email");
+        fieldAPINames.add("Lead_Source");
+        fieldAPINames.add("User_Account_ID");
+        fieldAPINames.add("Contact_Participation");
+    } else if(StringUtils.equalsIgnoreCase(moduleAPIName, ACCOUNTS)) {
+        fieldAPINames.add("Account_Name");
+        fieldAPINames.add("Europeana_org_ID");
+    }
+
+    fieldAPINames.add("Modified_Time");
+    return fieldAPINames;
+  }
 }

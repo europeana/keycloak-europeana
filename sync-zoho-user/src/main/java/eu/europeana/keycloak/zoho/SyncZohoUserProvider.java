@@ -87,8 +87,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
             try {
-                accountsJob = zohoBatchJob.ZohoBulkCreateJob("Accounts");
-                contactsJob = zohoBatchJob.ZohoBulkCreateJob("Contacts");
+                accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
+                contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
             } catch (Exception e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
@@ -173,7 +173,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private void synchroniseContacts(int days) {
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
         for (Account account : accounts) {
-            instituteMap.put(account.getID(),
+            instituteMap.put(account.getId(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
         for (Contact contact : contacts) {

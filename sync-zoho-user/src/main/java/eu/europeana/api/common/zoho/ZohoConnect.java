@@ -28,8 +28,6 @@ public class ZohoConnect {
     private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
 	private static ZohoInMemoryTokenStore tokenStore;
 
-	public ZohoConnect(){}
-
 	public boolean initialise() throws RuntimeException {
 		try {
 
@@ -40,9 +38,6 @@ public class ZohoConnect {
 
 			UserSignature userSignature = new UserSignature(ZOHO_USER_NAME);
 			LOG.info("Connecting to ZOHO");
-
-//			tokenStore  = new ZohoInMemoryTokenStore();
-
 			LOG.info("ZOHO client ID: " + ZOHO_CLIENT_ID);
 			LOG.info("ZOHO client secret: " + ZOHO_CLIENT_SECRET);
 			LOG.info("ZOHO refresh token: " + ZOHO_REFRESH_TOKEN);
@@ -89,8 +84,8 @@ public class ZohoConnect {
 	public boolean getOrCreateAccessToZoho() {
 		if (tokenStore != null) {
 			Token tokenById = tokenStore.findTokenById(ZOHO_USER_NAME);
-			if (tokenById != null && tokenById instanceof OAuthToken) {
-				LOG.info("Token Expires in : -" + ((OAuthToken) tokenById).getExpiresIn());
+			if (tokenById instanceof OAuthToken oauthToken) {
+				LOG.info("Token Expires in : -" + oauthToken.getExpiresIn());
 				return true;
 			}
 		} else {

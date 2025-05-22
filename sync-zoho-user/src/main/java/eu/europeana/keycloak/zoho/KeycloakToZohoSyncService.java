@@ -6,11 +6,13 @@ import com.zoho.crm.api.util.Choice;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
@@ -29,7 +31,6 @@ import com.zoho.crm.api.record.RecordOperations;
 import com.zoho.crm.api.record.Record;
 import com.zoho.crm.api.record.SuccessResponse;
 import com.zoho.crm.api.util.APIResponse;
-import com.zoho.crm.api.util.Model;
 import org.keycloak.models.jpa.entities.UserEntity;
 
 
@@ -65,11 +66,13 @@ public class KeycloakToZohoSyncService {
 
     return participationLevel;
   }
-  /**This method is used to update a single contact of zoho with ID and print the response.
+  /**This method is used to create a single contact of zoho with ID and print the response.
+   * @param userAccountID - keycloak public id of user
    * @param email - email for the new contact
-   * @param lastName - Name for the contact.This can be keycloak username or the combination of first and last name from keycloak
+   * @param firstName - firstName of user
+   * @param lastName - Name for the contact.This can be keycloak username if user does not have first and last name populated in keycloak
    */
-  public void createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException, IllegalAccessException {
+  public boolean createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException, IllegalAccessException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper bodyWrapper = new BodyWrapper();
@@ -79,7 +82,7 @@ public class KeycloakToZohoSyncService {
     newRecord.addFieldValue(Field.Contacts.LAST_NAME, lastName);
     newRecord.addKeyValue("Email",email);
 
-    List<Choice> participationLevelList = new ArrayList<>();
+    List<Choice<String>> participationLevelList = new ArrayList<>();
     if(participationLevel!=null)
       participationLevel.forEach(p-> participationLevelList.add(new Choice<>(p)));
 
@@ -94,7 +97,7 @@ public class KeycloakToZohoSyncService {
     HeaderMap headerInstance = new HeaderMap();
     APIResponse<ActionHandler> response = recordOperations.createRecords(bodyWrapper,
         headerInstance);
-    processResponse(response);
+    return processResponse(response);
   }
 
   /**This method is used to update a single contact of zoho with ID and print the response.
@@ -102,7 +105,7 @@ public class KeycloakToZohoSyncService {
    * @param userAccountID - keycloak user public id
    * @param participationLevel - Indicates the type of user e.g. API Customer,API User etc.
    */
-  public void updateZohoContact(long recordId,String userAccountID,Set<String> participationLevel) throws SDKException, IllegalAccessException {
+  public boolean updateZohoContact(long recordId,String userAccountID,Set<String> participationLevel) throws SDKException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper request = new BodyWrapper();
@@ -110,82 +113,60 @@ public class KeycloakToZohoSyncService {
     Record recordToUpdate = new Record();
 
     recordToUpdate.addKeyValue("User_Account_ID",userAccountID);
-
-    List<Choice> participationLevelList = new ArrayList<>();
+    List<Choice<String>> participationLevelList = new ArrayList<>();
     if(participationLevel!=null)
        participationLevel.forEach(p-> participationLevelList.add(new Choice<>(p)));
-
     recordToUpdate.addKeyValue("Contact_Participation",participationLevelList);
     records.add(recordToUpdate);
+
     request.setData(records);
     HeaderMap headerInstance = new HeaderMap();
     LOG.info("Updating  zoho contact id :" + recordId);
     APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,
         headerInstance);
-    processResponse(response);
-  }
-  private void processResponse(APIResponse<ActionHandler> response) throws IllegalAccessException {
-    if (response != null) {
-      if (response.isExpected()) {
-        ActionHandler actionHandler = response.getObject();
-        if (actionHandler instanceof ActionWrapper actionWrapper) {
-          List<ActionResponse> actionResponses = actionWrapper.getData();
-          for (ActionResponse actionResponse : actionResponses) {
-            if (actionResponse instanceof SuccessResponse successResponse) {
-              LOG.info("Message: " + successResponse.getMessage().getValue());
-            }
-            else if (actionResponse instanceof APIException exception) {
-              LOG.error("Status: " + exception.getStatus().getValue());
-              LOG.error("Code: " + exception.getCode().getValue());
-              LOG.error("Details: ");
-              for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                LOG.error(entry.getKey() + ": " + entry.getValue());
-              }
-              LOG.error("Message: " + exception.getMessage().getValue());
-            }
-          }
-        }
-        else if (actionHandler instanceof APIException exception) {
-          LOG.error("Status: " + exception.getStatus().getValue());
-          LOG.error("Code: " + exception.getCode().getValue());
-          LOG.error("Details: ");
-          for (Map.Entry<String, Object> entry : exception.getDetails().entrySet()) {
-            LOG.error(entry.getKey() + ": " + entry.getValue());
-          }
-          LOG.error("Message: " + exception.getMessage().getValue());
-        }
-      } else {
-        Model responseObject = response.getModel();
-        Class<? extends Model> clas = responseObject.getClass();
-        java.lang.reflect.Field[] fields = clas.getDeclaredFields();
-        for (java.lang.reflect.Field field : fields) {
-          LOG.error(field.getName() + ":" + field.get(responseObject));
-        }
-      }
-    }
+   return  processResponse(response);
   }
 
-  public Map<String, String> handleZohoUpdate(Contact contact) {
+  private boolean processResponse(APIResponse<ActionHandler> response){
+    if (response != null && response.isExpected()) {
+      if (response.getObject() instanceof ActionWrapper actionWrapper) {
+        for (ActionResponse actionResponse : actionWrapper.getData()) {
+          if (actionResponse instanceof SuccessResponse) {
+            return true;
+          } else if (actionResponse instanceof APIException exception) {
+            LOG.error("Status: " + exception.getStatus().getValue() + " Code:" + exception.getCode().getValue()+" Message: "+ exception.getMessage().getValue());
+            return false;
+          }
+        }
+      } else if (response.getObject() instanceof APIException exception) {
+        LOG.error(" Status: " + exception.getStatus().getValue() + " Code:" + exception.getCode().getValue()+" Message: "+ exception.getMessage().getValue());
+        return false;
+      }
+    }
+    return false;
+  }
+  public  void handleZohoUpdate(Contact contact) {
     try {
       String primaryMail = contact.getEmail();
       //check if contact exists in keycloak , if not then disassociate it
       UserModel keycloakUser = userProvider.getUserByEmail(realm,primaryMail);
       if (keycloakUser == null) {
-        //dissociate the contact i.e. set user_account_id as null
-        //TODO- Uncomment for production
-        //updateZohoContact(Long.parseLong(contact.getID()),null,null);
+        //dissociate the contact i.e. set the user_account_id  as null and remove API related participation levels
+        if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
+          updateZohoContact(Long.parseLong(contact.getId()),null, getUpdatedParticipationLevels(contact));
+        }
       } else {
         boolean isPartOfTestGroup = keycloakUser.getGroupsStream()
             .anyMatch(group -> "Europeana Test Users".equals(group.getName()));
         //Skip the users who belong to test groups
         if (!isPartOfTestGroup) {
-          String userAccountId = keycloakUser.getId();
           Set<String> participationLevel = getParticipationLevel(keycloakUser);
           //If Secondary mail is present then consider the private/project keys of that user
           updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-          if (isToUpdateContact(contact,keycloakUser,participationLevel)) {
-            updateZohoContact(Long.parseLong(contact.getID()), userAccountId, participationLevel);
-            updatedContacts.add(contact.getID()+":"+contact.getEmail());
+          if (isSyncEnabled() && isToUpdateContact(contact,keycloakUser,participationLevel)) {
+           if(updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)) {
+             updatedContacts.add(contact.getId() + ":" + contact.getEmail());
+           }
           }
         }
       }
@@ -193,7 +174,24 @@ public class KeycloakToZohoSyncService {
     catch (Exception e){
       LOG.error("Exception occured while updating  contact. "+ e);
     }
-    return null;
+  }
+
+  /**
+   * Control if actual updates in ZOHO to be made by the sync job.   *
+   * @return boolean
+   */
+  private boolean isSyncEnabled() {
+    String enableKeycloakToZohoSync = System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC");
+    return StringUtils.isNotEmpty(enableKeycloakToZohoSync) && "true".equals(enableKeycloakToZohoSync);
+  }
+
+  private static Set<String> getUpdatedParticipationLevels(Contact contact) {
+    if(StringUtils.isEmpty(contact.getContactParticipation())) {
+         return Collections.emptySet();
+    }
+    return Arrays.stream(contact.getContactParticipation().split(";")).filter(p ->
+            API_CUSTOMER.equals(p) || API_USER.equals(p) || ACCOUNT_HOLDER.equals(p))
+        .collect(Collectors.toCollection(HashSet::new));
   }
 
   private boolean isToUpdateContact(Contact zohoContact, UserModel keycloakUser,
@@ -202,21 +200,29 @@ public class KeycloakToZohoSyncService {
     if(!keycloakUser.getId().equals(zohoContact.getUserAccountId()))
       return true;
     //check if the name is changed
-    if(StringUtils.isNotEmpty(keycloakUser.getFirstName()) &&
-        !keycloakUser.getFirstName().equals(zohoContact.getFirstName())){
-      return true;
-    }
-    if(StringUtils.isNotEmpty(keycloakUser.getLastName()) &&
-        !keycloakUser.getLastName().equals(zohoContact.getLastName())){
+    if (isContactNameChanged(zohoContact, keycloakUser)) {
       return true;
     }
     //Check if participation level changed
+    return isparticipationLevelChanged(zohoContact, participationLevel);
+  }
+
+  private static boolean isparticipationLevelChanged(Contact zohoContact, Set<String> participationLevel) {
     if(StringUtils.isNotEmpty(zohoContact.getContactParticipation())) {
       String[] levels = zohoContact.getContactParticipation().split(";");
       return levels.length > 0 && Arrays.stream(levels)
           .anyMatch(p -> !participationLevel.contains(p));
     }
     return false;
+  }
+
+  private static boolean isContactNameChanged(Contact zohoContact, UserModel keycloakUser) {
+    if(StringUtils.isNotEmpty(keycloakUser.getFirstName()) &&
+        !keycloakUser.getFirstName().equals(zohoContact.getFirstName())){
+      return true;
+    }
+    return StringUtils.isNotEmpty(keycloakUser.getLastName()) &&
+        !keycloakUser.getLastName().equals(zohoContact.getLastName());
   }
 
   private void updateParticipationBasedOnsecondaryMail(String secondaryMail, Set<String> participationLevel) {
@@ -243,7 +249,7 @@ public class KeycloakToZohoSyncService {
       EntityManager entityManager = session.getProvider(JpaConnectionProvider.class)
           .getEntityManager();
       CustomUserDetailsRepository repo = new CustomUserDetailsRepository(entityManager);
-      //keyCloak Users
+      //Iterate over keyCloak Users
       List<UserEntity> keycloakUsers = repo.findKeycloakUsers();
       for (UserEntity user : keycloakUsers) {
         if (!zohoContactsByPrimaryMail.containsKey(user.getEmail())) {
@@ -254,9 +260,10 @@ public class KeycloakToZohoSyncService {
             lastName = user.getUsername();
           }
           Set<String> participationLevel = calculateParticipationLevel(user,repo);
-          createNewZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel));
+         if(isSyncEnabled() && createNewZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel))) {
           newContacts.add(user.getLastName());
           count++;
+         }
         }
       }
     }catch (SDKException | IllegalAccessException e){
