@@ -70,7 +70,7 @@ public class KeycloakToZohoSyncService {
    * @param firstName - firstName of user
    * @param lastName - Name for the contact.This can be keycloak username if user does not have first and last name populated in keycloak
    */
-  public boolean createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException {
+  public boolean createZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper bodyWrapper = new BodyWrapper();
@@ -141,6 +141,7 @@ public class KeycloakToZohoSyncService {
         return false;
       }
     }
+    LOG.error("Unexpected response from zoho");
     return false;
   }
   public  void handleZohoUpdate(Contact contact) {
@@ -252,12 +253,8 @@ public class KeycloakToZohoSyncService {
     List<String> newContacts= new ArrayList<>();
     try {
       //Separated zoho contacts
-      Map<String, Contact> zohoContactsByPrimaryMail = new HashMap<>();
-      for (Contact c : zohoContacts) {
-        if (StringUtils.isNotEmpty(c.getEmail())) {
-          zohoContactsByPrimaryMail.put(c.getEmail(), c);
-        }
-      }
+      Map<String, Contact> zohoContactsByPrimaryMail = getContactsMap(
+          zohoContacts);
       EntityManager entityManager = session.getProvider(JpaConnectionProvider.class)
           .getEntityManager();
       CustomUserDetailsRepository repo = new CustomUserDetailsRepository(entityManager);
@@ -267,14 +264,16 @@ public class KeycloakToZohoSyncService {
         if (!zohoContactsByPrimaryMail.containsKey(user.getEmail())) {
           //The keycloak user is not part of zoho yet , create new contact in zoho
           String firstName = user.getFirstName();
-          String lastName = user.getLastName();
-          if (StringUtils.isEmpty(firstName) && StringUtils.isEmpty(lastName)) {
-            lastName = user.getUsername();
-          }
+          String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user,repo);
-         if(isSyncEnabled() && createNewZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel))) {
-          newContacts.add(user.getEmail());
-          count++;
+         if(isSyncEnabled()){
+           if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel))){
+             newContacts.add(user.getEmail());
+             count++;
+           }
+           else {
+             LOG.error("Zoho Contact creation failed for "+user.getEmail());
+           }
          }
         }
       }
@@ -285,6 +284,27 @@ public class KeycloakToZohoSyncService {
     return count;
   }
 
+  private static String populateLastNameForContact(UserEntity user, String firstName) {
+    String lastName = user.getLastName();
+    if (StringUtils.isEmpty(firstName) && StringUtils.isEmpty(lastName)) {
+      lastName = user.getUsername();
+    }
+    if (StringUtils.isNotEmpty(firstName) && StringUtils.isEmpty(lastName)) {
+      lastName="-";
+    }
+    return lastName;
+  }
+
+  private static Map<String, Contact> getContactsMap(List<Contact> zohoContacts) {
+    Map<String, Contact> zohoContactsByPrimaryMail = new HashMap<>();
+    for (Contact c : zohoContacts) {
+      if (StringUtils.isNotEmpty(c.getEmail())) {
+        zohoContactsByPrimaryMail.put(c.getEmail(), c);
+      }
+    }
+    return zohoContactsByPrimaryMail;
+  }
+
   private Set<String> calculateParticipationLevel(UserEntity id, CustomUserDetailsRepository repo) {
     List<String> userRoles = repo.findUserRoles(id);
     Set<String> participationLevels = new HashSet<>();
@@ -293,4 +313,6 @@ public class KeycloakToZohoSyncService {
     if(userRoles.contains(CLIENT_OWNER)){participationLevels.add(API_USER);}
     return participationLevels;
   }
-}
+
+
+  }
