@@ -160,12 +160,6 @@ public class KeycloakToZohoSyncService {
     }
   }
 
-  /**
-   *
-   * @param contact
-   * @param keycloakUser
-   * @throws SDKException
-   */
   private void handleZohoContactUpdate(Contact contact, UserModel keycloakUser) throws SDKException {
     boolean isPartOfTestGroup = keycloakUser.getGroupsStream()
         .anyMatch(group -> EUROPEANA_TEST_USERS.equals(group.getName()));
@@ -252,6 +246,7 @@ public class KeycloakToZohoSyncService {
     int count = 0;
     List<String> newContacts= new ArrayList<>();
     try {
+      LOG.info("Creating new zoho contacts.");
       //Separated zoho contacts
       Map<String, Contact> zohoContactsByPrimaryMail = getContactsMap(
           zohoContacts);
@@ -260,9 +255,11 @@ public class KeycloakToZohoSyncService {
       CustomUserDetailsRepository repo = new CustomUserDetailsRepository(entityManager);
       //Iterate over keyCloak Users
       List<UserEntity> keycloakUsers = repo.findKeycloakUsers();
+      LOG.info(keycloakUsers.size() + " keycloak users found.");
       for (UserEntity user : keycloakUsers) {
         if (!zohoContactsByPrimaryMail.containsKey(user.getEmail())) {
           //The keycloak user is not part of zoho yet , create new contact in zoho
+          LOG.info("Creating zoho contact " + user.getEmail());
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user,repo);

@@ -78,7 +78,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
-        LOG.info("ZohoSync called.");
+        LOG.info("ZohoSync called. " + " Keycloak to zoho sync set to -  "+System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC"));
+
         String accountsJob;
         String contactsJob;
         int    nrUpdatedUsers = 0;
