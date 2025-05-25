@@ -1,7 +1,6 @@
 package eu.europeana.keycloak.zoho;
 
 import com.zoho.crm.api.exception.SDKException;
-import com.zoho.crm.api.record.Field.Contacts;
 import com.zoho.crm.api.util.Choice;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
@@ -35,12 +34,12 @@ import org.keycloak.models.jpa.entities.UserEntity;
 
 
 public class KeycloakToZohoSyncService {
-
   public static final String CLIENT_OWNER = "client_owner";
   public static final String SHARED_OWNER = "shared_owner";
   public static final String ACCOUNT_HOLDER = "Account holder";
   public static final String API_USER = "API User";
   public static final String API_CUSTOMER = "API Customer";
+  public static final String EUROPEANA_TEST_USERS = "Europeana Test Users";
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
@@ -63,7 +62,6 @@ public class KeycloakToZohoSyncService {
         roleModel -> (SHARED_OWNER.equals(roleModel.getName())))){
       participationLevel.add(API_CUSTOMER);
     }
-
     return participationLevel;
   }
   /**This method is used to create a single contact of zoho with ID and print the response.
@@ -72,13 +70,13 @@ public class KeycloakToZohoSyncService {
    * @param firstName - firstName of user
    * @param lastName - Name for the contact.This can be keycloak username if user does not have first and last name populated in keycloak
    */
-  public boolean createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException, IllegalAccessException {
+  public boolean createNewZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
     BodyWrapper bodyWrapper = new BodyWrapper();
 
     Record newRecord = new Record();
-    newRecord.addFieldValue(Contacts.FIRST_NAME, firstName);
+    newRecord.addFieldValue(Field.Contacts.FIRST_NAME, firstName);
     newRecord.addFieldValue(Field.Contacts.LAST_NAME, lastName);
     newRecord.addKeyValue("Email",email);
 
@@ -147,32 +145,46 @@ public class KeycloakToZohoSyncService {
   }
   public  void handleZohoUpdate(Contact contact) {
     try {
-      String primaryMail = contact.getEmail();
       //check if contact exists in keycloak , if not then disassociate it
-      UserModel keycloakUser = userProvider.getUserByEmail(realm,primaryMail);
+      UserModel keycloakUser = userProvider.getUserByEmail(realm,contact.getEmail());
       if (keycloakUser == null) {
-        //dissociate the contact i.e. set the user_account_id  as null and remove API related participation levels
-        if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
-          updateZohoContact(Long.parseLong(contact.getId()),null, getUpdatedParticipationLevels(contact));
-        }
+        handleUserDissociation(contact);
       } else {
-        boolean isPartOfTestGroup = keycloakUser.getGroupsStream()
-            .anyMatch(group -> "Europeana Test Users".equals(group.getName()));
-        //Skip the users who belong to test groups
-        if (!isPartOfTestGroup) {
-          Set<String> participationLevel = getParticipationLevel(keycloakUser);
-          //If Secondary mail is present then consider the private/project keys of that user
-          updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-          if (isSyncEnabled() && isToUpdateContact(contact,keycloakUser,participationLevel)) {
-           if(updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)) {
-             updatedContacts.add(contact.getId() + ":" + contact.getEmail());
-           }
-          }
-        }
+        //check and update contact of zoho if required
+        handleZohoContactUpdate(contact, keycloakUser);
       }
     }
-    catch (Exception e){
-      LOG.error("Exception occured while updating  contact. "+ e);
+    catch (SDKException e){
+      LOG.error("Exception occurred while updating  contact. "+ e);
+    }
+  }
+
+  /**
+   *
+   * @param contact
+   * @param keycloakUser
+   * @throws SDKException
+   */
+  private void handleZohoContactUpdate(Contact contact, UserModel keycloakUser) throws SDKException {
+    boolean isPartOfTestGroup = keycloakUser.getGroupsStream()
+        .anyMatch(group -> EUROPEANA_TEST_USERS.equals(group.getName()));
+    //Skip the users who belong to test groups
+    if (!isPartOfTestGroup) {
+      Set<String> participationLevel = getParticipationLevel(keycloakUser);
+      //If Secondary mail is present then consider the private/project keys of that user
+      updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
+      if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel)) {
+       if(updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)) {
+         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
+       }
+      }
+    }
+  }
+
+  private void handleUserDissociation(Contact contact) throws SDKException {
+    //dissociate the contact i.e. set the user_account_id  as null and remove API related participation levels
+    if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
+      updateZohoContact(Long.parseLong(contact.getId()),null, getUpdatedParticipationLevels(contact));
     }
   }
 
@@ -261,12 +273,12 @@ public class KeycloakToZohoSyncService {
           }
           Set<String> participationLevel = calculateParticipationLevel(user,repo);
          if(isSyncEnabled() && createNewZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel))) {
-          newContacts.add(user.getLastName());
+          newContacts.add(user.getEmail());
           count++;
          }
         }
       }
-    }catch (SDKException | IllegalAccessException e){
+    }catch (SDKException e){
       LOG.error("Error occured while creating contact : "+ e);
     }
     LOG.info("New contacts :" + newContacts);

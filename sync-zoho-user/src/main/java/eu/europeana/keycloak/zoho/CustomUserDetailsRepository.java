@@ -11,7 +11,7 @@ public class CustomUserDetailsRepository {
   }
 
   public List<UserEntity> findKeycloakUsers(){
-    String query ="SELECT u FROM UserEntity u WHERE u.realmId ='europeana' and u.enabled = true";
+    String query ="SELECT u FROM UserEntity u WHERE u.realmId ='europeana' and u.enabled = true and u.serviceAccountClientLink is null";
     return em.createQuery(query, UserEntity.class).getResultList();
   }
 

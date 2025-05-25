@@ -6,6 +6,7 @@ import com.zoho.crm.api.bulkread.FileBodyWrapper;
 import com.zoho.crm.api.bulkread.JobDetail;
 import com.zoho.crm.api.bulkread.ResponseHandler;
 import com.zoho.crm.api.bulkread.ResponseWrapper;
+import com.zoho.crm.api.exception.SDKException;
 import com.zoho.crm.api.util.APIResponse;
 import com.zoho.crm.api.util.StreamWrapper;
 import java.io.File;
@@ -33,22 +34,18 @@ public class ZohoBatchDownload {
     private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
     private static final String COMPLETED = "COMPLETED";
 
-    public String downloadResult(Long jobId) throws Exception {
+    public String downloadResult(Long jobId) throws SDKException, IOException, InterruptedException {
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
         int maxLoops = 20;
         int loops = 0;
         while (loops < maxLoops) {
             APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
             if (response != null && response.isExpected()) {
-                    ResponseHandler responseHandler = response.getObject();
-                    if (responseHandler instanceof ResponseWrapper responseWrapper){
-                        List<JobDetail> jobDetails      = responseWrapper.getData();
-                        for (JobDetail jobDetail : jobDetails){
-                            if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
-                                return downloadCompleted(jobId);
-                            }
-                        }
-                    }
+                ResponseHandler responseHandler = response.getObject();
+                if (responseHandler instanceof ResponseWrapper responseWrapper && isJobCompleted(
+                    responseWrapper)) {
+                    return downloadCompleted(jobId);
+                }
             }
             loops ++;
             LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
@@ -57,7 +54,17 @@ public class ZohoBatchDownload {
         return "";
     }
 
-    private String downloadCompleted(Long jobId) throws Exception {
+    private boolean isJobCompleted(ResponseWrapper responseWrapper) {
+        List<JobDetail> jobDetails      = responseWrapper.getData();
+        for (JobDetail jobDetail : jobDetails){
+            if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String downloadCompleted(Long jobId) throws SDKException, IOException {
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
@@ -79,13 +86,7 @@ public class ZohoBatchDownload {
                     }
                     inputStream.close();
                 } else if (responseHandler instanceof APIException exception) {
-                    LOG.error("Status: " + exception.getStatus().getValue());
-                    LOG.error("Code: " + exception.getCode().getValue());
-                    LOG.error("Details: ");
-                    for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
-                        LOG.error(entry.getKey() + ": " + entry.getValue());
-                    }
-                    LOG.error("Error downloading batch job: " + exception.getMessage());
+                    logExceptionDetails(exception);
                 }
             } else {
                 LOG.error("No usable response received");
@@ -93,40 +94,44 @@ public class ZohoBatchDownload {
         }
         return "";
     }
+    private static void logExceptionDetails(APIException exception) {
+        LOG.error("Status: " + exception.getStatus().getValue());
+        LOG.error("Code: " + exception.getCode().getValue());
+        LOG.error("Details: ");
+        for (Entry<String, Object> entry : exception.getDetails().entrySet()) {
+            LOG.error(entry.getKey() + ": " + entry.getValue());
+        }
+        LOG.error("Error downloading batch job: " + exception.getMessage());
+    }
 
-    public static String unZipFile(String pathToZipFile) throws Exception {
+    public static String unZipFile(String pathToZipFile) {
         Path   zipFilePath = Paths.get(pathToZipFile);
         Path   zipDir      = zipFilePath.getParent();
-
         //Open the file
         try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
             Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
             //We will unzip files in this folder
+            String directoryCreationFailed = "failed to create directory ";
             if (!zipDir.toFile().isDirectory()
                 && !zipDir.toFile().mkdirs()) {
-                throw new IOException("failed to create directory " + zipDir);
+                throw new IOException(directoryCreationFailed + zipDir);
             }
-
             //Iterate over zipEntries
             while (zipEntries.hasMoreElements()) {
                 ZipEntry zipEntry = zipEntries.nextElement();
-
                 File unzippedFile = new File(zipDir.resolve(Path.of(zipEntry.getName())).toString());
-
                 //If directory then create a new directory in uncompressed folder
                 if (zipEntry.isDirectory()) {
                     if (!unzippedFile.isDirectory() && !unzippedFile.mkdirs()) {
-                        throw new IOException("failed to create directory " + unzippedFile);
+                        throw new IOException(directoryCreationFailed + unzippedFile);
                     }
                 }
-
                 //Else create the file
                 else {
                     File unzippedParent = unzippedFile.getParentFile();
                     if (!unzippedParent.isDirectory() && !unzippedParent.mkdirs()) {
-                        throw new IOException("failed to create directory " + unzippedParent);
+                        throw new IOException(directoryCreationFailed + unzippedParent);
                     }
-
                     try(InputStream in = zipFile.getInputStream(zipEntry)) {
                         Files.copy(in, unzippedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         Files.deleteIfExists(zipFilePath);

@@ -40,10 +40,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
 
-     public static final String SYNC_REPORT_STATUS_MESSAGE = "{\"text\":\" %s accounts in Zoho where compared against %s accounts in KeyCloak where:  %s accounts are shared and %s contacts were added to Zoho. \n"
-        + "\n"
-        + "The affiliation for %s accounts was changed or established.\"}";
-
+    public static final String SYNC_REPORT_STATUS_MESSAGE = """
+        {"text":" %s accounts in Zoho where compared against %s accounts in KeyCloak where:  %s accounts are shared and %s contacts were added to Zoho.
+          The affiliation for %s accounts was changed or established."}
+        """;
     private final RealmModel      realm;
     private final UserProvider    userProvider;
     private final ZohoConnect     zohoConnect = new ZohoConnect();
@@ -151,7 +151,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     // skip the first line containing the CSV header
-    private void createAccounts(String pathToAccountsCsv) throws Exception {
+    private void createAccounts(String pathToAccountsCsv) throws IOException {
         accounts = new CsvToBeanBuilder(new FileReader(pathToAccountsCsv))
             .withType(Account.class)
             .withSkipLines(1)
@@ -161,7 +161,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     // skip the first line containing the CSV header
-    private void createContacts(String pathToContactsCsv) throws Exception {
+    private void createContacts(String pathToContactsCsv) throws IOException {
         contacts = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
             .withType(Contact.class)
             .withSkipLines(1)
