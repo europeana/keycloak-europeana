@@ -43,7 +43,11 @@ public class KeycloakToZohoSyncService {
   private final KeycloakSession session;
   private final RealmModel realm;
   private final UserProvider userProvider;
-  public  List<String> updatedContacts = new ArrayList<>();
+  private final List<String> updatedContacts = new ArrayList<>();
+
+  public List<String> getUpdatedContactList(){
+    return updatedContacts;
+  }
   private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
 
   public KeycloakToZohoSyncService(KeycloakSession session){
@@ -168,11 +172,10 @@ public class KeycloakToZohoSyncService {
       Set<String> participationLevel = getParticipationLevel(keycloakUser);
       //If Secondary mail is present then consider the private/project keys of that user
       updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-      if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel)) {
-       if(updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)) {
+      if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel) &&
+        updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)) {
          updatedContacts.add(contact.getId() + ":" + contact.getEmail());
        }
-      }
     }
   }
 
@@ -246,7 +249,6 @@ public class KeycloakToZohoSyncService {
     int count = 0;
     List<String> newContacts= new ArrayList<>();
     try {
-      LOG.info("Creating new zoho contacts.");
       //Separated zoho contacts
       Map<String, Contact> zohoContactsByPrimaryMail = getContactsMap(
           zohoContacts);
@@ -255,7 +257,6 @@ public class KeycloakToZohoSyncService {
       CustomUserDetailsRepository repo = new CustomUserDetailsRepository(entityManager);
       //Iterate over keyCloak Users
       List<UserEntity> keycloakUsers = repo.findKeycloakUsers();
-      LOG.info(keycloakUsers.size() + " keycloak users found.");
       for (UserEntity user : keycloakUsers) {
         if (!zohoContactsByPrimaryMail.containsKey(user.getEmail())) {
           //The keycloak user is not part of zoho yet , create new contact in zoho

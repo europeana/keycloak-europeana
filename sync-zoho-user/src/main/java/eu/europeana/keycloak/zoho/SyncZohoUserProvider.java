@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.zoho;
 
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.zoho.crm.api.exception.SDKException;
 import eu.europeana.api.common.zoho.ZohoConnect;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.ext.Provider;
@@ -103,7 +104,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
                     nrUpdatedUsers = updateKCUsers();
                 }
-            } catch (Exception e) {
+            } catch (IOException | SDKException | InterruptedException e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error downloading bulk job.";
             }
@@ -182,7 +183,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             kzSync.handleZohoUpdate(contact);
         }
         LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
-        LOG.info("Zoho Contacts Updated: " + kzSync.updatedContacts);
+        LOG.info("Zoho Contacts Updated: " + kzSync.getUpdatedContactList());
     }
     private void calculateModifiedZohoUsers(Contact contact, OffsetDateTime toThisTimeAgo) {
         if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
