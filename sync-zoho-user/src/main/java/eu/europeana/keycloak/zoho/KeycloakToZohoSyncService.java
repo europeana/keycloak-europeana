@@ -250,15 +250,22 @@ public class KeycloakToZohoSyncService {
     List<String> newContacts= new ArrayList<>();
     try {
       //Separated zoho contacts
-      Map<String, Contact> zohoContactsByPrimaryMail = getContactsMap(
-          zohoContacts);
       EntityManager entityManager = session.getProvider(JpaConnectionProvider.class)
           .getEntityManager();
       CustomUserDetailsRepository repo = new CustomUserDetailsRepository(entityManager);
+
+      Map<String, Contact> zohoContactsByPrimaryMail = getContactsMap(
+          zohoContacts);
+     //calculate users belonging to test Group
+      String testGroupId= repo.findTestGroupId();
+      List<String> testUserIds = new ArrayList<>();
+      if(testGroupId!=null){
+        testUserIds = repo.findTestGroupUsers(testGroupId);
+      }
       //Iterate over keyCloak Users
       List<UserEntity> keycloakUsers = repo.findKeycloakUsers();
       for (UserEntity user : keycloakUsers) {
-        if (!zohoContactsByPrimaryMail.containsKey(user.getEmail())) {
+        if (!zohoContactsByPrimaryMail.containsKey(user.getEmail()) && !testUserIds.contains(user.getId())) {
           //The keycloak user is not part of zoho yet , create new contact in zoho
           LOG.info("Creating zoho contact " + user.getEmail());
           String firstName = user.getFirstName();
@@ -295,6 +302,8 @@ public class KeycloakToZohoSyncService {
 
   private static Map<String, Contact> getContactsMap(List<Contact> zohoContacts) {
     Map<String, Contact> zohoContactsByPrimaryMail = new HashMap<>();
+
+
     for (Contact c : zohoContacts) {
       if (StringUtils.isNotEmpty(c.getEmail())) {
         zohoContactsByPrimaryMail.put(c.getEmail(), c);
