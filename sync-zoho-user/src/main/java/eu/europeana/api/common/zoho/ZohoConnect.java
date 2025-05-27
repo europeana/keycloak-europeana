@@ -25,7 +25,7 @@ import org.jboss.logging.Logger;
 public class ZohoConnect {
 
 	private static final Logger LOG        = Logger.getLogger(ZohoConnect.class);
-    private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
+	private static final Environment ENVIRONMENT = EUDataCenter.PRODUCTION;
 	private static ZohoInMemoryTokenStore tokenStore;
 
 	public boolean initialise() throws RuntimeException {
@@ -76,7 +76,7 @@ public class ZohoConnect {
 			return true;
 
 		} catch (Exception e) {
-			e.printStackTrace();
+		  LOG.error(e.getStackTrace());
 			return false;
 		}
 	}

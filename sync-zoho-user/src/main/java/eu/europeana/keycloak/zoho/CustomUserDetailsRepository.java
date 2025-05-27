@@ -26,7 +26,7 @@ public class CustomUserDetailsRepository {
   }
 
   public  List<String> findTestGroupUsers(String groupId){
-    String query ="SELECT uge.id FROM  UserGroupMembershipEntity uge WHERE uge.groupId=:groupID";
+    String query ="SELECT uge.user.id FROM  UserGroupMembershipEntity uge WHERE uge.groupId=:groupID";
     return em.createQuery(query,String.class).setParameter("groupID", groupId).getResultList();
   }
 

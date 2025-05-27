@@ -283,7 +283,7 @@ public class KeycloakToZohoSyncService {
         }
       }
     }catch (SDKException e){
-      LOG.error("Error occured while creating contact : "+ e);
+      LOG.error("Error occured while creating contact : "+ e.getMessage());
     }
     LOG.info("New contacts :" + newContacts);
     return count;
@@ -302,8 +302,6 @@ public class KeycloakToZohoSyncService {
 
   private static Map<String, Contact> getContactsMap(List<Contact> zohoContacts) {
     Map<String, Contact> zohoContactsByPrimaryMail = new HashMap<>();
-
-
     for (Contact c : zohoContacts) {
       if (StringUtils.isNotEmpty(c.getEmail())) {
         zohoContactsByPrimaryMail.put(c.getEmail(), c);
