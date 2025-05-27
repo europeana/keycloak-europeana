@@ -91,6 +91,8 @@ spec:
               value: "${RECAPTCHA_VERIFICATION_URL_PATH}"
             - name: RECAPTCHA_SECRET
               value: "${RECAPTCHA_SECRET}"
+            - name: ENABLE_KEYCLOAK_TO_ZOHO_SYNC
+              value: "${ENABLE_KEYCLOAK_TO_ZOHO_SYNC}"
           ports:
             - containerPort: 8080
           livenessProbe:

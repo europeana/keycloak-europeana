@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 public class Contact {
 
     @CsvBindByPosition(position = 0)
-    private String ID;
+    private String id;
 
     @CsvBindByPosition(position = 1)
     private String firstName;
@@ -29,14 +29,27 @@ public class Contact {
     private String email;
 
     @CsvBindByPosition(position = 6)
+    private String secondaryEmail;
+
+
+    @CsvBindByPosition(position = 7)
+    private String leadSource;
+
+    @CsvBindByPosition(position = 8)
+    private String userAccountId;
+
+    @CsvBindByPosition(position = 9)
+    private String contactParticipation;
+
+    @CsvBindByPosition(position = 10)
     private String modifiedTime;
 
-    public String getID() {
-        return ID;
+    public String getId() {
+        return id;
     }
 
-    public void setID(String ID) {
-        this.ID = ID;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getFirstName() {
@@ -79,6 +92,9 @@ public class Contact {
         this.email = email;
     }
 
+    public String getSecondaryEmail() { return secondaryEmail; }
+
+    public void setSecondaryEmail(String secondaryEmail) { this.secondaryEmail = secondaryEmail; }
     public OffsetDateTime getModifiedTime(){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
@@ -88,4 +104,19 @@ public class Contact {
         this.modifiedTime = modifiedTime;
     }
 
+    public String getLeadSource() { return leadSource; }
+
+    public void setLeadSource(String leadSource) { this.leadSource = leadSource; }
+
+    public String getUserAccountId() { return userAccountId; }
+
+    public void setUserAccountId(String userAccountId) { this.userAccountId = userAccountId; }
+
+    public String getContactParticipation() {
+        return contactParticipation;
+    }
+
+    public void setContactParticipation(String contactParticipation) {
+        this.contactParticipation = contactParticipation;
+    }
 }
