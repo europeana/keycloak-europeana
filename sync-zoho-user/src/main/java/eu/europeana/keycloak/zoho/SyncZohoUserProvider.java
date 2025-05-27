@@ -114,7 +114,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     private int createNewZohoContacts(List<Contact> contacts) {
-      return kzSync.validateAndCreateZohoContact(contacts);
+        if(kzSync.isSyncEnabled()) {
+            return kzSync.validateAndCreateZohoContact(contacts);
+        }
+        return 0;
     }
 
     private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
@@ -180,7 +183,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
         for (Contact contact : contacts) {
             calculateModifiedZohoUsers(contact, toThisTimeAgo);
-            kzSync.handleZohoUpdate(contact);
+            if(kzSync.isSyncEnabled()) {
+                kzSync.handleZohoUpdate(contact);
+            }
         }
         LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
         LOG.info("Zoho Contacts Updated: " + kzSync.getUpdatedContactList());

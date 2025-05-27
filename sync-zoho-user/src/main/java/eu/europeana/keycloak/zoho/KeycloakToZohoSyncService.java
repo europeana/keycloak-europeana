@@ -190,7 +190,7 @@ public class KeycloakToZohoSyncService {
    * Control if actual updates in ZOHO to be made by the sync job.   *
    * @return boolean
    */
-  private boolean isSyncEnabled() {
+  public boolean isSyncEnabled() {
     String enableKeycloakToZohoSync = System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC");
     return StringUtils.isNotEmpty(enableKeycloakToZohoSync) && "true".equals(enableKeycloakToZohoSync);
   }
