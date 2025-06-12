@@ -1,5 +1,9 @@
 package eu.europeana.keycloak.zoho;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class KeycloakUser {
 
   private String id;
@@ -7,16 +11,16 @@ public class KeycloakUser {
   private String email;
   private String firstName;
   private String lastName;
-  private String associatedRoleType;
+  private String associatedRoles;
 
   public KeycloakUser(String id, String username, String email, String firstName, String lastName,
-      String associatedRoleType) {
+      String associatedRoles) {
     this.id = id;
     this.username = username;
     this.email = email;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.associatedRoleType = associatedRoleType;
+    this.associatedRoles = associatedRoles;
   }
 
   public String getEmail() {
@@ -58,11 +62,18 @@ public class KeycloakUser {
     this.lastName = lastName;
   }
 
-  public String getAssociatedRoleType() {
-    return associatedRoleType;
+  public String getAssociatedRoles() {
+    return associatedRoles;
   }
 
-  public void setAssociatedRoleType(String associatedRoleType) {
-    this.associatedRoleType = associatedRoleType;
+  public void setAssociatedRoles(String associatedRoles) {
+    this.associatedRoles = associatedRoles;
+  }
+
+  public  List<String> getAssociatedRoleList(){
+    if(this.associatedRoles !=null){
+     return  Arrays.asList(getAssociatedRoles().split(","));
+    }
+    return Collections.emptyList();
   }
 }

@@ -105,7 +105,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     nrUpdatedUsers = updateKCUsers();
                 }
             } catch (IOException | SDKException | InterruptedException e) {
-                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
+                LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
                 return "Error downloading bulk job.";
             }
         }
@@ -114,10 +114,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     private int createNewZohoContacts(List<Contact> contacts) {
-        if(kzSync.isSyncEnabled()) {
-            return kzSync.validateAndCreateZohoContact(contacts);
-        }
-        return 0;
+      return kzSync.validateAndCreateZohoContact(contacts);
     }
 
     private String generateStatusReport(int nrUpdatedUsers,int nrOfNewlyAddedContactsInZoho) {
@@ -181,11 +178,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             instituteMap.put(account.getId(),
                              new Institute4Hash(account.getAccountName(), account.getEuropeanaOrgID()));
         }
+        kzSync.loadKeycloakUsersAndGroups();
         for (Contact contact : contacts) {
             calculateModifiedZohoUsers(contact, toThisTimeAgo);
-            if(kzSync.isSyncEnabled()) {
-                kzSync.handleZohoUpdate(contact);
-            }
+             kzSync.handleZohoUpdate(contact);
         }
         LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
         LOG.info("Zoho Contacts Updated: " + kzSync.getUpdatedContactList());
