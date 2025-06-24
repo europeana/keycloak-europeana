@@ -11,6 +11,9 @@ import org.keycloak.http.HttpRequest;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
 
+/**
+ * Provider class for to validate apikey with legacy way
+ */
 public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
 
   public static final String APIKEY_MISSING = "No API key in header. Correct header syntax 'Authorization: APIKEY <your_key_here>'";
@@ -18,7 +21,10 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
-
+  /**
+   * Construct ApiKeyLegacyValidationProvider with keycloak session and instantiate validation service
+   * @param keycloakSession keycloak session
+   */
   public ApiKeyLegacyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
     service = new ApiKeyValidationService(session);
@@ -34,6 +40,10 @@ public class ApiKeyLegacyValidationProvider implements RealmResourceProvider {
     //specific implementation not required . e.g resource or connection cleanup
   }
 
+  /**
+   * Extract apikey from http header and Validate
+   * @return response object with no content if success ,else the error response object
+   */
   @Path("")
   @POST
   public Response validateApiKeyLegacy(){

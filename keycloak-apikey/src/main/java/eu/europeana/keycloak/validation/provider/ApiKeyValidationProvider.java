@@ -24,6 +24,10 @@ import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
+/**
+ * Provider class for apikey validation operations
+ */
+
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
@@ -33,6 +37,10 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   private final ListApiKeysService listKeysService;
   private Cors cors;
 
+  /**
+   * Construct  ApiKeyValidationProvider with keycloak session and instantiate ListApiKeysService
+   * @param keycloakSession Keycloak Session
+   */
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
     service = new ApiKeyValidationService(session);
@@ -49,6 +57,12 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     //specific implementation not required . e.g resource or connection cleanup
   }
 
+  /**
+   * validates the apikey and ip
+   * @param clientId apikey to be validated
+   * @param ip IPV4 address
+   * @return response with Error message if failed or no content if success
+   */
   @Path("/validate")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
@@ -67,7 +81,11 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     return Response.status(Status.NO_CONTENT).build();
   }
 
-
+  /**
+   * Disable the client associated to keycloak user
+   * @param clientPublicID public id of client
+   * @return error response with message if failed or response with no content if success
+   */
   @Path("/{clientPublicId}")
   @DELETE
   public Response disableApikey(@PathParam("clientPublicId") String clientPublicID){
@@ -79,6 +97,10 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     return checkAndDisableApiKey(clientPublicID, result.getUser());
   }
 
+  /**
+   * Preflight request handler
+   * @return response
+   */
   @Path("/{clientPublicId}")
   @OPTIONS
   public Response disableApikeyPreflight() {
@@ -108,6 +130,10 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     return this.cors.builder(Response.status(Status.NO_CONTENT)).build();
   }
 
+  /**
+   * Create the apikey for the requesting user
+   * @return Error response with message if failed  or the response with no content if success
+   */
   @Path("")
   @POST
   public Response registerPersonalKey() {
@@ -134,6 +160,10 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
 
+  /**
+   * Preflight request handler
+   * @return response
+   */
   @Path("")
   @OPTIONS
   public Response registerPersonalKeyPreflight() {

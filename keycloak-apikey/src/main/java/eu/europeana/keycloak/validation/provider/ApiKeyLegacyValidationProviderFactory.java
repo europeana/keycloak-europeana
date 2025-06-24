@@ -6,6 +6,9 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
 
+/**
+ * Factory class for getting  ApiKeyLegacyValidationProvider instance
+ */
 public class ApiKeyLegacyValidationProviderFactory implements RealmResourceProviderFactory {
 
   public static final String PROVIDER_ID="validate_legacy";
