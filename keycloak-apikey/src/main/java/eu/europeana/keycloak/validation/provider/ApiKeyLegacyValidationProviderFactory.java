@@ -16,7 +16,7 @@ public class ApiKeyLegacyValidationProviderFactory implements RealmResourceProvi
 
   @Override
   public void init(Scope scope) {
-    //specific init actions not required e.g. reading,parsing configuration parameters,establishing initial connections to external resources  }
+    //specific init actions not required e.g. reading,parsing configuration parameters,establishing initial connections to external resources
   }
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {

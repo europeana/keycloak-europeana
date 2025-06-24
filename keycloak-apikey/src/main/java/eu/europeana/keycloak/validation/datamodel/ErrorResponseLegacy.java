@@ -7,6 +7,9 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.Getter;
 
+/**
+ *  legacy apikey validation result structure
+ */
 @JsonPropertyOrder({"success", "status", "error", "message", "timestamp", "path"})
 @JsonInclude(Include.NON_EMPTY)
 public class ErrorResponseLegacy {

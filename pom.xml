@@ -51,7 +51,6 @@
 
     <snakeyaml.version>2.3</snakeyaml.version>
     <jboss.logging.version>3.5.3.Final</jboss.logging.version>
-    <!--    <dependency-check-maven.version>11.1.0</dependency-check-maven.version>-->
     <dependency-check-maven.version>11.1.0</dependency-check-maven.version>
 
     <snakeyaml.version>2.3</snakeyaml.version>

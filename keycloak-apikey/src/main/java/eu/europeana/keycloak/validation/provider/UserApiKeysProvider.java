@@ -13,15 +13,19 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
+/**
+ * Provider class for fetching keys(clients) associated to keycloak user
+ */
 public class UserApiKeysProvider implements RealmResourceProvider {
-
   private final ApiKeyValidationService validationService;
   private final ListApiKeysService listKeysService;
-
   private final KeycloakSession session;
-
   private Cors cors;
 
+  /**
+   * Initialize {@code UserApiKeysProvider} with details
+   * @param keycloakSession current Keycloak session
+   */
   public UserApiKeysProvider(KeycloakSession keycloakSession) {
     this.session = keycloakSession;
     this.validationService = new ApiKeyValidationService(keycloakSession);

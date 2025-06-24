@@ -23,12 +23,19 @@ public class UserCountProvider implements RealmResourceProvider {
     public static final String CLIENT_OWNER = "client_owner";
     public static final String SHARED_OWNER = "shared_owner";
     private final KeycloakSession session;
+
+    /** Constructs new UserCountProvider with the provided keycloak session
+     * @param session current keycloak session
+     */
     public UserCountProvider(KeycloakSession session) {this.session = session;}
     @Override
     public Object getResource() {
         return this;
     }
 
+    /** Fetches the count of users and clients by type
+     * @return json string
+     */
     @Path("")
     @GET
     @Produces("application/json; charset=utf-8")
@@ -65,5 +72,4 @@ public class UserCountProvider implements RealmResourceProvider {
         obj.add("NumberOfPersonalClients",nrOfPrivatekeys);
         return obj.build().toString();
     }
-
 }

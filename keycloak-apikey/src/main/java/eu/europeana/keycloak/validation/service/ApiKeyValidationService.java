@@ -10,7 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
-import org.keycloak.TokenVerifier;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
@@ -21,12 +20,19 @@ import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 
+/**
+ * Provides operations for apikey validation.
+ */
 public class ApiKeyValidationService {
 
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
   private final KeycloakSession session;
   private final RealmModel realm;
 
+  /**
+   * Initialize the ApiKeyValidationService using keycloak session
+   * @param session Keycloak session
+   */
   public ApiKeyValidationService(KeycloakSession session) {
     this.session = session;
     this.realm =  session.getContext().getRealm();
@@ -34,6 +40,7 @@ public class ApiKeyValidationService {
 
   /** Method authenticates the bearer token input using the keycloack auth manager
    * @param tokenString  in form 'Bearer <TOKEN_VALUE>'
+   * @param grantType type of the token,it can be for client_credentials or password based
    * @return ValidationResult
    */
   public ValidationResult authorizeToken(String tokenString,String grantType) {
@@ -41,7 +48,7 @@ public class ApiKeyValidationService {
       AuthResult authResult=  AuthenticationManager.verifyIdentityToken(
           this.session, this.realm, session.getContext().getUri(),
           session.getContext().getConnection(), false, true,null, false,
-          tokenString, session.getContext().getRequestHeaders(), new TokenVerifier.Predicate[0]);
+          tokenString, session.getContext().getRequestHeaders());
 
       if (authResult == null || authResult.getClient() == null) {
         return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
@@ -89,8 +96,12 @@ public class ApiKeyValidationService {
    return true;
   }
 
-  public boolean validateApikeyLegacy(String apikey)
-   {
+  /**
+   * Legacy method to validate apikey
+   * @param apikey string
+   * @return boolean true if valid
+   */
+  public boolean validateApikeyLegacy(String apikey){
      //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientProvider clientProvider = session.clients();
     ClientModel client = clientProvider.getClientByClientId(realm, apikey);
@@ -106,6 +117,10 @@ public class ApiKeyValidationService {
     return true;
   }
 
+  /** Validates the input apikey
+   * @param apikey string value
+   * @return validation result object
+   */
   public ValidationResult validateApikey(String apikey){
     //validate if key exists . The clientID we receive in request parameter is actually the apikey.
     ClientModel client = session.clients().getClientByClientId(realm, apikey);
@@ -123,6 +138,12 @@ public class ApiKeyValidationService {
     return new ValidationResult(Status.OK,null);
   }
 
+
+  /**
+   * Fetch the apikey from request header
+   * @param httpRequest request
+   * @return apikey string
+   */
   public String extractApikeyFromAuthorizationHeader(HttpRequest httpRequest){
     HttpHeaders httpHeaders = httpRequest.getHttpHeaders();
     String authorization = httpHeaders!=null?httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION):null;
@@ -145,6 +166,7 @@ public class ApiKeyValidationService {
 
 
   /**Check if the HttpRequest has the Authorization header and validate its value.
+   * @param grantType type of grant used for issuing token. can be password or client_credentials
    * @return ValidationResult
    */
   public ValidationResult validateAuthToken(String grantType) {
@@ -156,6 +178,11 @@ public class ApiKeyValidationService {
     return authorizeToken(authHeader,grantType);
   }
 
+  /**
+   * Validates the input IP address string
+   * @param ip IPv4 address string
+   * @return Validation result
+   */
   public ValidationResult validateIp(String ip) {
     if(StringUtils.isBlank(ip)) {
       return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.IP_MISSING_400);
@@ -177,7 +204,7 @@ public class ApiKeyValidationService {
    * @return boolean indication if ip format is valid or not
    */
   private boolean isValidIpAddress(String ip) {
-    String regexFrag = "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])";
+    String regexFrag = "(\\d{1,2}|([0-1])\\d{2}|2[0-4]\\d|25[0-5])";
     String regex =regexFrag+"\\."+regexFrag+"\\."+regexFrag+"\\."+regexFrag;
     Pattern pattern = Pattern.compile(regex);
     Matcher matcher = pattern.matcher(ip);

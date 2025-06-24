@@ -23,11 +23,12 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     private final        String providerId;
     private final        String pepper;
     private final        Pattern pattern                 = Pattern.compile("-?\\d+(\\.\\d+)?");
-    Logger LOG;
+    private final Logger log;
 
-    public BCryptPasswordHashProvider(String providerId, Logger LOG) {
-        this.LOG = LOG;
-        LOG.debug("BCryptPasswordHashProvider created");
+
+    public BCryptPasswordHashProvider(String providerId, Logger log) {
+        this.log = log;
+        log.debug("BCryptPasswordHashProvider created");
         this.providerId = providerId;
         if (isNumeric(System.getenv("BCRYPT_ITERATIONS"))) {
             this.defaultIterations = Integer.parseInt(System.getenv("BCRYPT_ITERATIONS"));
@@ -43,7 +44,7 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
     @Override
     public boolean policyCheck(PasswordPolicy passwordPolicy, PasswordCredentialModel credentialModel) {
-        LOG.debug("BCryptPasswordHashProvider policy check");
+        log.debug("BCryptPasswordHashProvider policy check");
         int policyHashIterations = passwordPolicy.getHashIterations();
         if (policyHashIterations == -1) {
             policyHashIterations = defaultIterations;
@@ -80,7 +81,7 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
 
     @Override
     public boolean verify(String rawPassword, PasswordCredentialModel credential) {
-        LOG.debug("BCryptPasswordHashProvider verifying password ...");
+        log.debug("BCryptPasswordHashProvider verifying password ...");
         final String  hash             = credential.getPasswordSecretData().getValue();
         String        base64PepperedPw = pepperer(rawPassword);
         BCrypt.Result verifier         = BCrypt.verifyer(BCrypt.Version.VERSION_2Y,
@@ -90,13 +91,13 @@ public class BCryptPasswordHashProvider implements PasswordHashProvider {
     }
 
     private String pepperer(String rawPassword) {
-        LOG.debug("BCryptPasswordHashProvider adding pepper ...");
+        log.debug("BCryptPasswordHashProvider adding pepper ...");
         String pepperedPassword = rawPassword + pepper;
         return new String(Base64.encodeBase64(pepperedPassword.getBytes(StandardCharsets.UTF_8)),
                           StandardCharsets.UTF_8);
     }
 
-    public boolean isNumeric(String strNum) {
+    private boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;
         }

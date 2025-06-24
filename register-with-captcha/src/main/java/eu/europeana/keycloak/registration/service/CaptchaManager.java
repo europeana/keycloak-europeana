@@ -1,9 +1,9 @@
 package eu.europeana.keycloak.registration.service;
 
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.secret;
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.verificationUrlHost;
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.verificationUrlPath;
-import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.verificationUrlScheme;
+import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.SECRET;
+import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.VERIFICATION_URL_HOST;
+import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.VERIFICATION_URL_PATH;
+import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.VERIFICATION_URL_SCHEME;
 
 
 import eu.europeana.keycloak.registration.config.CaptachaManagerConfig;
@@ -84,8 +84,9 @@ public class CaptchaManager {
      */
     private URI getVerificationURI(String captchaToken) throws URISyntaxException {
         URIBuilder builder = new URIBuilder();
-        builder.setScheme(verificationUrlScheme).setHost(verificationUrlHost).setPath(verificationUrlPath)
-                .setParameter("secret", secret)
+        builder.setScheme(VERIFICATION_URL_SCHEME).setHost(VERIFICATION_URL_HOST).setPath(
+                VERIFICATION_URL_PATH)
+                .setParameter("secret", SECRET)
                 .setParameter("response", captchaToken);
         return builder.build();
     }

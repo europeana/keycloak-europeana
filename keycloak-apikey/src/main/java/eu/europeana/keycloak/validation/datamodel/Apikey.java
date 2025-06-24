@@ -27,6 +27,16 @@ public class Apikey {
   @Getter
   private final Date created;
 
+  /**
+   * Initialize the Apikey instance with details
+   * @param id
+   * @param clientId
+   * @param type
+   * @param creationDate
+   * @param name
+   * @param description
+   * @param state
+   */
   public Apikey(String id ,String clientId, String type,Date creationDate,String name,String description,
       String state) {
     this.id = id;

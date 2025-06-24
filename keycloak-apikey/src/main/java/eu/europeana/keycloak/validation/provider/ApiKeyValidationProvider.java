@@ -26,6 +26,7 @@ import org.keycloak.services.resources.Cors;
 
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
+  public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
@@ -88,12 +89,12 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   private Response checkAndDisableApiKey(String clientPublicID, UserModel user) {
     //Get Clients Associated to User
-    List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(user);
     ClientModel clientToBeDisabled = session.clients().getClientById(session.getContext().getRealm(),
         clientPublicID);
     if(clientToBeDisabled==null){
       return this.cors.builder(Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404)).build();
     }
+    List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(user);
     //check if requested client is part of clients associated to authorized user
     if (clientList.stream().noneMatch(apikey -> apikey.getId().equals(clientToBeDisabled.getId()))) {
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
@@ -122,14 +123,14 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
       }
       //check if user owns 3 disabled personal keys
-      if(personalKeys.stream().filter(p-> !p.isEnabled()).count() == 3){
+      if(personalKeys.stream().filter(p-> !p.isEnabled()).count() == ALLOWED_NUMBER_OF_DISABLED_KEYS){
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.KEY_LIMIT_REACHED_400)).build();
       }
     }
     //Create new key and associate it to user
-    KeyCloakClientCreationService service = new KeyCloakClientCreationService(session,
+    KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
         null, userModel.getUsername());
-    Apikey apikey = service.registerPersonalKey(userModel);
+    Apikey apikey = clientCreationService.registerPersonalKey(userModel);
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
 

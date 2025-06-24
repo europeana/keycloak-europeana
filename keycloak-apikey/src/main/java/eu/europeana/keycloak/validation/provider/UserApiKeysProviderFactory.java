@@ -6,6 +6,9 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
 
+/**
+ * Factory class for creating UserApiKeysProvider
+ */
 public class UserApiKeysProviderFactory implements RealmResourceProviderFactory {
 
   public static final String PROVIDER_ID="user";

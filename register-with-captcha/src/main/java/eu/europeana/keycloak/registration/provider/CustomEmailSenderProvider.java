@@ -31,7 +31,6 @@ import org.keycloak.vault.VaultStringSecret;
  */
 public class CustomEmailSenderProvider implements EmailSenderProvider {
   private final KeycloakSession session;
-
   private String addressForCC;
   private String addressForBCC;
 
