@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.jboss.logging.Logger;
 
 /**
@@ -34,23 +35,31 @@ public class ZohoBatchDownload {
     private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
     private static final String COMPLETED = "COMPLETED";
 
-    public String downloadResult(Long jobId) throws SDKException, InterruptedException {
-        BulkReadOperations           bulkReadOperations = new BulkReadOperations();
-        int maxLoops = 20;
-        int loops = 0;
-        while (loops < maxLoops) {
-            APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
-            if (response != null && response.isExpected()) {
-                ResponseHandler responseHandler = response.getObject();
-                if (responseHandler instanceof ResponseWrapper responseWrapper && isJobCompleted(
-                    responseWrapper)) {
-                    return downloadCompleted(jobId);
+    public String downloadResult(Long jobId) throws SDKException {
+
+            BulkReadOperations bulkReadOperations = new BulkReadOperations();
+            int maxLoops = 20;
+            int loops = 0;
+            while (loops < maxLoops) {
+                APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(
+                    jobId);
+                if (response != null && response.isExpected()) {
+                    ResponseHandler responseHandler = response.getObject();
+                    if (responseHandler instanceof ResponseWrapper responseWrapper
+                        && isJobCompleted(
+                        responseWrapper)) {
+                        return downloadCompleted(jobId);
+                    }
+                }
+                loops++;
+                LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
+                try {
+                Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    LOG.error(e.getStackTrace());
+                    Thread.currentThread().interrupt();
                 }
             }
-            loops ++;
-            LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
-            Thread.sleep(1000);
-        }
         return "";
     }
 
@@ -68,8 +77,8 @@ public class ZohoBatchDownload {
         BulkReadOperations           bulkReadOperations = new BulkReadOperations();
         APIResponse<ResponseHandler> response           = bulkReadOperations.downloadResult(jobId);
         if (response != null) {
-            if (Arrays.asList(204, 304).contains(response.getStatusCode())) {
-                LOG.error(response.getStatusCode() == 204 ? "No Content" : "Not Modified");
+            if (Arrays.asList(HttpStatus.SC_NO_CONTENT, HttpStatus.SC_NOT_MODIFIED).contains(response.getStatusCode())) {
+                LOG.error(response.getStatusCode() == HttpStatus.SC_NO_CONTENT ? "No Content" : "Not Modified");
                 return "";
             }
             if (response.isExpected()) {
@@ -108,6 +117,7 @@ public class ZohoBatchDownload {
         LOG.error("Error downloading batch job: " + exception.getMessage());
     }
 
+    @SuppressWarnings("javasecurity:S6096")
     public static String unZipFile(String pathToZipFile) {
         Path   zipFilePath = Paths.get(pathToZipFile);
         Path   zipDir      = zipFilePath.getParent();

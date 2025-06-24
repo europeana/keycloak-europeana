@@ -93,7 +93,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
                     nrUpdatedUsers = updateKCUsers();
                 }
-            } catch (IOException | SDKException | InterruptedException e) {
+            } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
                 return "Error downloading bulk job.";
             }
