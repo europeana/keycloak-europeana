@@ -117,7 +117,7 @@ public class ZohoBatchDownload {
         LOG.error("Error downloading batch job: " + exception.getMessage());
     }
 
-    @SuppressWarnings("javasecurity:S6096")
+    @SuppressWarnings("java:S6096")
     public static String unZipFile(String pathToZipFile) {
         Path   zipFilePath = Paths.get(pathToZipFile);
         Path   zipDir      = zipFilePath.getParent();
