@@ -19,12 +19,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -40,17 +34,14 @@ import org.keycloak.services.resource.RealmResourceProvider;
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
-
     public static final String SYNC_REPORT_STATUS_MESSAGE = """
         {"text":" %s accounts in Zoho where compared against %s accounts in KeyCloak where:  %s accounts are shared and %s contacts were added to Zoho.
-          The affiliation for %s accounts was changed or established."}
+         The affiliation for %s accounts was changed or established."}
         """;
     private final RealmModel      realm;
     private final UserProvider    userProvider;
     private final ZohoConnect     zohoConnect = new ZohoConnect();
-
     private final  KeycloakToZohoSyncService kzSync ;
-
     private List<Account> accounts;
     private List<Contact> contacts;
     HashMap<String, Institute4Hash> instituteMap    = new HashMap<>();
@@ -70,10 +61,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     /**
      * Retrieves users from Zoho
-     *
      * @return String (completed message)
      */
-
 
     @Path("")
     @GET
@@ -109,7 +98,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 return "Error downloading bulk job.";
             }
         }
-        publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
+        SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
+        conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 
@@ -126,31 +116,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                              nrUpdatedUsers);
     }
 
-    private void publishStatusReport(String message) {
-        LOG.info("Sending Slack Message : " + message);
-        try {
-            String slackWebhookApiAutomation = System.getenv("SLACK_WEBHOOK_API_AUTOMATION");
-            if (StringUtils.isBlank(slackWebhookApiAutomation)) {
-                LOG.error("Slack webhook not configured, status report will not be published over Slack.");
-                return;
-            }
-            HttpPost     httpPost = new HttpPost(slackWebhookApiAutomation);
-            StringEntity entity   = new StringEntity(message);
-            httpPost.setEntity(entity);
-            httpPost.setHeader("Accept", "application/json");
-            httpPost.setHeader("Content-type", "application/json");
-            try (CloseableHttpClient httpClient = HttpClients.createDefault();
-                 CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                LOG.info("Received status " + response.getStatusLine().getStatusCode()
-                         + " while calling slack!");
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    LOG.info(" Successfully sent slack message !");
-                }
-            }
-        } catch (IOException e) {
-            LOG.error("Exception occurred while sending slack message !! " + e.getMessage());
-        }
-    }
+
 
     // skip the first line containing the CSV header
     private void createAccounts(String pathToAccountsCsv) throws IOException {

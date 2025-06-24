@@ -17,7 +17,6 @@ import org.jboss.logging.Logger;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserProvider;
 import com.zoho.crm.api.HeaderMap;
 import com.zoho.crm.api.record.APIException;
 import com.zoho.crm.api.record.ActionHandler;
@@ -30,8 +29,12 @@ import com.zoho.crm.api.record.Record;
 import com.zoho.crm.api.record.SuccessResponse;
 import com.zoho.crm.api.util.APIResponse;
 
+/**
+ * Service to check and sync specific fields for the zoho contact or create new contact in zoho
+ */
 
 public class KeycloakToZohoSyncService {
+  private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
   public static final String CLIENT_OWNER = "client_owner";
   public static final String SHARED_OWNER = "shared_owner";
   public static final String ACCOUNT_HOLDER = "Account holder";
@@ -45,17 +48,23 @@ public class KeycloakToZohoSyncService {
   private Map<String,KeycloakUser> userdetails = new HashMap<>();
   private List<String> testUserIds = new ArrayList<>();
 
-  public List<String> getUpdatedContactList(){
-    return updatedContacts;
-  }
-  private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
-
+  /**
+   * Initialize KeycloakToZohoSyncService
+   * @param session Keycloak session
+   */
   public KeycloakToZohoSyncService(KeycloakSession session){
     this.realm = session.getContext().getRealm();
     this.entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
     this.repo = new CustomUserDetailsRepository(entityManager);
   }
 
+  public List<String> getUpdatedContactList(){
+    return updatedContacts;
+  }
+
+  /**
+   * Initialize userdetails map and the userids belonging to test group
+   */
   public void loadKeycloakUsersAndGroups(){
     userdetails =  repo.listAllUserMails(realm.getName());
     //calculate users belonging to test Group
@@ -71,7 +80,10 @@ public class KeycloakToZohoSyncService {
    * @param email - email for the new contact
    * @param firstName - firstName of user
    * @param lastName - Name for the contact.This can be keycloak username if user does not have first and last name populated in keycloak
-   */
+   * @param participationLevel - contacts participation level
+   * @return boolean true if contact created successfully
+   * @throws SDKException -
+   * */
   public boolean createZohoContact(String userAccountID ,String email,String firstName,String lastName,Set<String> participationLevel) throws SDKException {
     String moduleAPIName = "Contacts";
     RecordOperations recordOperations = new RecordOperations(moduleAPIName);
@@ -110,6 +122,8 @@ public class KeycloakToZohoSyncService {
    * @param recordId - The Zoho ID of the record to be updated.
    * @param userAccountID - keycloak user public id
    * @param participationLevel - Indicates the type of user e.g. API Customer,API User etc.
+   * @return boolean true if contact updated successfully
+   * @throws SDKException -
    */
   public boolean updateZohoContact(long recordId,String userAccountID,Set<String> participationLevel) throws SDKException {
 
@@ -134,7 +148,9 @@ public class KeycloakToZohoSyncService {
           if (actionResponse instanceof SuccessResponse) {
             return true;
           } else if (actionResponse instanceof APIException exception) {
-            LOG.error("Status: " + exception.getStatus().getValue() + " Code:" + exception.getCode().getValue()+" Message: "+ exception.getMessage().getValue());
+            LOG.error("Status: " + exception.getStatus().getValue() +
+                " Code:" + exception.getCode().getValue()+
+                " Message: "+ exception.getMessage().getValue());
             return false;
           }
         }
@@ -146,6 +162,11 @@ public class KeycloakToZohoSyncService {
     LOG.error("Unexpected response from zoho");
     return false;
   }
+
+  /**
+   * Update the contact in zoho
+   * @param contact object
+   */
   public  void handleZohoUpdate(Contact contact) {
     try {
       KeycloakUser keycloakUser = userdetails.get(contact.getEmail());
@@ -156,8 +177,7 @@ public class KeycloakToZohoSyncService {
         //update contact association in zoho if required
         handleZohoContactUpdate(contact, keycloakUser);
       }
-    }
-    catch (SDKException e){
+    }catch (SDKException e){
       LOG.error("Exception occurred while updating  contact. "+ e);
     }
   }
@@ -202,7 +222,7 @@ public class KeycloakToZohoSyncService {
          return Collections.emptySet();
     }
     return Arrays.stream(contactParticipation.split(";")).filter(participation ->
-            API_CUSTOMER.equals(participation) || API_USER.equals(participation) || ACCOUNT_HOLDER.equals(participation))
+            !(API_CUSTOMER.equals(participation) || API_USER.equals(participation) || ACCOUNT_HOLDER.equals(participation)))
         .collect(Collectors.toCollection(HashSet::new));
   }
 
@@ -240,14 +260,18 @@ public class KeycloakToZohoSyncService {
 
   private void updateParticipationBasedOnsecondaryMail(String secondaryMail, Set<String> participationLevel) {
     if(StringUtils.isNotEmpty(secondaryMail)) {
-      //UserModel keycloakUserForSecondaryMail = userProvider.getUserByEmail(realm,secondaryMail);
-      KeycloakUser userForSecondaryMail = userdetails.get(secondaryMail);
+       KeycloakUser userForSecondaryMail = userdetails.get(secondaryMail);
       if (userForSecondaryMail != null) {
         participationLevel.addAll(calculateParticipationLevel(userForSecondaryMail.getAssociatedRoleList()));
       }
     }
   }
 
+  /**
+   * Validates keycloak user and creates the associated contact in zoho
+   * @param zohoContacts list of contacts in zoho
+   * @return count of newly created contacts in zoho
+   */
   public int validateAndCreateZohoContact(List<Contact> zohoContacts) {
     int count = 0;
     List<String> newContacts= new ArrayList<>();
@@ -262,12 +286,11 @@ public class KeycloakToZohoSyncService {
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList());
-         if(isSyncEnabled()){
-           if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,(participationLevel))){
+          if(isSyncEnabled()){
+           if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,participationLevel)){
              newContacts.add(user.getEmail());
              count++;
-           }
-           else {
+           }else {
              LOG.error("Zoho Contact creation failed for "+user.getEmail());
            }
          }
@@ -304,8 +327,12 @@ public class KeycloakToZohoSyncService {
   private Set<String> calculateParticipationLevel(List<String> userRoles) {
     Set<String> participationLevels = new HashSet<>();
     participationLevels.add(ACCOUNT_HOLDER);
-    if(userRoles.contains(SHARED_OWNER)){participationLevels.add(API_CUSTOMER);}
-    if(userRoles.contains(CLIENT_OWNER)){participationLevels.add(API_USER);}
+    if(userRoles.contains(SHARED_OWNER)){
+      participationLevels.add(API_CUSTOMER);
+    }
+    if(userRoles.contains(CLIENT_OWNER)){
+      participationLevels.add(API_USER);
+    }
     return participationLevels;
   }
 

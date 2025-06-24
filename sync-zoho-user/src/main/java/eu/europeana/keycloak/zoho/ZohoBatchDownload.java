@@ -119,10 +119,21 @@ public class ZohoBatchDownload {
                 && !zipDir.toFile().mkdirs()) {
                 throw new IOException("failed to create directory " + zipDir);
             }
+            // Get the canonical path of the destination directory for validation
+            Path canonicalZipDir = zipDir.toRealPath();
             //Iterate over zipEntries
             while (zipEntries.hasMoreElements()) {
                 ZipEntry zipEntry = zipEntries.nextElement();
-                File unzippedFile = new File(zipDir.resolve(Path.of(zipEntry.getName())).toString());
+                String entryName = zipEntry.getName();
+
+                // Construct the target file path
+                Path targetPath = zipDir.resolve(entryName);
+                Path canonicalTargetPath = targetPath.toAbsolutePath();
+                if (!canonicalTargetPath.startsWith(canonicalZipDir)) {
+                    throw new IOException("Illegal zip entry path: " + entryName + " attempts to write outside the target directory.");
+                }
+
+                File unzippedFile = canonicalTargetPath.toFile();
                 //If directory then create a new directory in uncompressed folder
                 String filePath = getUnzippedFilePath(zipEntry, unzippedFile,
                     zipFile, zipFilePath);

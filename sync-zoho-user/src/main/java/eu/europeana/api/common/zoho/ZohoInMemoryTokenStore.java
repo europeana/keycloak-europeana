@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
+/** An implementation of {@link TokenStore} that provides custom storage and retrieval
+ *  operation for Zoho OAuth tokens.
  * @author Shweta Nazare, Sergiu Gordea, Luthien Dulk Created on 12 feb 2024
  */
 public class ZohoInMemoryTokenStore implements TokenStore {
