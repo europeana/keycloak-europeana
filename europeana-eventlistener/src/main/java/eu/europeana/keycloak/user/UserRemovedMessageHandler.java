@@ -28,13 +28,11 @@ import org.keycloak.email.EmailException;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.RoleContainerModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
 import static eu.europeana.keycloak.user.UserRemovedConfig.*;
 
-//import org.keycloak.representations.
 
 /**
  * Created by luthien on 25/10/2021.
@@ -43,14 +41,18 @@ import static eu.europeana.keycloak.user.UserRemovedConfig.*;
 public class UserRemovedMessageHandler {
 
     private static final Logger LOG = Logger.getLogger(UserRemovedMessageHandler.class);
+
+    public static final String CLIENT_OWNER = "client_owner";
+    public static final String SHARED_OWNER ="shared_owner";
+    public static final int DAYS_TO_ADD = 30;
     private final CloseableHttpClient httpClient;
     private final String prefix;
     private boolean setsDeleteOK       = false;
     private boolean slackHttpMessageOK  = false;
     private boolean slackEmailMessageOK = false;
 
-    public static final String CLIENT_OWNER = "client_owner";
-    public static final String SHARED_OWNER ="shared_owner";
+
+
 
     private String userSetToken;
 
@@ -58,6 +60,10 @@ public class UserRemovedMessageHandler {
         this.prefix        = prefix;
         httpClient         = HttpClients.createDefault();
     }
+
+
+
+
 
     @PreDestroy
     public void close() throws IOException {
@@ -90,13 +96,15 @@ public class UserRemovedMessageHandler {
             LOG.info(formatMessage(deleteEvent, setsDeleteOK ? USER_SETS_DELETED : USER_SETS_NOT_DELETED));
             LOG.info(formatMessage(deleteEvent, SENDING_CONFIRM_MSG_SLACK));
         }
-        if (null != SLACK_WEBHOOK && !SLACK_WEBHOOK.equalsIgnoreCase("")) {
+        if (null != SLACK_WEBHOOK && !"".equalsIgnoreCase(SLACK_WEBHOOK)) {
             String message = formatUserRemovedMessage(deleteEvent, true);
             LOG.info("message " + message);
             slackHttpMessageOK = sendSlackHttpMessage(deleteEvent,message,SLACK_WEBHOOK);
         }
         if (!slackHttpMessageOK) {
-            if (DEBUG_LOGS) {LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL)); }
+            if (DEBUG_LOGS) {
+                LOG.info(formatMessage(deleteEvent, HTTP_FAILED_TRYING_EMAIL));
+            }
              String message = formatUserRemovedMessage(deleteEvent, false);
              slackEmailMessageOK = sendSlackEmailMessage(session, slackUserModel, deleteEvent,message);
         }
@@ -128,18 +136,17 @@ public class UserRemovedMessageHandler {
 
         List<String> projectkeysWithoutUser = new ArrayList<>();
         for (RoleModel rolemodel : rolesAssociatedToUser) {
-            if (rolemodel.isClientRole()) {
-                RoleContainerModel container = rolemodel.getContainer();
-                ClientModel client = (ClientModel) container;
-                if (CLIENT_OWNER.equals(rolemodel.getName())) {
-                   dissociatePrivateKey(session, userModel, realm, client);
-                }
-                if (SHARED_OWNER.equals(rolemodel.getName())) {
-                    //get All users to whom the client(project key) is associated and check if it was the last user associated to that project key
-                     if (session.users().getRoleMembersStream(realm, rolemodel).findAny().isEmpty()) {
-                       projectkeysWithoutUser.add(client.getClientId());
+            ClientModel client = (ClientModel) rolemodel.getContainer();
+            if (rolemodel.isClientRole() && client!=null) {
+                    if (CLIENT_OWNER.equals(rolemodel.getName())) {
+                        dissociatePrivateKey(session, userModel, realm, client);
                     }
-                }
+                    if (SHARED_OWNER.equals(rolemodel.getName()) &&
+                        //get All users to whom the client(project key) is associated and check if it was the last user associated to that project key
+                        session.users().getRoleMembersStream(realm, rolemodel).findAny()
+                            .isEmpty()) {
+                        projectkeysWithoutUser.add(client.getClientId());
+                    }
             }
         }
         return  projectkeysWithoutUser;
@@ -152,8 +159,7 @@ public class UserRemovedMessageHandler {
            if (session.clients().removeClient(realm, clientModel.getId())) {
                LOG.info("Removed the private key "+clientModel.getClientId()+" associated to user-" + userModel.getUsername());
            }
-        }
-        else {
+        }else {
             LOG.error("Unable to remove private key associated to user");
         }
     }
@@ -166,53 +172,57 @@ public class UserRemovedMessageHandler {
      *                  FALSE for any other status or error condition
      */
     public boolean getUserSetToken() {
-
-            String responseString;
-            HttpPost     httpPost = new HttpPost(OIDTokenURL);
+            HttpPost     httpPost = new HttpPost(OID_TOKEN_URL);
             if (DEBUG_LOGS){
-                LOG.info("Auth server OID url: " + OIDTokenURL);
+                LOG.info("Auth server OID url: " + OID_TOKEN_URL);
             }
-            ArrayList<NameValuePair> postParameters;
-
-            postParameters = new ArrayList<>();
-            postParameters.add(new BasicNameValuePair("grant_type", GRANT_TYPE));
-            postParameters.add(new BasicNameValuePair("username", DELETE_MGR_ID));
-            postParameters.add(new BasicNameValuePair("password", DELETE_MGR_PW));
-            postParameters.add(new BasicNameValuePair("client_id", CLIENT_ID));
-            postParameters.add(new BasicNameValuePair("client_secret", CLIENT_SECRET));
-            postParameters.add(new BasicNameValuePair("scope", SCOPE));
-
             try {
-                httpPost.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
+                httpPost.setEntity(new UrlEncodedFormEntity( getPostParameters(), "UTF-8"));
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                LOG.error(e);
                 return false;
             }
-
             httpPost.setHeader("Content-type", "application/x-www-form-urlencoded");
-
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                    LOG.error("Error sending POST request, received HTTP " +
-                              response.getStatusLine().getStatusCode() +
-                              " response");
-                    return false;
-                } else {
-                    HttpEntity entity = response.getEntity();
-                    responseString = EntityUtils.toString(entity);
-                    userSetToken = readJsonValue(responseString, "access_token");
-                    if (isNotBlank(userSetToken)){
-                        if (DEBUG_LOGS) LOG.info("User set access token: " + userSetToken);
-                        return true;
-                    } else {
-                        LOG.error("No access token found in response from Keycloak: " + responseString);
-                        return false;
-                    }
-                }
+                return processResponse(response);
             } catch (Exception e) {
                 LOG.error(e);
                 return false;
             }
+    }
+
+    private boolean processResponse(CloseableHttpResponse response) throws IOException {
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            LOG.error("Error sending POST request, received HTTP response code" +
+                      response.getStatusLine().getStatusCode() );
+            return false;
+        } else {
+            HttpEntity entity = response.getEntity();
+            String responseString = EntityUtils.toString(entity);
+            userSetToken = readJsonValue(responseString, "access_token");
+            if (isNotBlank(userSetToken)){
+                if (DEBUG_LOGS){
+                    LOG.info("User set access token: " + userSetToken);
+                }
+                return true;
+            } else {
+                LOG.error("No access token found in response from Keycloak: " + responseString);
+                return false;
+            }
+        }
+    }
+
+    private static ArrayList<NameValuePair> getPostParameters() {
+        ArrayList<NameValuePair> postParameters;
+
+        postParameters = new ArrayList<>();
+        postParameters.add(new BasicNameValuePair("grant_type", GRANT_TYPE));
+        postParameters.add(new BasicNameValuePair("username", DELETE_MGR_ID));
+        postParameters.add(new BasicNameValuePair("password", DELETE_MGR_PW));
+        postParameters.add(new BasicNameValuePair("client_id", CLIENT_ID));
+        postParameters.add(new BasicNameValuePair("client_secret", CLIENT_SECRET));
+        postParameters.add(new BasicNameValuePair("scope", SCOPE));
+        return postParameters;
     }
 
     /**
@@ -239,8 +249,7 @@ public class UserRemovedMessageHandler {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
                 LOG.info(formatMessage(deleteEvent,
                                 "Usersets delete request successful: received HTTP " +
-                                response.getStatusLine().getStatusCode() +
-                                " response"));
+                                response.getStatusLine().getStatusCode() ));
                 return true;
             } else {
                 if (DEBUG_LOGS) {
@@ -252,8 +261,7 @@ public class UserRemovedMessageHandler {
                 } else {
                     LOG.error(formatMessage(deleteEvent,
                                  "Usersets delete request was not successful: received HTTP " +
-                                 response.getStatusLine().getStatusCode() +
-                                 " response"));
+                                 response.getStatusLine().getStatusCode()));
                 }
                 return false;
             }
@@ -277,7 +285,7 @@ public class UserRemovedMessageHandler {
                              deleteUser.getEmail(),
                              okString,
                              setsDeleteOK ? okString : errorString,
-                             LocalDate.now().plusDays(30));
+                             LocalDate.now().plusDays(DAYS_TO_ADD));
     }
 
     /**
@@ -290,7 +298,7 @@ public class UserRemovedMessageHandler {
     private boolean sendSlackHttpMessage(UserRemovedEvent deleteEvent,String message,String slackWebhook) {
 
         StringEntity entity;
-        HttpPost     httpPost = new HttpPost(slackWebhook);
+
 
         try {
             entity = new StringEntity(message);
@@ -299,6 +307,7 @@ public class UserRemovedMessageHandler {
             return false;
         }
 
+        HttpPost     httpPost = new HttpPost(slackWebhook);
         httpPost.setEntity(entity);
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
@@ -408,5 +417,4 @@ public class UserRemovedMessageHandler {
         jsonReader.close();
         return token;
     }
-
 }

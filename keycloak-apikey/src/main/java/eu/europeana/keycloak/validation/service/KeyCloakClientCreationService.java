@@ -4,7 +4,6 @@ import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.exception.KeyCreationException;
 import eu.europeana.keycloak.validation.util.Constants;
 import eu.europeana.keycloak.validation.util.PassGenerator;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -18,7 +17,9 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.RoleProvider;
 import org.keycloak.models.UserModel;
-
+/**
+ * Service for creating the keyclock client object along with necessary roles
+ */
 public class KeyCloakClientCreationService {
 
   private static final Logger LOG = Logger.getLogger(KeyCloakClientCreationService.class);
@@ -27,6 +28,12 @@ public class KeyCloakClientCreationService {
    private final String clientID;
   private final String clientName;
 
+  /**
+   * Constructs KeyCloakClientCreationService by initializing
+   * @param session KeycloakSession
+   * @param clientID ID of client
+   * @param clientName name of client
+   */
    public KeyCloakClientCreationService(KeycloakSession session,String clientID,String clientName) {
      this.session = session;
      this.realm =session.getContext().getRealm();

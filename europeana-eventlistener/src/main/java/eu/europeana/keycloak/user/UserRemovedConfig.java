@@ -3,14 +3,11 @@ package eu.europeana.keycloak.user;
 /**
  * Created by luthien on 01/11/2021.
  */
-public class UserRemovedConfig {
-    private UserRemovedConfig() {
-    }
+public final class UserRemovedConfig {
     public static final String LOG_PREFIX = "[KEYCLOAK_EVENT] ";
+    public static final String ERROR_ICON = ":x:";
 
-    protected static final String ERROR_ICON = ":x:";
-
-    static final boolean DEBUG_LOGS = System.getenv("DEBUG_LOGS").equalsIgnoreCase("true");
+    static final boolean DEBUG_LOGS = "true".equalsIgnoreCase(System.getenv("DEBUG_LOGS"));
     static final String GRANT_TYPE = "password";
     static final String CLIENT_ID = System.getenv("CLIENT_ID");
     static final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
@@ -21,7 +18,7 @@ public class UserRemovedConfig {
     static final String AUTH_SERVER_URL = System.getenv("AUTH_SERVER_URL");
     static final String SLACK_WEBHOOK = System.getenv("SLACK_WEBHOOK");
     static final String SLACK_USERNAME = System.getenv("SLACK_USER");
-    static final String OIDTokenURL = AUTH_SERVER_URL + "/realms/europeana/protocol/openid-connect/token";
+    static final String OID_TOKEN_URL = AUTH_SERVER_URL + "/realms/europeana/protocol/openid-connect/token";
 
     static final String ERROR_ASCII = "✘";
     static final String OK_ICON = ":heavy_check_mark:";
@@ -66,5 +63,6 @@ public class UserRemovedConfig {
 
     static final String SLACK_MSG_SENT = "Confirmation message was sent to Slack";
     static final String SLACK_WEBHOOK_ORPHAN_PROJECT_KEY = System.getenv("SLACK_WEBHOOK_ORPHAN_PROJECT_KEY");
-
+    private UserRemovedConfig() {
+    }
 }

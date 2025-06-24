@@ -1,8 +1,9 @@
 package eu.europeana.keycloak.validation.util;
 
-public class Constants {
-  private Constants() {
-  }
+/**
+ * Utility class to list constants used by keycloak apikey module
+ */
+public final class Constants {
   public static final String CLIENT_SCOPE_APIKEYS = "apikeys";
   public static final String ROLE_ATTRIBUTE_CREATION_DATE = "created";
   public static final String CREATION_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -18,4 +19,7 @@ public class Constants {
   public static final String CLIENT_OWNER = "client_owner";
   public static final String SHARED_OWNER ="shared_owner";
   public static final String CLIENT_OWNER_ROLE_DESCRIPTION="Ownership of this client";
+
+  private Constants() {
+  }
 }

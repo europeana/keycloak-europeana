@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
@@ -24,7 +23,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserManager;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -38,23 +36,20 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private static final Logger LOG         = Logger.getLogger(DeleteUnverifiedUserProvider.class);
     private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
     private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
-    private static final String USERDEL_MSG = " was deleted: email was not verified within 24 hours";
     private static final String DELETION_REPORT_MESSAGE  = "{\"text\":\" %s unverified accounts were deleted.\"}";
 
-    private static Map<String, String> EMAIL_NOT_VERIFIED;
+    private static Map<String, String> emailNotVerified;
 
     static {
-        EMAIL_NOT_VERIFIED = new HashMap<>();
-        EMAIL_NOT_VERIFIED.put(UserModel.EMAIL_VERIFIED, "false");
-        EMAIL_NOT_VERIFIED.put(UserModel.INCLUDE_SERVICE_ACCOUNT, "false");
+        emailNotVerified = new HashMap<>();
+        emailNotVerified.put(UserModel.EMAIL_VERIFIED, "false");
+        emailNotVerified.put(UserModel.INCLUDE_SERVICE_ACCOUNT, "false");
     }
 
     // change this value to set how many hours before {SYSDATE} unverified users (i.e. not confirmed by email)
     // must have registered at least, before they are removed when this add-on is triggered
     // (e.g. when set to 24L => removes all unverified users registered before yesterday, same time)
-    private final static Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
-
-    private boolean userRemoved = false;
+    private  static final Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
 
     private KeycloakSession session;
 
@@ -62,13 +57,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
     private UserProvider userProvider;
 
-    private UserManager userManager;
-
     public DeleteUnverifiedUserProvider(KeycloakSession session) {
         this.session      = session;
         this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
-        this.userManager  = new UserManager(session);
     }
 
     @Override
@@ -80,7 +72,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
      * Removes Users based on these criteria: - UserModel.EMAIL_VERIFIED = "false" - UserModel.INCLUDE_SERVICE_ACCOUNT =
      * "false" - was created less than [minimumAgeInDays] day(s) ago Details about the number and IDs of deleted users
      * are logged.
-     *
+     * @param minimumAgeInDays minimum age in days
      * @return String (completed message)
      */
     @Path("")
@@ -102,9 +94,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
         for (UserModel user : unverifiedUsersToYesterday) {
 
-            UserUuidDto           userUuidDto           = new UserUuidDto(user.getId(), user.getEmail());
-            UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user,
-                                                                                    userUuidDto);
+             UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user);
             session.getTransactionManager().enlistPrepare(userDeleteTransaction);
             nrOfDeletedUsers++;
 
@@ -129,10 +119,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private List<UserModel> getUnverifiedUsers(int minimumAgeInDays) {
         return userProvider.searchForUserStream(
                                realm,
-                               EMAIL_NOT_VERIFIED)
+                emailNotVerified)
                            .filter(u -> u.getCreatedTimestamp() <
                                         (System.currentTimeMillis() - (MILLIS_PER_DAY * minimumAgeInDays)))
-                           .collect(Collectors.toList());
+                           .toList();
     }
 
     private String listUnverifiedUsers(int minimumAgeInDays) {

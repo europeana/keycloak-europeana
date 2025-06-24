@@ -16,9 +16,17 @@ import org.keycloak.models.ClientModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 
+/**
+ * Provides operations to list the apikeys
+ */
 public class ListApiKeysService {
   private static final Logger LOG  = Logger.getLogger(ListApiKeysService.class);
 
+  /**
+   * Collects private and project apikyes associated to user,sorted by date.
+   * @param userModel keycloak UserModel
+   * @return sorted list of personal and project apikeys.
+   */
   public List<Apikey> getPrivateAndProjectkeys(UserModel userModel) {
     List<RoleModel> rolesAssociatedToUser = userModel.getRoleMappingsStream().filter(
         roleModel -> (Constants.CLIENT_OWNER.equals(roleModel.getName()) || Constants.SHARED_OWNER.equals(
@@ -52,14 +60,19 @@ public class ListApiKeysService {
       if (rolemodel.isClientRole()) {
         Apikey apikey = getApikey(rolemodel);
         if(apikey !=null) {
-          if(Constants.PERSONAL_KEY.equals(apikey.getType())){
-            personalKeys.add(apikey);
-          }
-          if(Constants.PROJECT_KEY.equals(apikey.getType())){
-            projectKeys.add(apikey);
-          }
+          checkAndPopulateKeyList(personalKeys, projectKeys, apikey);
         }
       }
+    }
+  }
+
+  private static void checkAndPopulateKeyList(List<Apikey> personalKeys, List<Apikey> projectKeys,
+      Apikey apikey) {
+    if(Constants.PERSONAL_KEY.equals(apikey.getType())){
+      personalKeys.add(apikey);
+    }
+    if(Constants.PROJECT_KEY.equals(apikey.getType())){
+      projectKeys.add(apikey);
     }
   }
 
@@ -71,7 +84,7 @@ public class ListApiKeysService {
    */
   private static Apikey getApikey(RoleModel rolemodel) {
     ClientModel client = (ClientModel) rolemodel.getContainer();
-    Date creationDate = getRoleCreationDate(rolemodel.getFirstAttribute(Constants.ROLE_ATTRIBUTE_CREATION_DATE));
+    Date creationDate = getUTCDate(rolemodel.getFirstAttribute(Constants.ROLE_ATTRIBUTE_CREATION_DATE));
     String clientState = client.isEnabled()?null: Constants.CLIENT_STATE_DISABLED;
     if (Constants.CLIENT_OWNER.equals(rolemodel.getName())) {
       return new Apikey(client.getId(), client.getClientId(), Constants.PERSONAL_KEY, creationDate, null,
@@ -85,15 +98,19 @@ public class ListApiKeysService {
     return null;
   }
 
-  public static Date getRoleCreationDate(String creationDate) {
-    if(StringUtils.isEmpty(creationDate)) return null;
+  /** Converts input string date in UTC, such as '2011-12-03T10:15:30Z'.
+   * @param dateString input date in string format
+   * @return null if input is empty or the Date object
+   */
+  public static Date getUTCDate(String dateString) {
+    if(StringUtils.isEmpty(dateString))
+      return null;
     try {
-      ZonedDateTime zonedDateTime = ZonedDateTime.parse(creationDate, DateTimeFormatter.ISO_INSTANT.withZone(
+      ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateString, DateTimeFormatter.ISO_INSTANT.withZone(
           ZoneOffset.UTC));
       return Date.from(zonedDateTime.toInstant());
-    }
-    catch (DateTimeParseException ex) {
-      LOG.error("Exception occurred while parsing date : "+creationDate+" returning null date");
+    }catch (DateTimeParseException ex) {
+      LOG.error("Exception occurred while parsing date : "+dateString+ " returning null date \n" + ex );
       return null;
     }
   }

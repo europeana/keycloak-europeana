@@ -5,29 +5,28 @@ import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
-import org.keycloak.models.KeycloakSession;
 
 public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
 
     private final String prefix;
-    Logger LOG;
+    private final  Logger log;
 
-    public EuropeanaEventListenerProvider(KeycloakSession session, Logger LOG, String prefix) {
-        this.LOG    = LOG;
+    public EuropeanaEventListenerProvider(Logger log, String prefix) {
+        this.log = log;
         this.prefix = prefix;
     }
 
     @Override
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
-        LOG.info(msg);
+        log.info(msg);
     }
 
     @Override
     public void onEvent(AdminEvent adminEvent, boolean b) {
         String msg = prefix + formatEventLog(adminEvent);
-        LOG.info(msg);
+        log.info(msg);
     }
 
     @Override

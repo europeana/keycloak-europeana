@@ -24,7 +24,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     @Override
     public EventListenerProvider create(KeycloakSession session) {
         this.session = session;
-        return new EuropeanaEventListenerProvider(session, LOG, LOG_PREFIX);
+        return new EuropeanaEventListenerProvider(LOG, LOG_PREFIX);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     @Override
     public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
         keycloakSessionFactory.register(
-            (event) -> {
+            event -> {
                 //do something here with the UserRemovedEvent
                 //the user is available via event.getUser()
                 if (event instanceof UserModel.UserRemovedEvent){

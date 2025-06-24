@@ -14,12 +14,11 @@ public class UserDeleteTransaction extends AbstractKeycloakTransaction {
     private static final Logger LOG = Logger.getLogger(UserDeleteTransaction.class);
 
     private final UserProvider userProvider;
-    private final UserUuidDto userUuidDto;
     private final UserModel  user;
     private final RealmModel realm;
 
-    public UserDeleteTransaction(UserProvider userProvider, RealmModel realm, UserModel user, UserUuidDto userUuidDto) {
-        this.userUuidDto  = userUuidDto;
+    public UserDeleteTransaction(UserProvider userProvider, RealmModel realm, UserModel user) {
+
         this.realm        = realm;
         this.user         = user;
         this.userProvider = userProvider;
