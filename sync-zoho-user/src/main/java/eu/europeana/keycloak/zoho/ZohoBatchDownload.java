@@ -30,6 +30,7 @@ import org.jboss.logging.Logger;
 /**
  * Created by luthien on 22/04/2024.
  */
+@SuppressWarnings("javasecurity:S6096")
 public class ZohoBatchDownload {
 
     private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
@@ -117,7 +118,6 @@ public class ZohoBatchDownload {
         LOG.error("Error downloading batch job: " + exception.getMessage());
     }
 
-    @SuppressWarnings("java:S6096")
     public static String unZipFile(String pathToZipFile) {
         Path   zipFilePath = Paths.get(pathToZipFile);
         Path   zipDir      = zipFilePath.getParent();
