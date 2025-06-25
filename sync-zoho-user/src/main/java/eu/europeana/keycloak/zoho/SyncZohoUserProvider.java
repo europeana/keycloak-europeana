@@ -150,7 +150,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             kzSync.handleZohoUpdate(contact);
         }
         LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
-        LOG.info("Zoho Contacts Updated: " + kzSync.getUpdatedContactList());
+        LOG.info("Zoho Contacts Updated in this sync: " + kzSync.getUpdatedContactList());
     }
     private void calculateModifiedZohoUsers(Contact contact, OffsetDateTime toThisTimeAgo) {
         if (contact.getModifiedTime().isAfter(toThisTimeAgo)) {
@@ -183,9 +183,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     user.setSingleAttribute("affiliation", zohoOrgId);
                     updated++;
                     LOG.info(affiliatedUser.getKey() + " affiliation updated from : " + affiliationValue + " to " +
-                             zohoOrgId);
+                             zohoOrgId + " in keycloak");
                 } else {
-                    LOG.info(affiliatedUser.getKey() + " will not be updated");
+                    LOG.info(affiliatedUser.getKey() + "affiliation will not be updated in keycloak");
                 }
 
             }

@@ -185,7 +185,9 @@ public class KeycloakToZohoSyncService {
   private void handleUserDissociation(Contact contact) throws SDKException {
     //dissociate the associated contact i.e. change the user_account_id  to null and remove API related participation levels
     if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
-      updateZohoContact(Long.parseLong(contact.getId()),null, removeAPIRelatedParticipation(contact.getContactParticipation()));
+      if(updateZohoContact(Long.parseLong(contact.getId()),null, removeAPIRelatedParticipation(contact.getContactParticipation()))){
+        updatedContacts.add(contact.getId() + ":" + contact.getEmail());
+      }
     }
   }
 
