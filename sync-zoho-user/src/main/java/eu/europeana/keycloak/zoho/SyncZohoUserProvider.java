@@ -147,7 +147,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         kzSync.loadKeycloakUsersAndGroups();
         for (Contact contact : contacts) {
             calculateModifiedZohoUsers(contact, toThisTimeAgo);
-             kzSync.handleZohoUpdate(contact);
+            kzSync.handleZohoUpdate(contact);
         }
         LOG.info(modifiedUserMap.size() + " contacts records were updated in Zoho in the past " + days + " days.");
         LOG.info("Zoho Contacts Updated: " + kzSync.getUpdatedContactList());

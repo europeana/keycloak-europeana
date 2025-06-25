@@ -6,8 +6,14 @@ import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.internal.SessionImpl;
+import org.hibernate.query.sql.internal.NativeQueryImpl;
+import org.jboss.logging.Logger;
 
 public class CustomUserDetailsRepository {
+
+  private static final Logger LOG = Logger.getLogger(CustomUserDetailsRepository.class);
   private final EntityManager em;
   public CustomUserDetailsRepository(EntityManager em) {
     this.em = em;
@@ -36,11 +42,11 @@ public class CustomUserDetailsRepository {
                             u.ID,u.USERNAME,u.EMAIL,u.FIRST_NAME ,u.LAST_NAME,
                             STRING_AGG(kr.NAME, ', ' ORDER BY kr.NAME) AS roles
                         FROM
-                            USER_ENTITY u
+                            {h-schema}USER_ENTITY u
                         LEFT JOIN
-                            USER_ROLE_MAPPING urm ON u.ID = urm.USER_ID
+                            {h-schema}USER_ROLE_MAPPING urm ON u.ID = urm.USER_ID
                         LEFT JOIN
-                            KEYCLOAK_ROLE kr ON urm.ROLE_ID = kr.ID
+                            {h-schema}KEYCLOAK_ROLE kr ON urm.ROLE_ID = kr.ID
                         WHERE u.realm_id = %s AND u.enabled = true AND u.service_account_client_link is null
                         GROUP BY
                             u.ID,u.USERNAME,u.EMAIL,u.FIRST_NAME ,u.LAST_NAME
@@ -50,6 +56,11 @@ public class CustomUserDetailsRepository {
 
     List<Object[]> rows = nativeQuery.getResultList();
 
+    if(((NativeQueryImpl<?>) nativeQuery).getSession() instanceof SessionImpl session){
+      if(session.getSessionFactory() instanceof SessionFactoryImpl factory){
+        LOG.info(" DB Schema name : "+factory.getProperties().get("hibernate.default_schema"));
+      }
+    }
 
     for(Object[] row : rows){
 

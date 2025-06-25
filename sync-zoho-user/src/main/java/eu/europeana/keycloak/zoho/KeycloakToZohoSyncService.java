@@ -193,7 +193,7 @@ public class KeycloakToZohoSyncService {
     boolean isPartOfTestGroup = isPartOfTestGroup(keycloakUser);
     //Skip the users who belong to test groups
     if (!isPartOfTestGroup) {
-      Set<String> participationLevel = calculateParticipationLevel(keycloakUser.getAssociatedRoleList());
+      Set<String> participationLevel = calculateParticipationLevel(keycloakUser.getAssociatedRoleList(),contact.getContactParticipation());
       //If Secondary mail is present then consider the private/project keys of that user
       updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
       if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel)
@@ -262,7 +262,7 @@ public class KeycloakToZohoSyncService {
     if(StringUtils.isNotEmpty(secondaryMail)) {
        KeycloakUser userForSecondaryMail = userdetails.get(secondaryMail);
       if (userForSecondaryMail != null) {
-        participationLevel.addAll(calculateParticipationLevel(userForSecondaryMail.getAssociatedRoleList()));
+        participationLevel.addAll(calculateParticipationLevel(userForSecondaryMail.getAssociatedRoleList(),null));
       }
     }
   }
@@ -282,11 +282,11 @@ public class KeycloakToZohoSyncService {
         KeycloakUser user = userEntry.getValue();
         if (!zohoContactsByPrimaryMail.containsKey(user.getEmail()) && !testUserIds.contains(user.getId())) {
           //The keycloak user is not part of zoho yet , create new contact in zoho
-          LOG.info("Creating zoho contact " + user.getEmail());
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
-          Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList());
+          Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList(),null);
           if(isSyncEnabled()){
+            LOG.info("Creating zoho contact " + user.getEmail());
            if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,participationLevel)){
              newContacts.add(user.getEmail());
              count++;
@@ -324,8 +324,14 @@ public class KeycloakToZohoSyncService {
     return zohoContactsByPrimaryMail;
   }
 
-  private Set<String> calculateParticipationLevel(List<String> userRoles) {
+  private Set<String> calculateParticipationLevel(List<String> userRoles,String existingParticipation) {
     Set<String> participationLevels = new HashSet<>();
+
+    if(StringUtils.isNotEmpty(existingParticipation)) {
+      List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(";")).toList();
+      participationLevels.addAll(existingParticipationLevelList);
+    }
+
     participationLevels.add(ACCOUNT_HOLDER);
     if(userRoles.contains(SHARED_OWNER)){
       participationLevels.add(API_CUSTOMER);
@@ -333,6 +339,7 @@ public class KeycloakToZohoSyncService {
     if(userRoles.contains(CLIENT_OWNER)){
       participationLevels.add(API_USER);
     }
+
     return participationLevels;
   }
 
