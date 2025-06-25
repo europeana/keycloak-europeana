@@ -29,7 +29,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
 /**
  * Created by luthien on 14/11/2022.
  */
-
+@SuppressWarnings("javasecurity:S6096")
 @Provider
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
