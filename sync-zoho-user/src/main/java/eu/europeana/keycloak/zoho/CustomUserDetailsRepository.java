@@ -6,7 +6,6 @@ import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.keycloak.models.jpa.entities.UserEntity;
 
 public class CustomUserDetailsRepository {
   private final EntityManager em;
@@ -44,9 +43,8 @@ public class CustomUserDetailsRepository {
                             KEYCLOAK_ROLE kr ON urm.ROLE_ID = kr.ID
                         WHERE u.realm_id = %s AND u.enabled = true AND u.service_account_client_link is null
                         GROUP BY
-                            u.ID, u.EMAIL
-                        ORDER BY u.EMAIL        
-        """.formatted("'"+realmName+"'");
+                            u.ID,u.USERNAME,u.EMAIL,u.FIRST_NAME ,u.LAST_NAME
+                        ORDER BY u.EMAIL""".formatted("'"+realmName+"'");
 
     Query nativeQuery = em.createNativeQuery(nativeQueryString);
 
