@@ -56,9 +56,9 @@ public class KeyCloakClientCreationService {
 
   private RoleModel createClientRole(String keyType, ClientModel client, Date creationDate) {
     if(Constants.PERSONAL_KEY.equals(keyType)) {
-        return createOwnerRole(client, creationDate, keyType,Constants.CLIENT_OWNER_ROLE_DESCRIPTION);
+        return createOwnerRole(client, creationDate, Constants.CLIENT_OWNER,Constants.CLIENT_OWNER_ROLE_DESCRIPTION);
     } else if (Constants.PROJECT_KEY.equals(keyType)){
-      return createOwnerRole(client, creationDate, keyType,Constants.SHARED_OWNER_ROLE_DESCRIPTION);
+      return createOwnerRole(client, creationDate, Constants.SHARED_OWNER,Constants.SHARED_OWNER_ROLE_DESCRIPTION);
     }
     return null;
   }
