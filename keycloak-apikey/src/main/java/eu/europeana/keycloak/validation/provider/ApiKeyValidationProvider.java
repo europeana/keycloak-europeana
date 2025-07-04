@@ -130,7 +130,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     //Create new key and associate it to user
     KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
         null, userModel.getUsername());
-    Apikey apikey = clientCreationService.registerPersonalKey(userModel);
+    Apikey apikey = clientCreationService.registerKey(userModel,Constants.PERSONAL_KEY,Constants.PRIVATE_KEY_DESCRIPTION);
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
 
