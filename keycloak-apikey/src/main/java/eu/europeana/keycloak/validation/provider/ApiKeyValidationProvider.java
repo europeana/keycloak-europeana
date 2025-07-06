@@ -7,6 +7,7 @@ import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.validation.util.SessionTracker;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
@@ -15,8 +16,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.infinispan.Cache;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -29,9 +36,12 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
-
   private final ListApiKeysService listKeysService;
   private Cors cors;
+
+  private static final Logger LOG  = Logger.getLogger(ApiKeyValidationProvider.class);
+  private static Cache<String, SessionTracker> sessionTrackerCache;
+  private static EmbeddedCacheManager cacheManager;
 
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
     this.session =keycloakSession;
@@ -52,6 +62,19 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/validate")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
+    //check and initialize the session tracking cache
+
+    if(initSessionTrackingCache()){
+      int sessionCount = 0;
+      SessionTracker sessionEntry = sessionTrackerCache.get("clientId");
+      if(sessionEntry!=null) {
+          sessionCount = sessionEntry.getSessionCount();
+      }
+      SessionTracker tracker = new SessionTracker("temp", clientId, ++sessionCount);
+      sessionTrackerCache.put(clientId,tracker);
+    }
+
+
     //validate token,apikey then IP in that order
     ValidationResult result = service.validateAuthToken(null);
     if (result.getErrorResponse() == null) {
@@ -159,4 +182,30 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         .exposedHeaders("Allow")
         .allowAllOrigins();
   }
+
+  public static boolean initSessionTrackingCache() {
+    try {
+      if(sessionTrackerCache == null) {
+        cacheManager = new DefaultCacheManager("cache-ispn-impl.xml");
+        sessionTrackerCache = cacheManager.getCache("sessionTrackerCache");
+        LOG.info("Infinispan cache 'sessionTrackerCache' initialized.");
+      }
+      return true;
+    } catch (IOException e) {
+      LOG.error("Failed to initialize infinispan cache 'sessionTrackerCache' "+e);
+      return false;
+    }
+  }
+
+  @Path("/clearcache")
+  @POST
+  public Response clearSessionTrackingCache(){
+      if(sessionTrackerCache !=null && !sessionTrackerCache.isEmpty()){
+        sessionTrackerCache.clear();
+        LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
+      }
+      LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
+      return this.cors.builder(Response.status(Status.OK)).build();
+  }
+
 }

@@ -91,6 +91,12 @@
       <version>${jakarta-annotationapi.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-infinispan</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
   </dependencies>
 
   <build>
