@@ -90,7 +90,11 @@
       <version>${commons-lang3.version}</version>
       <scope>compile</scope>
     </dependency>
-
+    <dependency>
+      <groupId>eu.europeana</groupId>
+      <artifactId>keycloak-common</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

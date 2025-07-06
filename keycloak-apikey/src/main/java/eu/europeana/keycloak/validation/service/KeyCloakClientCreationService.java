@@ -3,7 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.exception.KeyCreationException;
 import eu.europeana.keycloak.validation.util.Constants;
-import eu.europeana.keycloak.validation.util.PassGenerator;
+import eu.europeana.keycloak.PassGenerator;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;

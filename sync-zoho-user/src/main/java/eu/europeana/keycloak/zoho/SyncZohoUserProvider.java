@@ -25,6 +25,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
+import eu.europeana.keycloak.SlackConnection;
 
 /**
  * Created by luthien on 14/11/2022.
