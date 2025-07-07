@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -71,6 +72,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       }
       SessionTracker tracker = new SessionTracker("temp", clientId, ++sessionCount);
       sessionTrackerCache.put(clientId,tracker);
+      for(Map.Entry<String, SessionTracker> entry :  sessionTrackerCache.entrySet()){
+        LOG.info("Client-"+entry.getKey() + "   SessionCount-"+entry.getValue().getSessionCount());
+      }
     }
 
 
@@ -199,6 +203,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/clearcache")
   @POST
   public Response clearSessionTrackingCache(){
+       setupCors("POST");
       if(sessionTrackerCache !=null && !sessionTrackerCache.isEmpty()){
         sessionTrackerCache.clear();
         LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
