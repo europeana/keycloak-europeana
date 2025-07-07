@@ -65,5 +65,11 @@
       <memory max-count="-1"/>
     </distributed-cache>
 
+    <distributed-cache name="sessionTrackerCache" mode="SYNC" owners="2" statistics="true">
+      <locking isolation="READ_COMMITTED"/>
+      <expiration lifespan="-1" max-idle="-1"/>
+      <state-transfer enabled="true" timeout="60000"/>
+    </distributed-cache>
+
   </cache-container>
 </infinispan>
