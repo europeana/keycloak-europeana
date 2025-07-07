@@ -16,7 +16,7 @@ COPY addon-jars ./providers/
 COPY dependencies ./providers/
 
 # 5 copy quarkus configuration with custom jdbc settings
-#COPY config ./conf/
+COPY config/cache-ispn-impl.xml ./conf/
 
 # 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
@@ -35,7 +35,8 @@ COPY --from=builder /opt/keycloak/providers/ ./providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
+COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
+
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
 # CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
-
