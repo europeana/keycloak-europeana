@@ -24,6 +24,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -191,13 +192,17 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         .allowAllOrigins();
   }
 
-  public static boolean initSessionTrackingCache() {
+  public  boolean initSessionTrackingCache() {
     try {
+      InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+      sessionTrackerCache = provider.getCache("sessionTrackerCache");
+
       if(sessionTrackerCache == null) {
         cacheManager = new DefaultCacheManager("/opt/keycloak/conf/cache-ispn-impl.xml");
         sessionTrackerCache = cacheManager.getCache("sessionTrackerCache");
-        LOG.info("Infinispan cache 'sessionTrackerCache' initialized.");
+        LOG.info("Infinispan cache 'sessionTrackerCache' initialized using DefaultCacheManager");
       }
+      LOG.info("Found Infinispan cache 'sessionTrackerCache'");
       return true;
     } catch (IOException e) {
       LOG.error("Failed to initialize infinispan cache 'sessionTrackerCache' "+e);
