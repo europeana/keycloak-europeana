@@ -41,7 +41,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   private Cors cors;
 
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationProvider.class);
-  private static Cache<String, SessionTracker> sessionTrackerCache;
+  //private static Cache<String, SessionTracker> sessionTrackerCache;
   private static EmbeddedCacheManager cacheManager;
 
   public ApiKeyValidationProvider(KeycloakSession keycloakSession) {
@@ -64,25 +64,22 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
     //check and initialize the session tracking cache
-
-    if(initSessionTrackingCache()){
-      int sessionCount = 0;
-      SessionTracker tracker= null;
-      SessionTracker sessionEntry = sessionTrackerCache.get(clientId);
-
-      if(sessionEntry!=null) {
-          sessionCount = sessionEntry.getSessionCount();
-          LOG.info("Client- "+clientId +" found with count "+sessionCount);
-          sessionEntry.setSessionCount(++sessionCount);
-      }
-      else {
-        sessionTrackerCache.put(clientId, new SessionTracker("temp", clientId, ++sessionCount));
-      }
-      for(Map.Entry<String, SessionTracker> entry :  sessionTrackerCache.entrySet()){
-        LOG.info("Client-"+entry.getKey() + "   SessionCount-"+entry.getValue().getSessionCount());
-      }
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    SessionTracker tracker = null;
+    SessionTracker sessionEntry = sessionTrackerCache.get(clientId);
+    if (sessionEntry != null) {
+      int sessionCount = sessionEntry.getSessionCount();
+      LOG.info("Client- " + clientId + " found with count " + sessionCount);
+      sessionCount = sessionCount+1;
+      sessionEntry.setSessionCount(sessionCount);
+    } else {
+      sessionTrackerCache.put(clientId, new SessionTracker("temp", clientId, 1));
     }
-
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info(
+          "Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+    }
 
     //validate token,apikey then IP in that order
     ValidationResult result = service.validateAuthToken(null);
@@ -195,7 +192,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public  boolean initSessionTrackingCache() {
     try {
       InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-      sessionTrackerCache = provider.getCache("sessionTrackerCache");
+      Cache<Object, Object> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+      sessionTrackerCache = sessionTrackerCache;
+
 
       if(sessionTrackerCache == null) {
         cacheManager = new DefaultCacheManager("/opt/keycloak/conf/cache-ispn-impl.xml");
@@ -214,6 +213,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @POST
   public Response clearSessionTrackingCache(){
        setupCors("POST");
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<Object, Object> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+
       if(sessionTrackerCache !=null && !sessionTrackerCache.isEmpty()){
         sessionTrackerCache.clear();
         LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
