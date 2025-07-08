@@ -66,12 +66,19 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
     if(initSessionTrackingCache()){
       int sessionCount = 0;
+      SessionTracker tracker= null;
       SessionTracker sessionEntry = sessionTrackerCache.get("clientId");
+
       if(sessionEntry!=null) {
           sessionCount = sessionEntry.getSessionCount();
+          LOG.info("Client- "+clientId +" found with count "+sessionCount);
+          sessionCount =sessionCount+1 ;
+          sessionEntry.setSessionCount(sessionCount);
       }
-      SessionTracker tracker = new SessionTracker("temp", clientId, ++sessionCount);
-      sessionTrackerCache.put(clientId,tracker);
+      else {
+        sessionCount = sessionCount + 1;
+        sessionTrackerCache.put(clientId, new SessionTracker("temp", clientId, sessionCount));
+      }
       for(Map.Entry<String, SessionTracker> entry :  sessionTrackerCache.entrySet()){
         LOG.info("Client-"+entry.getKey() + "   SessionCount-"+entry.getValue().getSessionCount());
       }
