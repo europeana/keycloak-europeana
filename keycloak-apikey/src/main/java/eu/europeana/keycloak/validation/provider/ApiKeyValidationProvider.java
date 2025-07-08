@@ -8,15 +8,20 @@ import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
 import eu.europeana.keycloak.validation.util.SessionTracker;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,15 +75,12 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     SessionTracker sessionEntry = sessionTrackerCache.get(clientId);
     if (sessionEntry != null) {
       int sessionCount = sessionEntry.getSessionCount();
-      LOG.info("Client- " + clientId + " found with count " + sessionCount);
       sessionCount = sessionCount+1;
       sessionEntry.setSessionCount(sessionCount);
+      LOG.info("Client-" + clientId + " updated with sessionCount " + sessionCount);
     } else {
       sessionTrackerCache.put(clientId, new SessionTracker("temp", clientId, 1));
-    }
-    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
-      LOG.info(
-          "Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+      LOG.info("Client-" + clientId + " updated with sessionCount " + 1);
     }
 
     //validate token,apikey then IP in that order
@@ -212,10 +214,14 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/clearcache")
   @POST
   public Response clearSessionTrackingCache(){
-       setupCors("POST");
+     setupCors("POST");
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<Object, Object> sessionTrackerCache = provider.getCache("sessionTrackerCache");
-
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    LOG.info("Session Tracker Map:");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info(
+          "Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+    }
       if(sessionTrackerCache !=null && !sessionTrackerCache.isEmpty()){
         sessionTrackerCache.clear();
         LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
@@ -223,5 +229,22 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
       return this.cors.builder(Response.status(Status.OK)).build();
   }
+
+
+  @Path("/viewcache")
+  @GET
+  @Produces("application/json; charset=utf-8")
+  public String viewcache(){
+    JsonObjectBuilder details = Json.createObjectBuilder();
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    LOG.info("Session Tracker Cache Map:");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info("Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+      details.add(entry.getKey(),entry.getValue().getSessionCount());
+    }
+    return details.build().toString();
+  }
+
 
 }
