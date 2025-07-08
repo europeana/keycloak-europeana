@@ -67,7 +67,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     if(initSessionTrackingCache()){
       int sessionCount = 0;
       SessionTracker tracker= null;
-      SessionTracker sessionEntry = sessionTrackerCache.get("clientId");
+      SessionTracker sessionEntry = sessionTrackerCache.get(clientId);
 
       if(sessionEntry!=null) {
           sessionCount = sessionEntry.getSessionCount();
