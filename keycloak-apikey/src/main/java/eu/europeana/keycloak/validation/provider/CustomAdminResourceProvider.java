@@ -6,12 +6,14 @@ import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.util.Constants;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -42,6 +44,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   }
   @Path("/client")
   @POST
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   public Response createProjectKey(){
     this.setupCors("POST");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
@@ -74,6 +77,14 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
         .auth().allowedMethods(allowedMethod)
         .exposedHeaders("Allow")
         .allowAllOrigins();
+  }
+
+  @Path("/client")
+  @OPTIONS
+  public Response createProjectKeyPreflight(){
+    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
+        .auth().allowedMethods("POST")
+        .preflight().build();
   }
 
 }
