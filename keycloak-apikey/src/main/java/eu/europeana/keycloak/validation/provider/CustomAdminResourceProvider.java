@@ -68,8 +68,8 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
 
     //Create new key and associate it to user
     KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
-        null, userForKeyCreation.getUsername());
-    Apikey apikey = clientCreationService.registerKey(userModel,Constants.PROJECT_KEY,decodedFormParameters.getFirst("name"));
+        null, decodedFormParameters.getFirst("name"));
+    Apikey apikey = clientCreationService.registerKey(userForKeyCreation,Constants.PROJECT_KEY,null);
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
   private void setupCors(String allowedMethod) {
