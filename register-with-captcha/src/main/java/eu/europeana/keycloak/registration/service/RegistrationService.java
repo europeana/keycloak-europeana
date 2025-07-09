@@ -6,7 +6,7 @@ import static eu.europeana.keycloak.registration.config.CaptachaManagerConfig.CA
 import eu.europeana.keycloak.registration.datamodel.ErrorResponse;
 import eu.europeana.keycloak.registration.datamodel.RegistrationInput;
 import eu.europeana.keycloak.registration.exception.CaptchaException;
-import eu.europeana.keycloak.registration.util.PassGenerator;
+import eu.europeana.keycloak.PassGenerator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;

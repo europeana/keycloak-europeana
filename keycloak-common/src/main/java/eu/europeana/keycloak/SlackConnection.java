@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.usermgt;
+package eu.europeana.keycloak;
 
 import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
@@ -11,7 +11,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.jboss.logging.Logger;
 
 public class SlackConnection {
-
   private static final Logger LOG         = Logger.getLogger(SlackConnection.class);
 
   private String slackWebhook;
@@ -22,8 +21,6 @@ public class SlackConnection {
   public SlackConnection(String slackWebhook) {
     this.slackWebhook = slackWebhook;
   }
-
-
   /**
    * Sends the message to configured slack channel.
    * @param message - message body
@@ -52,6 +49,4 @@ public class SlackConnection {
       LOG.error("Exception occurred while sending slack message !! " + e.getMessage());
     }
   }
-
-
 }

@@ -25,6 +25,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
+import eu.europeana.keycloak.SlackConnection;
 
 /**
  * Created by luthien on 14/11/2022.
@@ -185,7 +186,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                     LOG.info(affiliatedUser.getKey() + " affiliation updated from : " + affiliationValue + " to " +
                              zohoOrgId + " in keycloak");
                 } else {
-                    LOG.info(affiliatedUser.getKey() + "affiliation will not be updated in keycloak");
+                    LOG.info(affiliatedUser.getKey() + " affiliation will not be updated in keycloak");
                 }
 
             }

@@ -81,7 +81,11 @@
       <artifactId>json</artifactId>
       <version>${json.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>eu.europeana</groupId>
+      <artifactId>keycloak-common</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
   </dependencies>
 
 

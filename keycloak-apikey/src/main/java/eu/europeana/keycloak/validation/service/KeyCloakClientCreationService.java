@@ -3,7 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.exception.KeyCreationException;
 import eu.europeana.keycloak.validation.util.Constants;
-import eu.europeana.keycloak.validation.util.PassGenerator;
+import eu.europeana.keycloak.PassGenerator;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -41,25 +41,34 @@ public class KeyCloakClientCreationService {
      this.clientName = clientName;
    }
 
-   public Apikey registerPersonalKey(UserModel user) {
+   public Apikey registerKey(UserModel user,String keyType,String keyDescription) {
      String apikey = (this.clientID == null)? generateApikeyName():clientID;
-     ClientModel client = createNewKey(apikey);
+     ClientModel client = createNewKey(apikey,keyDescription);
      Date creationDate = new Date();
-       RoleModel clientRole = createClientOwnerRole(client, creationDate);
-       if (clientRole != null) {
+     RoleModel clientRole = createClientRole(keyType, client, creationDate);
+     if (clientRole != null) {
          user.grantRole(clientRole);
          return new Apikey(client.getId(), client.getClientId(),
-             Constants.PERSONAL_KEY, creationDate, client.getName(), client.getDescription(), null);
+             keyType, creationDate, client.getName(), client.getDescription(), null);
         }
      return null;
    }
 
-  private ClientModel createNewKey(String clientID) {
+  private RoleModel createClientRole(String keyType, ClientModel client, Date creationDate) {
+    if(Constants.PERSONAL_KEY.equals(keyType)) {
+        return createOwnerRole(client, creationDate, Constants.CLIENT_OWNER,Constants.CLIENT_OWNER_ROLE_DESCRIPTION);
+    } else if (Constants.PROJECT_KEY.equals(keyType)){
+      return createOwnerRole(client, creationDate, Constants.SHARED_OWNER,Constants.SHARED_OWNER_ROLE_DESCRIPTION);
+    }
+    return null;
+  }
+
+  private ClientModel createNewKey(String clientID,String keyDescription) {
      try {
        ClientProvider clientProvider = session.clients();
        ClientModel client = clientProvider.addClient(realm, clientID);
        client.setName(clientName);
-       client.setDescription("Private key for individual use only");
+       client.setDescription(keyDescription);
        client.setProtocol("openid-connect");
        client.setPublicClient(true);
        client.setStandardFlowEnabled(false);
@@ -75,11 +84,11 @@ public class KeyCloakClientCreationService {
      }
   }
 
-  private RoleModel createClientOwnerRole(ClientModel client, Date roleCreationDate) {
+  private RoleModel createOwnerRole(ClientModel client, Date roleCreationDate,String roleName,String roleDescription) {
     try {
       RoleProvider roles = session.roles();
-      RoleModel roleModel = roles.addClientRole(client, Constants.CLIENT_OWNER);
-      roleModel.setDescription(Constants.CLIENT_OWNER_ROLE_DESCRIPTION);
+      RoleModel roleModel = roles.addClientRole(client, roleName);
+      roleModel.setDescription(roleDescription);
       roleModel.setAttribute(Constants.ROLE_ATTRIBUTE_CREATION_DATE,List.of(getDateString(roleCreationDate)));
       return roleModel;
     }catch (Exception e){
