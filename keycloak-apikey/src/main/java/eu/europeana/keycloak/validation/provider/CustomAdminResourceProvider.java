@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.apache.commons.lang3.StringUtils;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -61,8 +62,10 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     MultivaluedMap<String, String> decodedFormParameters = session.getContext().getHttpRequest()
         .getDecodedFormParameters();
     UserModel userForKeyCreation = session.users().getUserByEmail(session.getContext().getRealm(),decodedFormParameters.getFirst("email"));
-    //Return error if the type is not for project key or no exists for the specified email
-    if(!Constants.PROJECT_KEY.equals(decodedFormParameters.getFirst("type")) || userForKeyCreation ==null){
+    //Return error if the type is not for project key or no user exists for the specified email or project name is empty
+    if(!Constants.PROJECT_KEY.equals(decodedFormParameters.getFirst("type"))
+        || StringUtils.isBlank(decodedFormParameters.getFirst("name"))
+        || userForKeyCreation ==null){
       return this.cors.builder(Response.status(Status.BAD_REQUEST)).build();
     }
 
