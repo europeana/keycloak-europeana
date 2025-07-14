@@ -16,7 +16,10 @@ spec:
             - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
             - --log=console
             - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
+            - --cache-config-file=cache-ispn-impl.xml
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: KC_CACHE_STACK
               value: "kubernetes"
+            - name: KC_CUSTOM_INFINISPAN_CONFIG
+              value: "true"

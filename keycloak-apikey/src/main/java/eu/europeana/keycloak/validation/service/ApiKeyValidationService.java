@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -19,6 +20,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
+import org.infinispan.Cache;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 
 /**
  * Provides operations for apikey validation.
@@ -127,7 +130,7 @@ public class ApiKeyValidationService {
     return validateClient(client);
   }
 
-  private static ValidationResult validateClient(ClientModel client) {
+  private ValidationResult validateClient(ClientModel client) {
     if(client ==null){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
     }
@@ -135,6 +138,32 @@ public class ApiKeyValidationService {
     if(!client.isEnabled()){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
     }
+    // check the rate limit
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    SessionTracker sessionTracker =  sessionTrackerCache.get(client.getClientId());
+    String rateLimitDuration =System.getenv("SESSION_DURATION_FOR_RATE_LIMITING");
+    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
+    if(sessionTracker!=null && client.getRole(Constants.CLIENT_OWNER)!=null){
+     String personalKeyLimit =  System.getenv("PERSONAL_KEY_RATE_LIMIT");
+     if(StringUtils.isNotBlank(personalKeyLimit) ) {
+       int sessionCount = Integer.parseInt(sessionTracker.getSessionCount());
+       if(sessionCount >Integer.parseInt(personalKeyLimit)) {
+         return new ValidationResult(Status.TOO_MANY_REQUESTS,ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(personalKeyLimit,rateLimitDuration));
+       }
+     }
+    }
+
+    if(sessionTracker!=null && client.getRole(Constants.SHARED_OWNER)!=null){
+      String projectKeyLimit =  System.getenv("PROJECT_KEY_RATE_LIMIT");
+      if(StringUtils.isNotBlank(projectKeyLimit) ) {
+        int sessionCount = Integer.parseInt(sessionTracker.getSessionCount());
+        if(sessionCount >Integer.parseInt(projectKeyLimit)) {
+          return new ValidationResult(Status.TOO_MANY_REQUESTS,ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(projectKeyLimit,rateLimitDuration));
+        }
+      }
+    }
+
     return new ValidationResult(Status.OK,null);
   }
 
@@ -210,5 +239,7 @@ public class ApiKeyValidationService {
     Matcher matcher = pattern.matcher(ip);
     return  matcher.matches();
   }
+
+
 
 }

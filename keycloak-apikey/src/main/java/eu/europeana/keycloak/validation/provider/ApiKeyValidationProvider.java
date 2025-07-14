@@ -2,6 +2,7 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
@@ -17,6 +18,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import org.infinispan.Cache;
+import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -27,6 +32,7 @@ import org.keycloak.services.resources.Cors;
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
+  private static final Logger LOG  = Logger.getLogger(ApiKeyValidationProvider.class);
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
@@ -158,5 +164,25 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         .auth().allowedMethods(allowedMethod)
         .exposedHeaders("Allow")
         .allowAllOrigins();
+  }
+
+
+  @Path("/sessioncount")
+  @DELETE
+  public Response clearSessionTrackingCache(){
+    setupCors("DELETE");
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    LOG.info("Session Tracker Map:");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info(
+          "Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+    }
+    if(!sessionTrackerCache.isEmpty()){
+      sessionTrackerCache.clear();
+      LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
+    }
+    LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
+    return this.cors.builder(Response.status(Status.OK)).build();
   }
 }
