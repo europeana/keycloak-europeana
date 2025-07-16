@@ -8,14 +8,19 @@ import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -184,5 +189,23 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     }
     LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
     return this.cors.builder(Response.status(Status.OK)).build();
+  }
+
+  @Path("/sessioncount")
+  @GET
+  @Produces("application/json; charset=utf-8")
+  public String viewcache(){
+    JsonObjectBuilder main = Json.createObjectBuilder();
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    LOG.info("Session Tracker Cache Map:");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info("Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+      JsonObjectBuilder details = Json.createObjectBuilder();
+      details.add("sessionCount",entry.getValue().getSessionCount());
+      details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
+      main.add(entry.getKey(),details);
+    }
+    return main.build().toString();
   }
 }
