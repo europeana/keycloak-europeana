@@ -120,24 +120,11 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  /** Validates the input apikey
-   * @param apikey string value
+  /** Performs the rate limit check for the input client.
+   * @param client Keycloak client
    * @return validation result object
    */
-  public ValidationResult validateApikey(String apikey){
-    //validate if key exists . The clientID we receive in request parameter is actually the apikey.
-    ClientModel client = session.clients().getClientByClientId(realm, apikey);
-    return validateClient(client);
-  }
-
-  private ValidationResult validateClient(ClientModel client) {
-    if(client ==null){
-      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
-    }
-    //check if key not deprecated and currently active
-    if(!client.isEnabled()){
-      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
-    }
+  public ValidationResult performRateLimitCheck(ClientModel client){
     // check the rate limit
     ValidationResult rateLimitCheck = checkMaximumSessionLimitForClient(client);
     if (rateLimitCheck != null) {
@@ -146,6 +133,28 @@ public class ApiKeyValidationService {
     return new ValidationResult(Status.OK, null);
   }
 
+  /**
+   * Validates the input kyecloak client (i.e. apikey)
+   * @param client ClientModel representing the apikey
+   * @return validation result object
+   */
+  public ValidationResult validateClient(ClientModel client) {
+    if(client ==null){
+      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
+    }
+    //check if key not deprecated and currently active
+    if(!client.isEnabled()){
+      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
+    }
+    return new ValidationResult(Status.OK, null);
+  }
+
+  /**
+   * Method interact with custom distributed cache 'sessionTrackerCache'
+   * The number of sessions per time limit are validated , updated if required for the client.
+   * @param client
+   * @return
+   */
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");

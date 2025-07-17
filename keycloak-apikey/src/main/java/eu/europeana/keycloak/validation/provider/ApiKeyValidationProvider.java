@@ -63,13 +63,18 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/validate")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
-    //validate token,apikey then IP in that order
+    //validate token,apikey(i.e. clientId),IP and then rateLimit in that order
     ValidationResult result = service.validateAuthToken(null);
+    ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
+
     if (result.getErrorResponse() == null) {
-      result = service.validateApikey(clientId);
+      result = service.validateClient(client);
     }
     if(result.getErrorResponse() == null){
       result = service.validateIp(ip);
+    }
+    if(result.getErrorResponse() == null){
+      result = service.performRateLimitCheck(client);
     }
     //TODO - Update Logic to consume the validated IP
     if(result!= null && result.getErrorResponse() != null) {
@@ -174,21 +179,16 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   @Path("/sessioncount")
   @DELETE
-  public Response clearSessionTrackingCache(){
+  public String  clearSessionTrackingCache(){
     setupCors("DELETE");
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
-    LOG.info("Session Tracker Map:");
-    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
-      LOG.info(
-          "Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
-    }
+
     if(!sessionTrackerCache.isEmpty()){
       sessionTrackerCache.clear();
-      LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
+      return "Infinispan cache 'sessionTrackerCache' is cleared";
     }
-    LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
-    return this.cors.builder(Response.status(Status.OK)).build();
+    return "Infinispan cache 'sessionTrackerCache' is already empty";
   }
 
   @Path("/sessioncount")
