@@ -237,7 +237,7 @@ public class ApiKeyValidationService {
     if(!isValidIpAddress(ip)){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.IP_INVALID_400);
     }
-    return null;
+    return new ValidationResult(Status.OK, null);
   }
 
   /** Method checks IPV4 address input and checks if it is matching the xxx.xxx.xxx.xxx

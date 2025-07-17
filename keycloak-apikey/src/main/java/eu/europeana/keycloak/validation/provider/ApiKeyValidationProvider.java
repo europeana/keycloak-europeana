@@ -180,7 +180,6 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/sessioncount")
   @DELETE
   public String  clearSessionTrackingCache(){
-    setupCors("DELETE");
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
 
