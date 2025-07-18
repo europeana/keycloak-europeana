@@ -54,3 +54,31 @@ spec:
               args:
                 - "${KEYCLOAK_HOST}/auth/realms/europeana/zohosync"
           restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: keycloakclient-session-count-reset-job
+spec:
+  schedule: "${KEYCLOAK_SESSIONCOUNT_RESET_SCHEDULE}"
+  suspend: ${SUSPEND_KEYCLOAK_SESSIONCOUNT_RESET}
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          annotations:
+            fluentd/include: '${COLLECT_LOGS}'
+            fluentd/multiline: 'true'
+        spec:
+          containers:
+            - name: cron
+              image: busybox
+              imagePullPolicy: IfNotPresent
+              command:
+                - wget
+              args:
+                - "--method=DELETE ${KEYCLOAK_HOST}/auth/realms/europeana/sessioncount"
+          restartPolicy: Never

@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -19,6 +20,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
+import org.infinispan.Cache;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 
 /**
  * Provides operations for apikey validation.
@@ -117,17 +120,25 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  /** Validates the input apikey
-   * @param apikey string value
+  /** Performs the rate limit check for the input client.
+   * @param client Keycloak client
    * @return validation result object
    */
-  public ValidationResult validateApikey(String apikey){
-    //validate if key exists . The clientID we receive in request parameter is actually the apikey.
-    ClientModel client = session.clients().getClientByClientId(realm, apikey);
-    return validateClient(client);
+  public ValidationResult performRateLimitCheck(ClientModel client){
+    // check the rate limit
+    ValidationResult rateLimitCheck = checkMaximumSessionLimitForClient(client);
+    if (rateLimitCheck != null) {
+      return rateLimitCheck;
+    }
+    return new ValidationResult(Status.OK, null);
   }
 
-  private static ValidationResult validateClient(ClientModel client) {
+  /**
+   * Validates the input kyecloak client (i.e. apikey)
+   * @param client ClientModel representing the apikey
+   * @return validation result object
+   */
+  public ValidationResult validateClient(ClientModel client) {
     if(client ==null){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
     }
@@ -135,7 +146,49 @@ public class ApiKeyValidationService {
     if(!client.isEnabled()){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
     }
-    return new ValidationResult(Status.OK,null);
+    return new ValidationResult(Status.OK, null);
+  }
+
+  /**
+   * Method interact with custom distributed cache 'sessionTrackerCache'
+   * The number of sessions per time limit are validated , updated if required for the client.
+   * @param client
+   * @return
+   */
+  private ValidationResult checkMaximumSessionLimitForClient(ClientModel client) {
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+
+
+    String rateLimitDuration = System.getenv("SESSION_DURATION_FOR_RATE_LIMITING");
+    String personalKeyLimit = System.getenv("PERSONAL_KEY_RATE_LIMIT");
+    String projectKeyLimit = System.getenv("PROJECT_KEY_RATE_LIMIT");
+
+    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
+   SessionTracker sessionTracker = sessionTrackerCache.compute(client.getClientId(),
+        (key, existingTracker) -> {
+          if (existingTracker == null) {
+            return new SessionTracker(key, 1);
+          } else {
+            existingTracker.setSessionCount(existingTracker.getSessionCount() + 1);
+            return existingTracker;
+          }
+        });
+
+      int sessionCount = sessionTracker.getSessionCount();
+      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > Integer.parseInt(
+          personalKeyLimit)) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS,
+            ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(personalKeyLimit,
+                rateLimitDuration));
+      }
+      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > Integer.parseInt(
+          projectKeyLimit)) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS,
+            ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(projectKeyLimit,
+                rateLimitDuration));
+      }
+      return null;
   }
 
 
@@ -163,8 +216,6 @@ public class ApiKeyValidationService {
   }
 
 
-
-
   /**Check if the HttpRequest has the Authorization header and validate its value.
    * @param grantType type of grant used for issuing token. can be password or client_credentials
    * @return ValidationResult
@@ -190,7 +241,7 @@ public class ApiKeyValidationService {
     if(!isValidIpAddress(ip)){
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.IP_INVALID_400);
     }
-    return null;
+    return new ValidationResult(Status.OK, null);
   }
 
   /** Method checks IPV4 address input and checks if it is matching the xxx.xxx.xxx.xxx
@@ -210,5 +261,4 @@ public class ApiKeyValidationService {
     Matcher matcher = pattern.matcher(ip);
     return  matcher.matches();
   }
-
 }

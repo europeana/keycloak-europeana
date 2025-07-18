@@ -2,21 +2,31 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import org.infinispan.Cache;
+import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -27,6 +37,7 @@ import org.keycloak.services.resources.Cors;
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
+  private static final Logger LOG  = Logger.getLogger(ApiKeyValidationProvider.class);
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
 
@@ -52,13 +63,18 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/validate")
   @POST
   public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
-    //validate token,apikey then IP in that order
+    //validate token,apikey(i.e. clientId),IP and then rateLimit in that order
     ValidationResult result = service.validateAuthToken(null);
+    ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
+
     if (result.getErrorResponse() == null) {
-      result = service.validateApikey(clientId);
+      result = service.validateClient(client);
     }
     if(result.getErrorResponse() == null){
       result = service.validateIp(ip);
+    }
+    if(result.getErrorResponse() == null){
+      result = service.performRateLimitCheck(client);
     }
     //TODO - Update Logic to consume the validated IP
     if(result!= null && result.getErrorResponse() != null) {
@@ -158,5 +174,37 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         .auth().allowedMethods(allowedMethod)
         .exposedHeaders("Allow")
         .allowAllOrigins();
+  }
+
+
+  @Path("/sessioncount")
+  @DELETE
+  public String  clearSessionTrackingCache(){
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+
+    if(!sessionTrackerCache.isEmpty()){
+      sessionTrackerCache.clear();
+      return "Infinispan cache 'sessionTrackerCache' is cleared";
+    }
+    return "Infinispan cache 'sessionTrackerCache' is already empty";
+  }
+
+  @Path("/sessioncount")
+  @GET
+  @Produces("application/json; charset=utf-8")
+  public String viewcache(){
+    JsonObjectBuilder main = Json.createObjectBuilder();
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    LOG.info("Session Tracker Cache Map:");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      LOG.info("Client-" + entry.getKey() + "   SessionCount-" + entry.getValue().getSessionCount());
+      JsonObjectBuilder details = Json.createObjectBuilder();
+      details.add("sessionCount",entry.getValue().getSessionCount());
+      details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
+      main.add(entry.getKey(),details);
+    }
+    return main.build().toString();
   }
 }
