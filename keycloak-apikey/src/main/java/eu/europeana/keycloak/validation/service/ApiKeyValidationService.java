@@ -159,32 +159,36 @@ public class ApiKeyValidationService {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
 
-    SessionTracker sessionTracker = sessionTrackerCache.get(client.getClientId());
 
     String rateLimitDuration = System.getenv("SESSION_DURATION_FOR_RATE_LIMITING");
     String personalKeyLimit = System.getenv("PERSONAL_KEY_RATE_LIMIT");
     String projectKeyLimit = System.getenv("PROJECT_KEY_RATE_LIMIT");
 
     //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-    if (sessionTracker != null) {
+   SessionTracker sessionTracker = sessionTrackerCache.compute(client.getClientId(),
+        (key, existingTracker) -> {
+          if (existingTracker == null) {
+            return new SessionTracker(key, 1);
+          } else {
+            existingTracker.setSessionCount(existingTracker.getSessionCount() + 1);
+            return existingTracker;
+          }
+        });
+
       int sessionCount = sessionTracker.getSessionCount();
-      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >=Integer.parseInt(
+      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > Integer.parseInt(
           personalKeyLimit)) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(personalKeyLimit,
                 rateLimitDuration));
       }
-      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >=Integer.parseInt(
+      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > Integer.parseInt(
           projectKeyLimit)) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(projectKeyLimit,
                 rateLimitDuration));
       }
-      sessionTracker.setSessionCount(sessionCount + 1);
-    } else {
-      sessionTrackerCache.put(client.getClientId(), new SessionTracker(client.getClientId(), 1));
-    }
-    return null;
+      return null;
   }
 
 
