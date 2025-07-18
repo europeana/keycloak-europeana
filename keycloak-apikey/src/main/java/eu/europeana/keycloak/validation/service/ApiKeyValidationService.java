@@ -168,13 +168,13 @@ public class ApiKeyValidationService {
     //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
     if (sessionTracker != null) {
       int sessionCount = sessionTracker.getSessionCount();
-      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > Integer.parseInt(
+      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >=Integer.parseInt(
           personalKeyLimit)) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(personalKeyLimit,
                 rateLimitDuration));
       }
-      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > Integer.parseInt(
+      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >=Integer.parseInt(
           projectKeyLimit)) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(projectKeyLimit,
