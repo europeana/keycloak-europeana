@@ -177,8 +177,8 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   }
 
 
-  @Path("/sessioncount")
-  @DELETE
+  @Path("/clearcache")
+  @GET
   public String  clearSessionTrackingCache(){
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");

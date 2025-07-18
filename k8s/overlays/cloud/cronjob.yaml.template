@@ -80,5 +80,5 @@ spec:
               command:
                 - wget
               args:
-                - "--method=DELETE ${KEYCLOAK_HOST}/auth/realms/europeana/sessioncount"
+                - "${KEYCLOAK_HOST}/auth/realms/europeana/client/clearcache"
           restartPolicy: Never
