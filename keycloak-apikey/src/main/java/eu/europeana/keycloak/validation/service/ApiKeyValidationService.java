@@ -29,6 +29,13 @@ import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 public class ApiKeyValidationService {
 
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
+  public static final String SESSION_TRACKER_CACHE = "sessionTrackerCache";
+  public static final String SESSION_DURATION_FOR_RATE_LIMITING = "SESSION_DURATION_FOR_RATE_LIMITING";
+  public static final String PERSONAL_KEY_RATE_LIMIT = "PERSONAL_KEY_RATE_LIMIT";
+  public static final String PROJECT_KEY_RATE_LIMIT = "PROJECT_KEY_RATE_LIMIT";
+  public static final int DEFAULT_PROJECT_KEY_RATE_LIMIT = 10000;
+  public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT = 1000;
+  public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT = 60;
   private final KeycloakSession session;
   private final RealmModel realm;
 
@@ -157,15 +164,15 @@ public class ApiKeyValidationService {
    */
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
-
-
-    String rateLimitDuration = System.getenv("SESSION_DURATION_FOR_RATE_LIMITING");
-    String personalKeyLimit = System.getenv("PERSONAL_KEY_RATE_LIMIT");
-    String projectKeyLimit = System.getenv("PROJECT_KEY_RATE_LIMIT");
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(SESSION_TRACKER_CACHE);
+    if (sessionTrackerCache == null) {
+      LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
+          + " not found. Cannot perform rate limit check");
+      return null;
+    }
 
     //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-   SessionTracker sessionTracker = sessionTrackerCache.compute(client.getClientId(),
+    SessionTracker sessionTracker = sessionTrackerCache.compute(client.getClientId(),
         (key, existingTracker) -> {
           if (existingTracker == null) {
             return new SessionTracker(key, 1);
@@ -175,20 +182,38 @@ public class ApiKeyValidationService {
           }
         });
 
-      int sessionCount = sessionTracker.getSessionCount();
-      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > Integer.parseInt(
-          personalKeyLimit)) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(personalKeyLimit,
-                rateLimitDuration));
-      }
-      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > Integer.parseInt(
-          projectKeyLimit)) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(projectKeyLimit,
-                rateLimitDuration));
-      }
-      return null;
+    int sessionCount = sessionTracker.getSessionCount();
+    int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
+        DEFAULT_SESSION_DURATION_RATE_LIMIT);
+
+    int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
+    if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > personalKeyLimit) {
+      return new ValidationResult(Status.TOO_MANY_REQUESTS,
+          ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
+              String.valueOf(rateLimitDuration)));
+    }
+
+    int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
+    if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > projectKeyLimit) {
+      return new ValidationResult(Status.TOO_MANY_REQUESTS,
+          ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
+              String.valueOf(rateLimitDuration)));
+    }
+    return null;
+  }
+
+  private int getEnvInt(String envVar, int defaultValue) {
+    String evVarValue = System.getenv(envVar);
+    if(StringUtils.isBlank(evVarValue)){
+     LOG.error("Environment variable "+envVar+ " is not configured. Using default value "+ defaultValue);
+     return defaultValue;
+    }
+    try{
+       return Integer.parseInt(evVarValue);
+    }catch (NumberFormatException ex){
+       LOG.error("Invalid number format for environment variable "+envVar+"="+evVarValue+" Using default value "+ defaultValue);
+       return defaultValue;
+    }
   }
 
 
