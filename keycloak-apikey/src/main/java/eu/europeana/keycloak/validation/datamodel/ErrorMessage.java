@@ -43,8 +43,10 @@ public enum ErrorMessage {
           + "Please confirm if the identifier corresponds to the public identifier for the client and its respective key."),
   CLIENT_ALREADY_DISABLED_410("410_client_disabled","The client has already disabled","The client has already been previously disabled."),
 
-  LIMIT_PERSONAL_KEYS_429("429_limit_personal","Personal key client has reached the limit of %s requests per %s minutes","The use of personal keys is limited to X requests per Y minutes. If your project requires a higher rate limit or makes regular use of the APIs, we recommend applying for a project key in the account section of the Europeana website."),
-  LIMIT_PROJECT_KEYS_429("429_limit_project","Project key client has reached the limit of %s request per %s minutes","The recommended way to access the Europeana APIs with project keys is by using access tokens, which can be obtained through the Europeana Authentication Service. Learn more at https://europeana.atlassian.net/wiki/spaces/EF/pages/2462351393/Accessing+the+APIs#Auth-Service");
+  LIMIT_PERSONAL_KEYS_429("429_limit_personal","Personal key client has reached the limit of %s requests per %s minutes",
+      "The use of personal keys is limited to %s requests per %s minutes. If your project requires a higher rate limit or makes regular use of the APIs, we recommend applying for a project key in the account section of the Europeana website."),
+  LIMIT_PROJECT_KEYS_429("429_limit_project","Project key client has reached the limit of %s request per %s minutes",
+      "The recommended way to access the Europeana APIs with project keys is by using access tokens, which can be obtained through the Europeana Authentication Service. Learn more at https://europeana.atlassian.net/wiki/spaces/EF/pages/2462351393/Accessing+the+APIs#Auth-Service");
 
 
 
@@ -52,7 +54,7 @@ public enum ErrorMessage {
   @JsonInclude(value = JsonInclude.Include.NON_EMPTY)
   private String error;
   @JsonInclude(value = JsonInclude.Include.NON_EMPTY)
-  private final String message;
+  private  String message;
 
   ErrorMessage(String code, String error, String message) {
     this.code = code;
@@ -66,6 +68,11 @@ public enum ErrorMessage {
 
   public ErrorMessage formatError(String ...args){
     this.error =  String.format(this.getError(),args);
+    return this;
+  }
+
+  public ErrorMessage formatErrorMessage(String ...args){
+    this.message =  String.format(this.getMessage(),args);
     return this;
   }
 }

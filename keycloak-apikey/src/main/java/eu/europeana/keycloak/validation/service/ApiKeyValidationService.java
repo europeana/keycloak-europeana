@@ -127,18 +127,7 @@ public class ApiKeyValidationService {
     return true;
   }
 
-  /** Performs the rate limit check for the input client.
-   * @param client Keycloak client
-   * @return validation result object
-   */
-  public ValidationResult performRateLimitCheck(ClientModel client){
-    // check the rate limit
-    ValidationResult rateLimitCheck = checkMaximumSessionLimitForClient(client);
-    if (rateLimitCheck != null) {
-      return rateLimitCheck;
-    }
-    return new ValidationResult(Status.OK, null);
-  }
+
 
   /**
    * Validates the input kyecloak client (i.e. apikey)
@@ -156,19 +145,17 @@ public class ApiKeyValidationService {
     return new ValidationResult(Status.OK, null);
   }
 
-  /**
-   * Method interact with custom distributed cache 'sessionTrackerCache'
-   * The number of sessions per time limit are validated , updated if required for the client.
-   * @param client
-   * @return
+  /** Performs the rate limit check for the input client.
+   * @param client Keycloak client
+   * @return validation result object
    */
-  private ValidationResult checkMaximumSessionLimitForClient(ClientModel client) {
+  public ValidationResult performRateLimitCheck(ClientModel client) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(SESSION_TRACKER_CACHE);
     if (sessionTrackerCache == null) {
       LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
           + " not found. Cannot perform rate limit check");
-      return null;
+     return new ValidationResult(Status.OK, null);
     }
 
     //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
@@ -182,6 +169,18 @@ public class ApiKeyValidationService {
           }
         });
 
+    return checkMaximumSessionLimitForClient(client, sessionTracker);
+  }
+
+
+  /**
+   * Method interact with custom distributed cache 'sessionTrackerCache'
+   * The number of sessions per time limit are validated , updated if required for the client.
+   * @param client keycloak Client object
+   * @return ValidationResult object . Result staus is OK in case unable to perform the rate limit check
+   */
+
+  private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
     int sessionCount = sessionTracker.getSessionCount();
     int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
         DEFAULT_SESSION_DURATION_RATE_LIMIT);
@@ -190,7 +189,9 @@ public class ApiKeyValidationService {
     if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > personalKeyLimit) {
       return new ValidationResult(Status.TOO_MANY_REQUESTS,
           ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
-              String.valueOf(rateLimitDuration)));
+                  String.valueOf(rateLimitDuration))
+              .formatErrorMessage(String.valueOf(personalKeyLimit),
+                  String.valueOf(rateLimitDuration)));
     }
 
     int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
@@ -199,7 +200,7 @@ public class ApiKeyValidationService {
           ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
               String.valueOf(rateLimitDuration)));
     }
-    return null;
+    return new ValidationResult(Status.OK, null);
   }
 
   private int getEnvInt(String envVar, int defaultValue) {
