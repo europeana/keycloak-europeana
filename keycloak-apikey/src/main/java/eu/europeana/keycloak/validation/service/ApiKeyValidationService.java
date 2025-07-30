@@ -158,18 +158,21 @@ public class ApiKeyValidationService {
      return new ValidationResult(Status.OK, null);
     }
 
-    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-    SessionTracker sessionTracker = sessionTrackerCache.compute(client.getClientId(),
-        (key, existingTracker) -> {
-          if (existingTracker == null) {
-            return new SessionTracker(key, 1);
-          } else {
-            existingTracker.setSessionCount(existingTracker.getSessionCount() + 1);
-            return existingTracker;
-          }
-        });
-
-    return checkMaximumSessionLimitForClient(client, sessionTracker);
+     //check the limits for allowed number of sessions for each apikey (keycloak client)
+    ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client,sessionTrackerCache.get(client.getClientId()));
+    if(limitCheckResult.isSuccess()) {
+      //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
+       sessionTrackerCache.compute(client.getClientId(),
+          (key, existingTracker) -> {
+            if (existingTracker == null) {
+              return new SessionTracker(key, 1);
+            } else {
+              existingTracker.setSessionCount(existingTracker.getSessionCount() + 1);
+              return existingTracker;
+            }
+          });
+    }
+    return limitCheckResult;
   }
 
 
@@ -181,24 +184,26 @@ public class ApiKeyValidationService {
    */
 
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
-    int sessionCount = sessionTracker.getSessionCount();
-    int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
-        DEFAULT_SESSION_DURATION_RATE_LIMIT);
+    if(sessionTracker != null) {
+      int sessionCount = sessionTracker.getSessionCount();
+      int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
+          DEFAULT_SESSION_DURATION_RATE_LIMIT);
 
-    int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
-    if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount > personalKeyLimit) {
-      return new ValidationResult(Status.TOO_MANY_REQUESTS,
-          ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
-                  String.valueOf(rateLimitDuration))
-              .formatErrorMessage(String.valueOf(personalKeyLimit),
-                  String.valueOf(rateLimitDuration)));
-    }
+      int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
+      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS,
+            ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
+                    String.valueOf(rateLimitDuration))
+                .formatErrorMessage(String.valueOf(personalKeyLimit),
+                    String.valueOf(rateLimitDuration)));
+      }
 
-    int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
-    if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount > projectKeyLimit) {
-      return new ValidationResult(Status.TOO_MANY_REQUESTS,
-          ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
-              String.valueOf(rateLimitDuration)));
+      int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
+      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS,
+            ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
+                String.valueOf(rateLimitDuration)));
+      }
     }
     return new ValidationResult(Status.OK, null);
   }
