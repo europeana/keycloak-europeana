@@ -82,6 +82,11 @@
       <version>${json.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-infinispan</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+    <dependency>
       <groupId>eu.europeana</groupId>
       <artifactId>keycloak-common</artifactId>
       <version>2.4-SNAPSHOT</version>

@@ -93,6 +93,12 @@ spec:
               value: "${RECAPTCHA_SECRET}"
             - name: ENABLE_KEYCLOAK_TO_ZOHO_SYNC
               value: "${ENABLE_KEYCLOAK_TO_ZOHO_SYNC}"
+            - name: SESSION_DURATION_FOR_RATE_LIMITING
+              value: "${SESSION_DURATION_FOR_RATE_LIMITING}"
+            - name: PERSONAL_KEY_RATE_LIMIT
+              value: "${PERSONAL_KEY_RATE_LIMIT}"
+            - name: PROJECT_KEY_RATE_LIMIT
+              value: "${PROJECT_KEY_RATE_LIMIT}"
           ports:
             - containerPort: 8080
           livenessProbe:
