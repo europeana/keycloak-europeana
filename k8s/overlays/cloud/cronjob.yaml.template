@@ -19,7 +19,7 @@ spec:
           containers:
             - name: cron
               image: busybox
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command:
                 - wget
               args:
@@ -48,7 +48,7 @@ spec:
           containers:
             - name: cron
               image: busybox
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command:
                 - wget
               args:
@@ -76,7 +76,7 @@ spec:
           containers:
             - name: cron
               image: busybox
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command:
                 - wget
               args:

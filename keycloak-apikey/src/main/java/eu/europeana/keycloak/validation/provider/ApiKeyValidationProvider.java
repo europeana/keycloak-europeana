@@ -70,14 +70,14 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     if (result.getErrorResponse() == null) {
       result = service.validateClient(client);
     }
-    if(result.getErrorResponse() == null){
+    if (result.getErrorResponse() == null){
       result = service.validateIp(ip);
     }
-    if(result.getErrorResponse() == null){
+    if (result.getErrorResponse() == null){
       result = service.performRateLimitCheck(client);
     }
     //TODO - Update Logic to consume the validated IP
-    if(result!= null && result.getErrorResponse() != null) {
+    if (result!= null && result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
     return Response.status(Status.NO_CONTENT).build();
@@ -107,7 +107,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     //Get Clients Associated to User
     ClientModel clientToBeDisabled = session.clients().getClientById(session.getContext().getRealm(),
         clientPublicID);
-    if(clientToBeDisabled==null){
+    if (clientToBeDisabled==null){
       return this.cors.builder(Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404)).build();
     }
     List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(user);
@@ -116,7 +116,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
     //check if key already disabled
-    if(!clientToBeDisabled.isEnabled()){
+    if (!clientToBeDisabled.isEnabled()){
       return this.cors.builder(Response.status(Status.GONE).entity(ErrorMessage.CLIENT_ALREADY_DISABLED_410)).build();
     }
     //disable the key
@@ -135,11 +135,11 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     UserModel userModel = result.getUser();
     List<ClientModel> personalKeys = getPersonalKeys(userModel);
     if (!personalKeys.isEmpty()) {
-      if(personalKeys.stream().anyMatch(ClientModel::isEnabled)){
+      if (personalKeys.stream().anyMatch(ClientModel::isEnabled)){
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
       }
       //check if user owns 3 disabled personal keys
-      if(personalKeys.stream().filter(p-> !p.isEnabled()).count() == ALLOWED_NUMBER_OF_DISABLED_KEYS){
+      if (personalKeys.stream().filter(p-> !p.isEnabled()).count() == ALLOWED_NUMBER_OF_DISABLED_KEYS){
         return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.KEY_LIMIT_REACHED_400)).build();
       }
     }
@@ -183,7 +183,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
 
-    if(!sessionTrackerCache.isEmpty()){
+    if (!sessionTrackerCache.isEmpty()){
       sessionTrackerCache.clear();
       return "Infinispan cache 'sessionTrackerCache' is cleared";
     }
@@ -193,7 +193,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/sessioncount")
   @GET
   @Produces("application/json; charset=utf-8")
-  public String viewcache(){
+  public String viewCache(){
     JsonObjectBuilder main = Json.createObjectBuilder();
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
