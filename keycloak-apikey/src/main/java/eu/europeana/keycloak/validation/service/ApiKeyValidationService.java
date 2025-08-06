@@ -7,6 +7,7 @@ import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -155,24 +156,25 @@ public class ApiKeyValidationService {
     if (sessionTrackerCache == null) {
       LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
           + " not found. Cannot perform rate limit check");
-     return new ValidationResult(Status.OK, null);
+      return new ValidationResult(Status.OK, null);
     }
 
-     //check the limits for allowed number of sessions for each apikey (keycloak client)
-    ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client,sessionTrackerCache.get(client.getClientId()));
-    if(limitCheckResult.isSuccess()) {
-      //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-       sessionTrackerCache.compute(client.getClientId(),
-          (key, existingTracker) -> {
-            if (existingTracker == null) {
-              return new SessionTracker(key, 1);
-            } else {
-              existingTracker.setSessionCount(existingTracker.getSessionCount() + 1);
-              return existingTracker;
-            }
-          });
-    }
-    return limitCheckResult;
+    AtomicReference<ValidationResult> resultReference = new AtomicReference<>();
+
+    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
+    sessionTrackerCache.compute(client.getClientId(),
+        (key, existingTracker) -> {
+          SessionTracker tracker = (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
+          //check the limits for allowed number of sessions for each apikey (keycloak client)
+          ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client, tracker);
+          if (limitCheckResult.isSuccess()) {
+            tracker.setSessionCount(tracker.getSessionCount() + 1);
+          }
+          resultReference.set(limitCheckResult);
+          return tracker;
+        });
+
+    return resultReference.get();
   }
 
 
@@ -184,11 +186,10 @@ public class ApiKeyValidationService {
    */
 
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
-    if(sessionTracker != null) {
       int sessionCount = sessionTracker.getSessionCount();
       int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
           DEFAULT_SESSION_DURATION_RATE_LIMIT);
-
+      //check personal key limit
       int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
       if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
@@ -197,14 +198,13 @@ public class ApiKeyValidationService {
                 .formatErrorMessage(String.valueOf(personalKeyLimit),
                     String.valueOf(rateLimitDuration)));
       }
-
+      //check project key limit
       int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
       if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
                 String.valueOf(rateLimitDuration)));
       }
-    }
     return new ValidationResult(Status.OK, null);
   }
 
