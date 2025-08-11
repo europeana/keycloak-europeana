@@ -194,7 +194,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), entry.getKey());
       SessionTracker tracker = entry.getValue();
-      if(client!=null && tracker !=null) {
+      if(client!=null && tracker !=null && tracker.getLastAccessDateString()!=null) {
         RoleModel clientOwnerRole = client.getRole(Constants.CLIENT_OWNER);
         RoleModel shareOwnerRole = client.getRole(Constants.SHARED_OWNER);
         if (clientOwnerRole != null) {
