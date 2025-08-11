@@ -31,7 +31,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
-        if(EventType.CODE_TO_TOKEN.equals(event.getType())){
+        if(EventType.LOGIN.equals(event.getType())){
             String clientID = event.getClientId();
             ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientID);
             RoleModel clientOwnerRole = client.getRole("client_owner");
