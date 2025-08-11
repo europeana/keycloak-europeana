@@ -1,7 +1,10 @@
 package eu.europeana.keycloak.validation.datamodel;
 
+import eu.europeana.keycloak.validation.util.Constants;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class SessionTracker implements Serializable {
@@ -11,10 +14,15 @@ public class SessionTracker implements Serializable {
 
   private LocalDateTime lastAccessDate;
 
+  private String lastAccessDateString;
+
   public SessionTracker(String id, int sessionCount) {
     this.id = id;
     this.sessionCount = sessionCount;
     this.lastAccessDate = LocalDateTime.now();
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+        ZoneOffset.UTC);
+    this.lastAccessDateString = formatter.format(lastAccessDate);
   }
 
   public String getId() {
@@ -39,6 +47,10 @@ public class SessionTracker implements Serializable {
 
   public void setLastAccessDate(LocalDateTime lastAccessDate) {
     this.lastAccessDate = lastAccessDate;
+  }
+
+  public String getLastAccessDateString() {
+    return lastAccessDateString;
   }
 
   @Override

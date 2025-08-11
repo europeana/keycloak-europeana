@@ -1,26 +1,54 @@
 package eu.europeana.keycloak.logging;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
+import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.models.ClientModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RoleModel;
 
 public class EuropeanaEventListenerProvider implements EventListenerProvider {
-
 
     private final String prefix;
     private final  Logger log;
 
-    public EuropeanaEventListenerProvider(Logger log, String prefix) {
+    KeycloakSession session;
+
+    public EuropeanaEventListenerProvider(Logger log, String prefix,KeycloakSession session) {
         this.log = log;
         this.prefix = prefix;
+        this.session = session;
     }
 
     @Override
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
+        if(EventType.CODE_TO_TOKEN.equals(event.getType())){
+            String clientID = event.getClientId();
+            ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientID);
+            RoleModel clientOwnerRole = client.getRole("client_owner");
+            RoleModel shareOwnerRole = client.getRole("shared_owner");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(
+                ZoneOffset.UTC);
+            Date lastAccessTime= new Date();
+            if (clientOwnerRole != null) {
+                clientOwnerRole.setAttribute("lastAccessDate",
+                    List.of(formatter.format(lastAccessTime.toInstant())));
+            }
+            if (shareOwnerRole != null) {
+                shareOwnerRole.setAttribute("lastAccessDate",
+                    List.of(formatter.format(lastAccessTime.toInstant())));
+            }
+        }
+
     }
 
     @Override

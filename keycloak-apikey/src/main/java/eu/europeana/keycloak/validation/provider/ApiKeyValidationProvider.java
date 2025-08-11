@@ -182,12 +182,31 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public String  clearSessionTrackingCache(){
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
-
     if (!sessionTrackerCache.isEmpty()){
+      updateLastAccessDate(sessionTrackerCache);
       sessionTrackerCache.clear();
       return "Infinispan cache 'sessionTrackerCache' is cleared";
     }
     return "Infinispan cache 'sessionTrackerCache' is already empty";
+  }
+
+  private void updateLastAccessDate(Cache<String, SessionTracker> sessionTrackerCache) {
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), entry.getKey());
+      SessionTracker tracker = entry.getValue();
+      if(client!=null && tracker !=null) {
+        RoleModel clientOwnerRole = client.getRole(Constants.CLIENT_OWNER);
+        RoleModel shareOwnerRole = client.getRole(Constants.SHARED_OWNER);
+        if (clientOwnerRole != null) {
+          clientOwnerRole.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
+              List.of(tracker.getLastAccessDateString()));
+        }
+        if (shareOwnerRole != null) {
+          shareOwnerRole.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
+              List.of(tracker.getLastAccessDateString()));
+        }
+      }
+    }
   }
 
   @Path("/sessioncount")
