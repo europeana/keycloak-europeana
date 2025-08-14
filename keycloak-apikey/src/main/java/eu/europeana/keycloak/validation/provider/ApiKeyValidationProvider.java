@@ -24,6 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.jboss.logging.Logger;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
@@ -195,18 +197,17 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), entry.getKey());
       SessionTracker tracker = entry.getValue();
       if(client!=null && tracker !=null && tracker.getLastAccessDateString()!=null) {
-        RoleModel clientOwnerRole = client.getRole(Constants.CLIENT_OWNER);
-        RoleModel shareOwnerRole = client.getRole(Constants.SHARED_OWNER);
-        if (clientOwnerRole != null) {
-          clientOwnerRole.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
-              List.of(tracker.getLastAccessDateString()));
-        }
-        if (shareOwnerRole != null) {
-          shareOwnerRole.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
-              List.of(tracker.getLastAccessDateString()));
-        }
+        updateLastAccessAttribute(client, tracker.getLastAccessDateString());
       }
     }
+  }
+
+  private static void updateLastAccessAttribute(ClientModel client, String lastAccessDate) {
+    Stream.of(Constants.CLIENT_OWNER,Constants.SHARED_OWNER)
+        .map(client::getRole)
+        .filter(Objects::nonNull)
+        .forEach(roleModel -> roleModel.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
+            List.of(lastAccessDate)));
   }
 
   @Path("/sessioncount")

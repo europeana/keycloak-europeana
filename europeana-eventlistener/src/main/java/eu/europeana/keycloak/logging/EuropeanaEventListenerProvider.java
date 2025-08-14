@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
@@ -12,7 +14,6 @@ import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RoleModel;
 
 public class EuropeanaEventListenerProvider implements EventListenerProvider {
 
@@ -32,23 +33,24 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
         if(EventType.LOGIN.equals(event.getType())){
-            String clientID = event.getClientId();
-            ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientID);
-            RoleModel clientOwnerRole = client.getRole("client_owner");
-            RoleModel shareOwnerRole = client.getRole("shared_owner");
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(
-                ZoneOffset.UTC);
-            Date lastAccessTime= new Date();
-            if (clientOwnerRole != null) {
-                clientOwnerRole.setAttribute("lastAccessDate",
-                    List.of(formatter.format(lastAccessTime.toInstant())));
-            }
-            if (shareOwnerRole != null) {
-                shareOwnerRole.setAttribute("lastAccessDate",
-                    List.of(formatter.format(lastAccessTime.toInstant())));
-            }
+            updateLastAccessTimeOfApikey(event);
         }
+    }
 
+    /**
+     * Updates the role attribute 'lastAccess' on the personal or project keys (i.e client)
+     * @param event keycloak event
+     */
+    private void updateLastAccessTimeOfApikey(Event event) {
+        ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), event.getClientId());
+        String lastAccessDateString = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(
+            ZoneOffset.UTC).format(new Date().toInstant());
+
+        Stream.of("client_owner","shared_owner")
+            .map(client::getRole)
+            .filter(Objects::nonNull)
+            .forEach(roleModel -> roleModel.setAttribute("lastAccess",
+                List.of(lastAccessDateString)));
     }
 
     @Override
