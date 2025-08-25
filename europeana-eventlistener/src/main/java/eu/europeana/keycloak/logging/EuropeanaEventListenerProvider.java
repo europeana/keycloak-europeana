@@ -28,6 +28,10 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
         this.session = session;
     }
 
+    /** Upon successful keycloak login , the {@link EventType} 'LOGIN' is triggered.
+     * Method is overridden for logging the event details and set the lastAccess time on corresponding apikey of user.
+     * @param event to be triggered
+     */
     @Override
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
