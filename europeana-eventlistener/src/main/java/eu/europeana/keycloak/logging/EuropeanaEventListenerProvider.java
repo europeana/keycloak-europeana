@@ -28,7 +28,8 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
         this.session = session;
     }
 
-    /** Upon successful keycloak login , the {@link EventType} 'LOGIN' is triggered.
+    /** Upon successful keycloak login by user(user-password based login), the {@link EventType} 'LOGIN' is triggered and for client credential based login
+     *  the 'CLIENT_LOGIN' event is triggered
      * Method is overridden for logging the event details and set the lastAccess time on corresponding apikey of user.
      * @param event to be triggered
      */
@@ -36,7 +37,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
-        if(EventType.LOGIN.equals(event.getType())){
+        if(EventType.LOGIN.equals(event.getType()) || EventType.CLIENT_LOGIN.equals(event.getType()) ){
             updateLastAccessTimeOfApikey(event);
         }
     }
