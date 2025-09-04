@@ -6,6 +6,7 @@ import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -169,6 +170,7 @@ public class ApiKeyValidationService {
           ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client, tracker);
           if (limitCheckResult.isSuccess()) {
             tracker.setSessionCount(tracker.getSessionCount() + 1);
+            tracker.setLastAccessDate(LocalDateTime.now());
           }
           resultReference.set(limitCheckResult);
           return tracker;

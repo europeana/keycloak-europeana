@@ -50,7 +50,7 @@ public class SessionTracker implements Serializable {
   }
 
   public String getLastAccessDateString() {
-    return lastAccessDateString;
+    return formatter.format(lastAccessDate);
   }
 
   @Override
