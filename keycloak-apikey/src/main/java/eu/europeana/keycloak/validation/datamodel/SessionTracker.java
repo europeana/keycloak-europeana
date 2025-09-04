@@ -11,19 +11,16 @@ public class SessionTracker implements Serializable {
   private static final long serialVersionUID = 1L;
   private String id;
   private int sessionCount;
-
   private LocalDateTime lastAccessDate;
 
-  private String lastAccessDateString;
+  DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+      ZoneOffset.UTC);
 
   public SessionTracker(String id, int sessionCount) {
     this.id = id;
     this.sessionCount = sessionCount;
     this.lastAccessDate = LocalDateTime.now();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
-        ZoneOffset.UTC);
-    this.lastAccessDateString = formatter.format(lastAccessDate);
-  }
+   }
 
   public String getId() {
     return id;
