@@ -37,7 +37,7 @@ public class EuropeanaEventListenerProvider implements EventListenerProvider {
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
-        if(EventType.LOGIN.equals(event.getType()) || EventType.CLIENT_LOGIN.equals(event.getType()) ){
+        if(EventType.LOGIN.equals(event.getType()) || EventType.CLIENT_LOGIN.equals(event.getType())){
             updateLastAccessTimeOfApikey(event);
         }
     }
