@@ -17,6 +17,7 @@ spec:
             - --log=console
             - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
             - --cache-config-file=cache-ispn-impl.xml
+            - --spi-timer-provider=CustomTimerProvider
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: KC_CACHE_STACK
