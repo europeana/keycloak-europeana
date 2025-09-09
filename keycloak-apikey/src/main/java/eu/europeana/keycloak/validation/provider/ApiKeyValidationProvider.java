@@ -62,16 +62,13 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   @Path("/validate")
   @POST
-  public Response validateApiKey(@QueryParam("client_id") String clientId , @QueryParam("ip") String ip ) {
-    //validate token,apikey(i.e. clientId),IP and then rateLimit in that order
+  public Response validateApiKey(@QueryParam("client_id") String clientId) {
+    //validate token,apikey(i.e. clientId) then rateLimit in that order
     ValidationResult result = service.validateAuthToken(null);
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
 
     if (result.getErrorResponse() == null) {
       result = service.validateClient(client);
-    }
-    if (result.getErrorResponse() == null){
-      result = service.validateIp(ip);
     }
     if (result.getErrorResponse() == null){
       result = service.performRateLimitCheck(client);

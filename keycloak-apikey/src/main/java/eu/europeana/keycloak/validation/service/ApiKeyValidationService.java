@@ -260,36 +260,4 @@ public class ApiKeyValidationService {
     return authorizeToken(authHeader,grantType);
   }
 
-  /**
-   * Validates the input IP address string
-   * @param ip IPv4 address string
-   * @return Validation result
-   */
-  public ValidationResult validateIp(String ip) {
-    if(StringUtils.isBlank(ip)) {
-      return new ValidationResult(Status.BAD_REQUEST,ErrorMessage.IP_MISSING_400);
-    }
-    if(!isValidIpAddress(ip)){
-      return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.IP_INVALID_400);
-    }
-    return new ValidationResult(Status.OK, null);
-  }
-
-  /** Method checks IPV4 address input and checks if it is matching the xxx.xxx.xxx.xxx
-   * where xxx  ranges from 0-255 and validated using regex.
-   * Regex explanation:
-   * (\d{1,2}  -> one or two-digit number
-   * |(0|1)\d{2}-> or first number can be 0 or 1 followed by any 2-digit number
-   * |2[0-4]\d -> or  first number is 2 middle number can be between 0 and 4 and last number can be any single digit
-   * |25[0-5]) -> or  first number is 2 middle number is 5 and last number can be between 0 and 5
-   * @param ip value as string
-   * @return boolean indication if ip format is valid or not
-   */
-  private boolean isValidIpAddress(String ip) {
-    String regexFrag = "(\\d{1,2}|([0-1])\\d{2}|2[0-4]\\d|25[0-5])";
-    String regex =regexFrag+"\\."+regexFrag+"\\."+regexFrag+"\\."+regexFrag;
-    Pattern pattern = Pattern.compile(regex);
-    Matcher matcher = pattern.matcher(ip);
-    return  matcher.matches();
-  }
 }
