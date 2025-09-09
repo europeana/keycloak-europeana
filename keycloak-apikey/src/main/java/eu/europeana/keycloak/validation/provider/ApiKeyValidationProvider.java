@@ -2,14 +2,12 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
-import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -19,12 +17,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
-import org.infinispan.Cache;
-import org.jboss.logging.Logger;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
@@ -173,36 +165,5 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
         .allowAllOrigins();
   }
 
-
-  @Path("/clearcache")
-  @GET
-  public String  clearSessionTrackingCache(){
-    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
-    if (!sessionTrackerCache.isEmpty()){
-      updateLastAccessDate(sessionTrackerCache);
-      sessionTrackerCache.clear();
-      return "Infinispan cache 'sessionTrackerCache' is cleared";
-    }
-    return "Infinispan cache 'sessionTrackerCache' is already empty";
-  }
-
-  private void updateLastAccessDate(Cache<String, SessionTracker> sessionTrackerCache) {
-    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
-      ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), entry.getKey());
-      SessionTracker tracker = entry.getValue();
-      if(client!=null && tracker !=null && tracker.getLastAccessDateString()!=null) {
-        updateLastAccessAttribute(client, tracker.getLastAccessDateString());
-      }
-    }
-  }
-
-  private static void updateLastAccessAttribute(ClientModel client, String lastAccessDate) {
-    Stream.of(Constants.CLIENT_OWNER,Constants.SHARED_OWNER)
-        .map(client::getRole)
-        .filter(Objects::nonNull)
-        .forEach(roleModel -> roleModel.setAttribute(Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE,
-            List.of(lastAccessDate)));
-  }
 
 }
