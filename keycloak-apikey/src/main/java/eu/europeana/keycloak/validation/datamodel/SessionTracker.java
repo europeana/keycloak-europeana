@@ -13,7 +13,7 @@ public class SessionTracker implements Serializable {
   private int sessionCount;
   private LocalDateTime lastAccessDate;
 
-  DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
       ZoneOffset.UTC);
 
   public SessionTracker(String id, int sessionCount) {
