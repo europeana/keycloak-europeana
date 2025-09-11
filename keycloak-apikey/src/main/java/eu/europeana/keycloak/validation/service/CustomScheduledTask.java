@@ -11,6 +11,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
 import org.keycloak.timer.ScheduledTask;
 
 public class CustomScheduledTask implements ScheduledTask {
@@ -33,7 +34,13 @@ public class CustomScheduledTask implements ScheduledTask {
 
   private void updateLastAccessDate(KeycloakSession session,Cache<String, SessionTracker> sessionTrackerCache) {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
-      ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), entry.getKey());
+      RealmModel europeanaRealm = session.realms().getRealm("europeana");
+      if(europeanaRealm == null){
+       LOG.error("LastAccessDate not updated in cache. Realm not found - 'europeana'");
+       return;
+      }
+
+      ClientModel client = session.clients().getClientByClientId(europeanaRealm, entry.getKey());
       SessionTracker tracker = entry.getValue();
       if(client!=null && tracker !=null && tracker.getLastAccessDateString()!=null) {
         updateLastAccessAttribute(client, tracker.getLastAccessDateString());
