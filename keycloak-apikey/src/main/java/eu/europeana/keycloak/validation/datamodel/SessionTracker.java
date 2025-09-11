@@ -13,8 +13,6 @@ public class SessionTracker implements Serializable {
   private int sessionCount;
   private LocalDateTime lastAccessDate;
 
-  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
-      ZoneOffset.UTC);
 
   public SessionTracker(String id, int sessionCount) {
     this.id = id;
@@ -47,6 +45,8 @@ public class SessionTracker implements Serializable {
   }
 
   public String getLastAccessDateString() {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+        ZoneOffset.UTC);
     return formatter.format(lastAccessDate);
   }
 
