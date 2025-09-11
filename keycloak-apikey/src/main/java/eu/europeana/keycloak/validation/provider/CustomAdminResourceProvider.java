@@ -88,17 +88,25 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   @GET
   public Response viewCache(){
     this.setupCors("GET");
-    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
-    if (!result.isSuccess()) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+    try {
+      ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+      if (!result.isSuccess()) {
+        return this.cors.builder(
+            Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      }
+      //allow project key creation only to the authenticated users who have admin role
+      UserModel userModel = result.getUser();
+      if (userModel.getRoleMappingsStream()
+          .noneMatch(p -> Constants.ADMIN_ROLE_NAME.equals(p.getName()))) {
+        return this.cors.builder(
+            Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+      }
+      return getCachedSessionDetails();
     }
-    //allow project key creation only to the authenticated users who have admin role
-    UserModel userModel = result.getUser();
-    if(userModel.getRoleMappingsStream().noneMatch(p->Constants.ADMIN_ROLE_NAME.equals(p.getName()))){
-      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+    catch (Exception e){
+       e.printStackTrace();
+       return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)).build();
     }
-
-    return getCachedSessionDetails();
   }
 
   private Response getCachedSessionDetails() {
