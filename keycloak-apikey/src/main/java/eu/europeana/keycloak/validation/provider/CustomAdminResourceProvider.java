@@ -14,7 +14,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -87,7 +86,6 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
 
   @Path("/sessioncount")
   @GET
-  @Produces("application/json; charset=utf-8")
   public Response viewCache(){
     this.setupCors("GET");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
