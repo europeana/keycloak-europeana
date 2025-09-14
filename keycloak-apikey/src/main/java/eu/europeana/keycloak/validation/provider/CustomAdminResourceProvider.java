@@ -12,6 +12,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.GenericEntity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -114,7 +115,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       objList.add(entry.getValue());
     }
-    return this.cors.builder(Response.status(Status.OK).entity(objList)).build();
+    return this.cors.builder(Response.status(Status.OK).entity(new GenericEntity<List<SessionTracker>>(objList){})).build();
   }
 
   private void setupCors(String allowedMethod) {
