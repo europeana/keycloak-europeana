@@ -86,6 +86,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
 
   @Path("/sessioncount")
   @GET
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   public Response viewCache(){
     this.setupCors("GET");
     try {
@@ -104,7 +105,6 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       return getCachedSessionDetails();
     }
     catch (Exception e){
-       e.printStackTrace();
        return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)).build();
     }
   }
