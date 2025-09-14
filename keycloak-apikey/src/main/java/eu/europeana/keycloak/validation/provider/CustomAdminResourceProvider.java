@@ -86,7 +86,6 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
 
   @Path("/sessioncount")
   @GET
-  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   public Response viewCache(){
     this.setupCors("GET");
     try {
@@ -119,7 +118,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
       cachedObject.add(entry.getKey(),details);
     }
-    return this.cors.builder(Response.status(Status.OK).entity(cachedObject)).build();
+    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build())).build();
   }
 
   private void setupCors(String allowedMethod) {
