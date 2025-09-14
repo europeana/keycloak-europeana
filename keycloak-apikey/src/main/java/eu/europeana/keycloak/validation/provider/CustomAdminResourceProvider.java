@@ -7,18 +7,18 @@ import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.util.Constants;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.GenericEntity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.infinispan.Cache;
@@ -109,13 +109,17 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   }
 
   private Response getCachedSessionDetails() {
-    List<SessionTracker> objList = new ArrayList<>();
+    JsonObjectBuilder cachedObject = Json.createObjectBuilder();
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
-      objList.add(entry.getValue());
+      JsonObjectBuilder details = Json.createObjectBuilder();
+      details.add("sessionCount",entry.getValue().getSessionCount());
+      details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
+      cachedObject.add(entry.getKey(),details);
     }
-    return this.cors.builder(Response.status(Status.OK).entity(new GenericEntity<List<SessionTracker>>(objList){})).build();
+    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
+
   }
 
   private void setupCors(String allowedMethod) {
