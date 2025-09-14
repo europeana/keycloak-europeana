@@ -116,7 +116,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       JsonObjectBuilder details = Json.createObjectBuilder();
       details.add("sessionCount",entry.getValue().getSessionCount());
       details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
-      cachedObject.add(entry.getKey(),details);
+      cachedObject.add(entry.getKey(),details.build());
     }
     return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build())).build();
   }
