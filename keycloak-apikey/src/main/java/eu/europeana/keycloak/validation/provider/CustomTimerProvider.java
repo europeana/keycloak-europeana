@@ -26,7 +26,7 @@ public class CustomTimerProvider implements TimerProvider {
   @Override
   public void schedule(Runnable runnable, long intervalMillis, String taskName) {
     LOG.info("Executing eu.europeana.keycloak.validation.provider.CustomTimerProvider.schedule  method");
-    scheduler.scheduleAtFixedRate(runnable, 0L,intervalMillis, TimeUnit.MILLISECONDS);
+    scheduler.scheduleAtFixedRate(runnable, 1000L,intervalMillis, TimeUnit.MILLISECONDS);
   }
 
   @Override
