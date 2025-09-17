@@ -11,7 +11,7 @@ import org.keycloak.timer.TimerProviderFactory;
 
 public class CustomTimerProviderFactory implements TimerProviderFactory {
 
-  public static final long INTERVAL_MILLIS = 60000L;
+  public static final long INTERVAL_MILLIS = 180000L;
   public static final String TASK_NAME = "clearSessionTrackingCache";
 
   private final Logger LOG = Logger.getLogger(CustomTimerProviderFactory.class);

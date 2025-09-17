@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,15 @@ public class CustomTimerProvider implements TimerProvider {
   @Override
   public void schedule(Runnable runnable, long intervalMillis, String taskName) {
     LOG.info("Executing eu.europeana.keycloak.validation.provider.CustomTimerProvider.schedule  method");
-    scheduler.scheduleAtFixedRate(runnable, 1000L,intervalMillis, TimeUnit.MILLISECONDS);
+    scheduler.scheduleAtFixedRate(runnable, calculateInitialDelay(intervalMillis),intervalMillis, TimeUnit.MILLISECONDS);
+  }
+
+  private long calculateInitialDelay(long intervalMillis) {
+    LocalDateTime now = LocalDateTime.now();
+    int currentMinute = now.getMinute();
+    int intervalInminutes = (int) (intervalMillis / 60000L);
+    int minutesSinceLastInterval = currentMinute % intervalInminutes;
+    return intervalInminutes - minutesSinceLastInterval ;
   }
 
   @Override
