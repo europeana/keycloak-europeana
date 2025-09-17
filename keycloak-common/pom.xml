@@ -37,6 +37,19 @@
       <artifactId>jboss-logging</artifactId>
       <version>${jboss.logging.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-model-infinispan</artifactId>
+      <version>${keycloak.version}</version>
+    </dependency>
+
   </dependencies>
 
   <build>

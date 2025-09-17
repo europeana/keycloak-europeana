@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.validation.service;
 
+import eu.europeana.keycloak.CustomScheduledTask;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.util.Constants;
 import java.util.List;
@@ -12,16 +13,20 @@ import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
-import org.keycloak.timer.ScheduledTask;
 
-public class CustomScheduledTask implements ScheduledTask {
+public class ClearSessionTrackingCacheTask extends CustomScheduledTask {
 
-  private final Logger LOG = Logger.getLogger(CustomScheduledTask.class);
+  private final Logger LOG = Logger.getLogger(ClearSessionTrackingCacheTask.class);
 
-
+  public ClearSessionTrackingCacheTask() {
+    super("clearSessionTrackingCache");
+  }
   @Override
-  public void run(KeycloakSession session) {
-     //Clear the session cache
+  public void process(KeycloakSession session) {
+    clearSessionTrackingCache(session);
+  }
+
+  private void clearSessionTrackingCache(KeycloakSession session) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
     if (!sessionTrackerCache.isEmpty()){

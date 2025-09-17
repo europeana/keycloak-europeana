@@ -1,13 +1,13 @@
 package eu.europeana.keycloak.validation.provider;
 
-import eu.europeana.keycloak.validation.service.CustomScheduledTask;
+import eu.europeana.keycloak.FixedRateTaskScheduler;
+import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resource.RealmResourceProviderFactory;
-import org.keycloak.timer.TimerProvider;
 
 /**
  * Factory for creating instances of {@link CustomAdminResourceProvider}.
@@ -18,6 +18,7 @@ import org.keycloak.timer.TimerProvider;
 
 public class CustomAdminResourceProviderFactory implements RealmResourceProviderFactory {
   private final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
+
   public static final String PROVIDER_ID="admin";
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
@@ -31,18 +32,11 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
 
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-//specific postInit actions not required e.g. establish connections to resources that other providers have instantiated
 
-    try(KeycloakSession session = keycloakSessionFactory.create()) {
-      TimerProvider provider = session.getProvider(TimerProvider.class);
-      LOG.info("Scheduling the cron ");
-
-      if (provider != null) {
-        LOG.info("Found Provider " + provider.getClass().getName());
-        provider.scheduleTask(new CustomScheduledTask(), 180000L, "clearSessionTrackingCache");
-      }
-    }
-
+    LOG.info("Configured Session Duration - "+ System.getenv("SESSION_DURATION_FOR_RATE_LIMITING"));
+    //schedule the cache cleanup task
+    FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ClearSessionTrackingCacheTask(),3);
+    scheduler.scheduleTask(keycloakSessionFactory);
   }
 
   @Override
@@ -54,4 +48,5 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
   public String getId() {
     return PROVIDER_ID;
   }
+
 }

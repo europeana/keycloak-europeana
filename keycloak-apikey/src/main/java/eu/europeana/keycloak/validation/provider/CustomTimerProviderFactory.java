@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
-import eu.europeana.keycloak.validation.service.CustomScheduledTask;
+import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
@@ -34,7 +34,7 @@ public class CustomTimerProviderFactory implements TimerProviderFactory {
 
       if (provider != null) {
         LOG.info("Found Provider " + provider.getClass().getName());
-        provider.scheduleTask(new CustomScheduledTask(),INTERVAL_MILLIS, TASK_NAME);
+        provider.scheduleTask(new ClearSessionTrackingCacheTask(),INTERVAL_MILLIS, TASK_NAME);
       }
     }
   }
