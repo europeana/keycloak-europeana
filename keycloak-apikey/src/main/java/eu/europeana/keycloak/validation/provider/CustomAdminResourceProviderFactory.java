@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.FixedRateTaskScheduler;
+import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
@@ -17,9 +18,11 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
  */
 
 public class CustomAdminResourceProviderFactory implements RealmResourceProviderFactory {
-  private final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
 
   public static final String PROVIDER_ID="admin";
+  public static final int DEFAULT_SESSION_DURATION = 60;
+  public static final String SESSION_DURATION = "SESSION_DURATION_FOR_RATE_LIMITING";
+  private final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
     return new CustomAdminResourceProvider(keycloakSession);
@@ -32,10 +35,11 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
 
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-
-    LOG.info("Configured Session Duration - "+ System.getenv("SESSION_DURATION_FOR_RATE_LIMITING"));
+    int intervalMinutes = KeycloakUtils.getEnvInt(SESSION_DURATION,
+        DEFAULT_SESSION_DURATION);
+    LOG.info("Configured Session Duration - "+ intervalMinutes);
     //schedule the cache cleanup task
-    FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ClearSessionTrackingCacheTask(),3);
+    FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ClearSessionTrackingCacheTask(),intervalMinutes);
     scheduler.scheduleTask(keycloakSessionFactory);
   }
 

@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.validation.service;
 
+import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
@@ -189,10 +190,10 @@ public class ApiKeyValidationService {
 
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
       int sessionCount = sessionTracker.getSessionCount();
-      int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
+      int rateLimitDuration = KeycloakUtils.getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
           DEFAULT_SESSION_DURATION_RATE_LIMIT);
       //check personal key limit
-      int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
+      int personalKeyLimit = KeycloakUtils.getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
       if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
@@ -201,7 +202,7 @@ public class ApiKeyValidationService {
                     String.valueOf(rateLimitDuration)));
       }
       //check project key limit
-      int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
+      int projectKeyLimit = KeycloakUtils.getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
       if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
@@ -209,21 +210,6 @@ public class ApiKeyValidationService {
       }
     return new ValidationResult(Status.OK, null);
   }
-
-  private int getEnvInt(String envVar, int defaultValue) {
-    String evVarValue = System.getenv(envVar);
-    if(StringUtils.isBlank(evVarValue)){
-     LOG.error("Environment variable "+envVar+ " is not configured. Using default value "+ defaultValue);
-     return defaultValue;
-    }
-    try{
-       return Integer.parseInt(evVarValue);
-    }catch (NumberFormatException ex){
-       LOG.error("Invalid number format for environment variable "+envVar+"="+evVarValue+" Using default value "+ defaultValue);
-       return defaultValue;
-    }
-  }
-
 
   /**
    * Fetch the apikey from request header

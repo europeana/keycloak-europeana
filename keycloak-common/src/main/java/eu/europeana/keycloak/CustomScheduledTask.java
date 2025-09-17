@@ -11,10 +11,8 @@ public abstract class CustomScheduledTask implements ScheduledTask {
 
   public static final String WORK_CACHE = "workCache";
   private final String taskName;
-
   public static final long LOCK_DURATION = 60000L;
-
-  private Logger LOG = Logger.getLogger(CustomScheduledTask.class);
+  private final Logger LOG = Logger.getLogger(CustomScheduledTask.class);
 
   public String getTaskName() {
     return taskName;
@@ -27,6 +25,7 @@ public abstract class CustomScheduledTask implements ScheduledTask {
 
   @Override
   public void run(KeycloakSession session) {
+    LOG.info("Acquiring the lock to execute the task "+taskName);
     if (acquireLock(session)) {
       //Execute task
       process(session);
@@ -50,13 +49,13 @@ public abstract class CustomScheduledTask implements ScheduledTask {
           .putIfAbsent(taskName, timeWhenLockExpires);
 
       if (previousExpiry == null) {
-        LOG.info("Acquired the Lock with expiry on "+timeWhenLockExpires);
+        LOG.info("Acquired the Lock with expiry on "+ timeWhenLockExpires);
         return true;
       } else if (previousExpiry < now) {
         if (workCache.getAdvancedCache()
             .withFlags(Flag.FORCE_SYNCHRONOUS)
             .replace(taskName, previousExpiry, timeWhenLockExpires)) {
-          LOG.info("Took over the expired Lock and new expiry is "+timeWhenLockExpires);
+          LOG.info("Took over the expired Lock and new expiry is "+ timeWhenLockExpires);
           return true;
         }
       }
