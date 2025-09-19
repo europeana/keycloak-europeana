@@ -22,6 +22,15 @@ public final class Constants {
   public static final String SHARED_OWNER_ROLE_DESCRIPTION="Shared ownership for this client (project keys)";
   public static final String PRIVATE_KEY_DESCRIPTION = "Private key for individual use only";
   public static final String ADMIN_ROLE_NAME = "admin";
+
+  public static final String SESSION_TRACKER_CACHE = "sessionTrackerCache";
+  public static final String SESSION_DURATION_FOR_RATE_LIMITING = "SESSION_DURATION_FOR_RATE_LIMITING";
+  public static final String PERSONAL_KEY_RATE_LIMIT = "PERSONAL_KEY_RATE_LIMIT";
+  public static final String PROJECT_KEY_RATE_LIMIT = "PROJECT_KEY_RATE_LIMIT";
+  public static final int DEFAULT_PROJECT_KEY_RATE_LIMIT = 10000;
+  public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT = 1000;
+  public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT = 60;
+
   private Constants() {
   }
 }

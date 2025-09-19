@@ -32,13 +32,7 @@ import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 public class ApiKeyValidationService {
 
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
-  public static final String SESSION_TRACKER_CACHE = "sessionTrackerCache";
-  public static final String SESSION_DURATION_FOR_RATE_LIMITING = "SESSION_DURATION_FOR_RATE_LIMITING";
-  public static final String PERSONAL_KEY_RATE_LIMIT = "PERSONAL_KEY_RATE_LIMIT";
-  public static final String PROJECT_KEY_RATE_LIMIT = "PROJECT_KEY_RATE_LIMIT";
-  public static final int DEFAULT_PROJECT_KEY_RATE_LIMIT = 10000;
-  public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT = 1000;
-  public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT = 60;
+
   private final KeycloakSession session;
   private final RealmModel realm;
 
@@ -154,9 +148,9 @@ public class ApiKeyValidationService {
    */
   public ValidationResult performRateLimitCheck(ClientModel client) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(SESSION_TRACKER_CACHE);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(Constants.SESSION_TRACKER_CACHE);
     if (sessionTrackerCache == null) {
-      LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
+      LOG.error("Infinispan cache " +Constants.SESSION_TRACKER_CACHE
           + " not found. Cannot perform rate limit check");
       return new ValidationResult(Status.OK, null);
     }
@@ -190,10 +184,10 @@ public class ApiKeyValidationService {
 
   private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
       int sessionCount = sessionTracker.getSessionCount();
-      int rateLimitDuration = KeycloakUtils.getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
-          DEFAULT_SESSION_DURATION_RATE_LIMIT);
+      int rateLimitDuration = KeycloakUtils.getEnvInt(Constants.SESSION_DURATION_FOR_RATE_LIMITING,
+          Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT);
       //check personal key limit
-      int personalKeyLimit = KeycloakUtils.getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
+      int personalKeyLimit = KeycloakUtils.getEnvInt(Constants.PERSONAL_KEY_RATE_LIMIT, Constants.DEFAULT_PERSONAL_KEY_RATE_LIMIT);
       if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
@@ -202,7 +196,7 @@ public class ApiKeyValidationService {
                     String.valueOf(rateLimitDuration)));
       }
       //check project key limit
-      int projectKeyLimit = KeycloakUtils.getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
+      int projectKeyLimit = KeycloakUtils.getEnvInt(Constants.PROJECT_KEY_RATE_LIMIT, Constants.DEFAULT_PROJECT_KEY_RATE_LIMIT);
       if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
         return new ValidationResult(Status.TOO_MANY_REQUESTS,
             ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),

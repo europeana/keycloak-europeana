@@ -3,6 +3,7 @@ package eu.europeana.keycloak.validation.provider;
 import eu.europeana.keycloak.FixedRateTaskScheduler;
 import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
+import eu.europeana.keycloak.validation.util.Constants;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
@@ -20,8 +21,6 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 public class CustomAdminResourceProviderFactory implements RealmResourceProviderFactory {
 
   public static final String PROVIDER_ID="admin";
-  public static final int DEFAULT_SESSION_DURATION = 60;
-  public static final String SESSION_DURATION = "SESSION_DURATION_FOR_RATE_LIMITING";
   private final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
@@ -35,9 +34,14 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
 
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-    int intervalMinutes = KeycloakUtils.getEnvInt(SESSION_DURATION,
-        DEFAULT_SESSION_DURATION);
+    int intervalMinutes = KeycloakUtils.getEnvInt(Constants.SESSION_DURATION_FOR_RATE_LIMITING,
+        Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT);
+
     LOG.info("Configured Session Duration - "+ intervalMinutes);
+    if(intervalMinutes < 0 || intervalMinutes > Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT) {
+      LOG.info("Session duration not valid, defaulting to " +  Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT + " minutes");
+    }
+
     //schedule the cache cleanup task
     FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ClearSessionTrackingCacheTask(),intervalMinutes);
     scheduler.scheduleTask(keycloakSessionFactory);
