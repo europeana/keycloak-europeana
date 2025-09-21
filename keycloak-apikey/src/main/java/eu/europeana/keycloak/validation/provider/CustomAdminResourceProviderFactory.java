@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.validation.provider;
 
-import eu.europeana.keycloak.FixedRateTaskScheduler;
+import eu.europeana.keycloak.timer.FixedRateTaskScheduler;
 import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
 import eu.europeana.keycloak.validation.util.Constants;

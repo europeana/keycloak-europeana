@@ -1,4 +1,4 @@
-package eu.europeana.keycloak;
+package eu.europeana.keycloak.timer;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
@@ -17,7 +17,7 @@ public class FixedRateTaskScheduler {
 
   private static final Logger LOG = Logger.getLogger(FixedRateTaskScheduler.class);
   public static final int MINUTES_IN_HOUR = 60;
-  public static final long MILLISECONDS_IN_MINUTE = 6000L;
+  public static final long MILLISECONDS_IN_A_MINUTE = 6000L;
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private final CustomScheduledTask task;
   private final int intervalMinutes;
@@ -38,7 +38,7 @@ public class FixedRateTaskScheduler {
    */
   public void scheduleTask(KeycloakSessionFactory keycloakSessionFactory){
     LOG.info("Scheduling the task '"+task.getTaskName()+"' with interval "+intervalMinutes);
-    scheduler.scheduleAtFixedRate(new ClusterAwareScheduledTaskRunner(keycloakSessionFactory,task,intervalMinutes * MILLISECONDS_IN_MINUTE),
+    scheduler.scheduleAtFixedRate(new ClusterAwareScheduledTaskRunner(keycloakSessionFactory,task,intervalMinutes * MILLISECONDS_IN_A_MINUTE),
         calculateInitialDelay(intervalMinutes),intervalMinutes, TimeUnit.MINUTES);
   }
 

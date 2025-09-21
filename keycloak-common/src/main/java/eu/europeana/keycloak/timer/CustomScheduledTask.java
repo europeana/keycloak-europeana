@@ -1,4 +1,4 @@
-package eu.europeana.keycloak;
+package eu.europeana.keycloak.timer;
 
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;

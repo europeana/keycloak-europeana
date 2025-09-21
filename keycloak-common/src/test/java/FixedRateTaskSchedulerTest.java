@@ -1,8 +1,8 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import eu.europeana.keycloak.CustomScheduledTask;
-import eu.europeana.keycloak.FixedRateTaskScheduler;
+import eu.europeana.keycloak.timer.CustomScheduledTask;
+import eu.europeana.keycloak.timer.FixedRateTaskScheduler;
 
 import java.time.LocalDateTime;
 import java.time.Month;

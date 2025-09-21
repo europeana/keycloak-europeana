@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.validation.service;
 
-import eu.europeana.keycloak.CustomScheduledTask;
+import eu.europeana.keycloak.timer.CustomScheduledTask;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.util.Constants;
 import java.util.List;
