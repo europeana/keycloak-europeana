@@ -9,7 +9,7 @@ import org.keycloak.timer.ScheduledTask;
 
 public abstract class CustomScheduledTask implements ScheduledTask {
 
-  public static final String WORK_CACHE = "workCache";
+  public static final String WORK_CACHE = "work";
   private final String taskName;
   public static final long LOCK_DURATION = 60000L;
   private final Logger LOG = Logger.getLogger(CustomScheduledTask.class);
