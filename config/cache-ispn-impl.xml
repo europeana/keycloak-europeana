@@ -71,11 +71,5 @@
       <state-transfer enabled="true" timeout="60000"/>
     </distributed-cache>
 
-    <distributed-cache name="workCache" mode="SYNC" owners="2" statistics="true">
-      <locking isolation="READ_COMMITTED"/>
-      <expiration lifespan="-1" max-idle="-1"/>
-      <state-transfer enabled="true" timeout="60000"/>
-    </distributed-cache>
-
   </cache-container>
 </infinispan>
