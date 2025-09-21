@@ -31,6 +31,10 @@ import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
  */
 public class ApiKeyValidationService {
 
+  public static final int PERSONAL_KEY_LIMIT = KeycloakUtils.getEnvInt(Constants.PERSONAL_KEY_RATE_LIMIT, Constants.DEFAULT_PERSONAL_KEY_RATE_LIMIT);
+  public static final int PROJECT_KEY_LIMIT = KeycloakUtils.getEnvInt(Constants.PROJECT_KEY_RATE_LIMIT, Constants.DEFAULT_PROJECT_KEY_RATE_LIMIT);
+  public static final int RATE_LIMIT_DURATION = KeycloakUtils.getEnvInt(Constants.SESSION_DURATION_FOR_RATE_LIMITING,
+      Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT);
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
 
   private final KeycloakSession session;
@@ -162,12 +166,7 @@ public class ApiKeyValidationService {
         (key, existingTracker) -> {
           SessionTracker tracker = (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
           //check the limits for allowed number of sessions for each apikey (keycloak client)
-          ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client, tracker);
-          if (limitCheckResult.isSuccess()) {
-            tracker.setSessionCount(tracker.getSessionCount() + 1);
-            tracker.setLastAccessDate(LocalDateTime.now());
-          }
-          resultReference.set(limitCheckResult);
+          resultReference.set(validateAndUpdateSessionTracker(client, tracker));
           return tracker;
         });
 
@@ -182,27 +181,43 @@ public class ApiKeyValidationService {
    * @return ValidationResult object . Result staus is OK in case unable to perform the rate limit check
    */
 
-  private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
-      int sessionCount = sessionTracker.getSessionCount();
-      int rateLimitDuration = KeycloakUtils.getEnvInt(Constants.SESSION_DURATION_FOR_RATE_LIMITING,
-          Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT);
-      //check personal key limit
-      int personalKeyLimit = KeycloakUtils.getEnvInt(Constants.PERSONAL_KEY_RATE_LIMIT, Constants.DEFAULT_PERSONAL_KEY_RATE_LIMIT);
-      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
-                    String.valueOf(rateLimitDuration))
-                .formatErrorMessage(String.valueOf(personalKeyLimit),
-                    String.valueOf(rateLimitDuration)));
+  private ValidationResult validateAndUpdateSessionTracker(ClientModel client, SessionTracker tracker) {
+    int updatedCount = tracker.getSessionCount() + 1;
+    //check personal key limit
+    if (client.getRole(Constants.CLIENT_OWNER) != null) {
+      if (updatedCount > PERSONAL_KEY_LIMIT) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS, personalKeyLimitReachedMessage());
       }
-      //check project key limit
-      int projectKeyLimit = KeycloakUtils.getEnvInt(Constants.PROJECT_KEY_RATE_LIMIT, Constants.DEFAULT_PROJECT_KEY_RATE_LIMIT);
-      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
-                String.valueOf(rateLimitDuration)));
+      updateSessionTracker(tracker,PERSONAL_KEY_LIMIT,updatedCount);
+    }
+    //check project key limit
+    if (client.getRole(Constants.SHARED_OWNER) != null) {
+      if (updatedCount > PROJECT_KEY_LIMIT) {
+        return new ValidationResult(Status.TOO_MANY_REQUESTS, projectKeyLimitReachedMessage());
       }
+      updateSessionTracker(tracker,PROJECT_KEY_LIMIT,updatedCount);
+    }
     return new ValidationResult(Status.OK, null);
+  }
+
+  private void updateSessionTracker(SessionTracker tracker, int maxKeyLimit, int updatedCount) {
+    tracker.setSessionCount(updatedCount);
+    tracker.setLastAccessDate(LocalDateTime.now());
+    if(updatedCount == maxKeyLimit && tracker.getLastRateLimitReachingTime() == null){
+      tracker.setLastRateLimitReachingTime(tracker.getLastAccessDate());
+    }
+  }
+
+  private static ErrorMessage projectKeyLimitReachedMessage() {
+    return ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(PROJECT_KEY_LIMIT),
+        String.valueOf(RATE_LIMIT_DURATION));
+  }
+
+  private static ErrorMessage personalKeyLimitReachedMessage() {
+    return ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(PERSONAL_KEY_LIMIT),
+            String.valueOf(RATE_LIMIT_DURATION))
+        .formatErrorMessage(String.valueOf(PERSONAL_KEY_LIMIT),
+            String.valueOf(RATE_LIMIT_DURATION));
   }
 
   /**
@@ -274,4 +289,5 @@ public class ApiKeyValidationService {
     Matcher matcher = pattern.matcher(ip);
     return  matcher.matches();
   }
+
 }

@@ -8,11 +8,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class SessionTracker implements Serializable {
+
+  public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+      ZoneOffset.UTC);
   private static final long serialVersionUID = 1L;
   private String id;
   private int sessionCount;
   private LocalDateTime lastAccessDate;
-
+  private LocalDateTime lastRateLimitReachingTime;
 
   public SessionTracker(String id, int sessionCount) {
     this.id = id;
@@ -22,10 +25,6 @@ public class SessionTracker implements Serializable {
 
   public String getId() {
     return id;
-  }
-
-  public void setId(String id) {
-    this.id = id;
   }
 
   public int getSessionCount() {
@@ -44,10 +43,24 @@ public class SessionTracker implements Serializable {
     this.lastAccessDate = lastAccessDate;
   }
 
+  public LocalDateTime getLastRateLimitReachingTime() {
+    return lastRateLimitReachingTime;
+  }
+
+  public void setLastRateLimitReachingTime(LocalDateTime lastRateLimitReachingTime) {
+    this.lastRateLimitReachingTime = lastRateLimitReachingTime;
+  }
+
   public String getLastAccessDateString() {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
-        ZoneOffset.UTC);
-    return formatter.format(lastAccessDate);
+    return FORMATTER.format(lastAccessDate);
+  }
+
+  public String getLastRateLimitReachingTimeString() {
+    if (lastRateLimitReachingTime != null) {
+      return FORMATTER.format(lastRateLimitReachingTime);
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -57,7 +70,8 @@ public class SessionTracker implements Serializable {
     SessionTracker that = (SessionTracker) obj;
     return Objects.equals(id, that.id) &&
         Objects.equals(sessionCount, that.sessionCount) &&
-        Objects.equals(lastAccessDate,that.lastAccessDate);
+        Objects.equals(lastAccessDate,that.lastAccessDate)&&
+        Objects.equals(lastRateLimitReachingTime,that.lastRateLimitReachingTime);
   }
 
 }
