@@ -36,14 +36,14 @@ public class ClearSessionTrackingCacheTask extends CustomScheduledTask {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(Constants.SESSION_TRACKER_CACHE);
     if (!sessionTrackerCache.isEmpty()){
-      updateLastAccessDate(session,sessionTrackerCache);
+      updateClient(session,sessionTrackerCache);
       sessionTrackerCache.clear();
       LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
     }
     LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
   }
 
-  private void updateLastAccessDate(KeycloakSession session,Cache<String, SessionTracker> sessionTrackerCache) {
+  private void updateClient(KeycloakSession session,Cache<String, SessionTracker> sessionTrackerCache) {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       RealmModel europeanaRealm = session.realms().getRealm("europeana");
       if(europeanaRealm == null){

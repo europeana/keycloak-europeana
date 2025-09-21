@@ -18,7 +18,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.infinispan.Cache;
@@ -115,7 +114,8 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       JsonObjectBuilder details = Json.createObjectBuilder();
       details.add("sessionCount",entry.getValue().getSessionCount());
-      details.add("LastAccessDate",entry.getValue().getLastAccessDate().format(DateTimeFormatter.ISO_DATE_TIME));
+      details.add("LastAccessDate",entry.getValue().getLastAccessDateString());
+      details.add("rateLimitReached",entry.getValue().getLastRateLimitReachingTimeString());
       cachedObject.add(entry.getKey(),details);
     }
     return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
