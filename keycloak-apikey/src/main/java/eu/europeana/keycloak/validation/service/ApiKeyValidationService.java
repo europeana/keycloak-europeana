@@ -151,25 +151,26 @@ public class ApiKeyValidationService {
    * @return validation result object
    */
   public ValidationResult performRateLimitCheck(ClientModel client) {
-    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(Constants.SESSION_TRACKER_CACHE);
-    if (sessionTrackerCache == null) {
-      LOG.error("Infinispan cache " +Constants.SESSION_TRACKER_CACHE
-          + " not found. Cannot perform rate limit check");
-      return new ValidationResult(Status.OK, null);
-    }
-
     AtomicReference<ValidationResult> resultReference = new AtomicReference<>();
 
-    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-    sessionTrackerCache.compute(client.getClientId(),
-        (key, existingTracker) -> {
-          SessionTracker tracker = (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
-          //check the limits for allowed number of sessions for each apikey (keycloak client)
-          resultReference.set(validateAndUpdateSessionTracker(client, tracker));
-          return tracker;
-        });
-
+      InfinispanConnectionProvider provider = session.getProvider(
+          InfinispanConnectionProvider.class);
+      Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(
+          Constants.SESSION_TRACKER_CACHE);
+      if (sessionTrackerCache == null) {
+        LOG.error("Infinispan cache " + Constants.SESSION_TRACKER_CACHE
+            + " not found. Cannot perform rate limit check");
+        return new ValidationResult(Status.OK, null);
+      }
+      //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
+      sessionTrackerCache.compute(client.getClientId(),
+          (key, existingTracker) -> {
+            SessionTracker tracker =
+                (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
+            //check the limits for allowed number of sessions for each apikey (keycloak client)
+            resultReference.set(validateAndUpdateSessionTracker(client, tracker));
+            return tracker;
+          });
     return resultReference.get();
   }
 
@@ -182,6 +183,7 @@ public class ApiKeyValidationService {
    */
 
   private ValidationResult validateAndUpdateSessionTracker(ClientModel client, SessionTracker tracker) {
+    try {
     int updatedCount = tracker.getSessionCount() + 1;
     //check personal key limit
     if (client.getRole(Constants.CLIENT_OWNER) != null) {
@@ -198,6 +200,10 @@ public class ApiKeyValidationService {
       updateSessionTracker(tracker,PROJECT_KEY_LIMIT,updatedCount);
     }
     return new ValidationResult(Status.OK, null);
+    }catch (Exception e){
+      LOG.error("Error during limit check " + e);
+      return new ValidationResult(Status.INTERNAL_SERVER_ERROR, null);
+    }
   }
 
   private void updateSessionTracker(SessionTracker tracker, int maxKeyLimit, int updatedCount) {
