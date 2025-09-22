@@ -1,5 +1,8 @@
 package eu.europeana.keycloak.validation.util;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 /**
  * Utility class to list constants used by keycloak apikey module
  */
@@ -32,6 +35,9 @@ public final class Constants {
   public static final int DEFAULT_PROJECT_KEY_RATE_LIMIT = 10000;
   public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT = 1000;
   public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT = 60;
+
+  public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(Constants.CREATION_DATE_PATTERN).withZone(
+      ZoneOffset.UTC);
 
   private Constants() {
   }

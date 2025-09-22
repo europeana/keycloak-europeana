@@ -114,8 +114,8 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       JsonObjectBuilder details = Json.createObjectBuilder();
       details.add("sessionCount",entry.getValue().getSessionCount());
-      details.add("LastAccessDate",entry.getValue().getLastAccessDateString());
-      details.add("rateLimitReached",entry.getValue().getLastRateLimitReachingTimeString());
+      details.add("LastAccessDate",entry.getValue().getLastAccessDate());
+      details.add("rateLimitReached",entry.getValue().getLastRateLimitReachingTime());
       cachedObject.add(entry.getKey(),details);
     }
     return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();

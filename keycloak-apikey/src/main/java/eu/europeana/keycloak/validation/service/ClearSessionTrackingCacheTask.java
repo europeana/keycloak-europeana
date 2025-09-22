@@ -54,11 +54,11 @@ public class ClearSessionTrackingCacheTask extends CustomScheduledTask {
       ClientModel client = session.clients().getClientByClientId(europeanaRealm, entry.getKey());
       SessionTracker tracker = entry.getValue();
       if(client!=null && tracker !=null) {
-        if (tracker.getLastAccessDateString() != null) {
-          updateClientRoleAtrribute(client, tracker.getLastAccessDateString(),Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE);
+        if (tracker.getLastAccessDate() != null) {
+          updateClientRoleAtrribute(client, tracker.getLastAccessDate(),Constants.ROLE_ATTRIBUTE_LAST_ACCESS_DATE);
         }
         if (tracker.getLastRateLimitReachingTime() != null) {
-          updateClientRoleAtrribute(client, tracker.getLastRateLimitReachingTimeString(),Constants.ROLE_ATTRIBUTE_LAST_RATELIMIT_REACHING_DATE);
+          updateClientRoleAtrribute(client, tracker.getLastRateLimitReachingTime(),Constants.ROLE_ATTRIBUTE_LAST_RATELIMIT_REACHING_DATE);
         }
       }
     }

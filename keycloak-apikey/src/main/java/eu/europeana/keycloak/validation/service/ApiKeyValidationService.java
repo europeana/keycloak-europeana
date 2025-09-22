@@ -202,7 +202,7 @@ public class ApiKeyValidationService {
 
   private void updateSessionTracker(SessionTracker tracker, int maxKeyLimit, int updatedCount) {
     tracker.setSessionCount(updatedCount);
-    tracker.setLastAccessDate(LocalDateTime.now());
+    tracker.setLastAccessDate(Constants.FORMATTER.format(LocalDateTime.now()));
     if(updatedCount == maxKeyLimit && tracker.getLastRateLimitReachingTime() == null){
       tracker.setLastRateLimitReachingTime(tracker.getLastAccessDate());
     }
