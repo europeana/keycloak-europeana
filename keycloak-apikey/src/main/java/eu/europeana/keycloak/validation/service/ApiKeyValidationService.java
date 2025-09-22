@@ -162,11 +162,12 @@ public class ApiKeyValidationService {
             + " not found. Cannot perform rate limit check");
         return new ValidationResult(Status.OK, null);
       }
+      String lastAccessDate = Constants.FORMATTER.format(LocalDateTime.now());
       //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
       sessionTrackerCache.compute(client.getClientId(),
           (key, existingTracker) -> {
             SessionTracker tracker =
-                (existingTracker != null) ? existingTracker : new SessionTracker(key, 0,Constants.FORMATTER.format(LocalDateTime.now()));
+                (existingTracker != null) ? existingTracker : new SessionTracker(key, 0, lastAccessDate);
             //check the limits for allowed number of sessions for each apikey (keycloak client)
             resultReference.set(validateAndUpdateSessionTracker(client, tracker));
             return tracker;
