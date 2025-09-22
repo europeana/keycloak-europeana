@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
+/**
+ *
+ */
 public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker, SessionTracker>,
     Serializable {
   AtomicReference<ErrorMessage> resultReference = new AtomicReference<>();
@@ -57,7 +60,7 @@ public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker
     //check project key limit
     if (Constants.PROJECT_KEY.equals(keyType)) {
       if (updatedCount > PROJECT_KEY_LIMIT) {
-        projectKeyLimitReachedMessage();
+        return projectKeyLimitReachedMessage();
       }
       updateSessionTracker(tracker, PROJECT_KEY_LIMIT, updatedCount);
     }
