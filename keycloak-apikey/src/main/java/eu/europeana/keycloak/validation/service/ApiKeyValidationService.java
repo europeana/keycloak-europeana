@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.infinispan.Cache;
 import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
@@ -21,8 +23,6 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
-import org.infinispan.Cache;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 
 /**
  * Provides operations for apikey validation.
@@ -153,15 +153,19 @@ public class ApiKeyValidationService {
             + " not found. Cannot perform rate limit check");
         return new ValidationResult(Status.OK, null);
       }
-    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-    String keyType = getKeyType(client);
-    if(StringUtils.isNotEmpty(keyType)) {
-      SesstionTrackerUpdator updater = new SesstionTrackerUpdator(
-          Constants.FORMATTER.format(LocalDateTime.now()), keyType);
-       sessionTrackerCache.compute(client.getClientId(), updater);
 
+    String keyType = getKeyType(client);
+    if (StringUtils.isEmpty(keyType)) {
+      return new ValidationResult(Status.OK, null);
     }
-    return new ValidationResult(Status.OK,null);
+
+    SesstionTrackerUpdator updater = new SesstionTrackerUpdator(
+        Constants.FORMATTER.format(LocalDateTime.now()), keyType);
+    sessionTrackerCache.compute(client.getClientId(), updater);
+
+    ErrorMessage errorMessage = updater.resultReference.get();
+    Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
+    return new ValidationResult(status, errorMessage);
   }
 
   private String getKeyType(ClientModel client) {

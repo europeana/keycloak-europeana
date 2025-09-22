@@ -3,9 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
-import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.util.Constants;
-import jakarta.ws.rs.core.Response.Status;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,7 +11,7 @@ import java.util.function.BiFunction;
 
 public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker, SessionTracker>,
     Serializable {
-  AtomicReference<ValidationResult> resultReference = new AtomicReference<>();
+  AtomicReference<ErrorMessage> resultReference = new AtomicReference<>();
 
   public static final int PERSONAL_KEY_LIMIT = KeycloakUtils.getEnvInt(Constants.PERSONAL_KEY_RATE_LIMIT, Constants.DEFAULT_PERSONAL_KEY_RATE_LIMIT);
   public static final int PROJECT_KEY_LIMIT = KeycloakUtils.getEnvInt(Constants.PROJECT_KEY_RATE_LIMIT, Constants.DEFAULT_PROJECT_KEY_RATE_LIMIT);
@@ -47,23 +45,23 @@ public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker
 
 
 
-  private  ValidationResult validateAndUpdateSessionTracker(SessionTracker tracker) {
+  private ErrorMessage validateAndUpdateSessionTracker(SessionTracker tracker) {
     int updatedCount = tracker.getSessionCount() + 1;
     //check personal key limit
     if (Constants.PERSONAL_KEY.equals(keyType)) {
       if (updatedCount > PERSONAL_KEY_LIMIT) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS, personalKeyLimitReachedMessage());
+        return personalKeyLimitReachedMessage();
       }
       updateSessionTracker(tracker, PERSONAL_KEY_LIMIT, updatedCount);
     }
     //check project key limit
     if (Constants.PROJECT_KEY.equals(keyType)) {
       if (updatedCount > PROJECT_KEY_LIMIT) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS, projectKeyLimitReachedMessage());
+        projectKeyLimitReachedMessage();
       }
       updateSessionTracker(tracker, PROJECT_KEY_LIMIT, updatedCount);
     }
-    return new ValidationResult(Status.OK, null);
+    return null;
   }
 
 
