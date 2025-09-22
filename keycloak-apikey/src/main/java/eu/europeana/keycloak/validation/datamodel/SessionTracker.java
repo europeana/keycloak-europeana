@@ -1,8 +1,7 @@
 package eu.europeana.keycloak.validation.datamodel;
 
-import eu.europeana.keycloak.validation.util.Constants;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
 import java.util.Objects;
 
 public class SessionTracker implements Serializable {
@@ -13,10 +12,10 @@ public class SessionTracker implements Serializable {
   private String lastAccessDate;
   private String lastRateLimitReachingTime;
 
-  public SessionTracker(String id, int sessionCount) {
+  public SessionTracker(String id, int sessionCount, String lastAccessDate) {
     this.id = id;
     this.sessionCount = sessionCount;
-    this.lastAccessDate = Constants.FORMATTER.format(LocalDateTime.now());
+    this.lastAccessDate = lastAccessDate ;
    }
 
   public String getId() {

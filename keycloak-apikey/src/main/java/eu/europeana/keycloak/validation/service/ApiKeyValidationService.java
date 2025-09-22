@@ -166,7 +166,7 @@ public class ApiKeyValidationService {
       sessionTrackerCache.compute(client.getClientId(),
           (key, existingTracker) -> {
             SessionTracker tracker =
-                (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
+                (existingTracker != null) ? existingTracker : new SessionTracker(key, 0,Constants.FORMATTER.format(LocalDateTime.now()));
             //check the limits for allowed number of sessions for each apikey (keycloak client)
             resultReference.set(validateAndUpdateSessionTracker(client, tracker));
             return tracker;
@@ -183,27 +183,22 @@ public class ApiKeyValidationService {
    */
 
   private ValidationResult validateAndUpdateSessionTracker(ClientModel client, SessionTracker tracker) {
-    try {
-    int updatedCount = tracker.getSessionCount() + 1;
-    //check personal key limit
-    if (client.getRole(Constants.CLIENT_OWNER) != null) {
-      if (updatedCount > PERSONAL_KEY_LIMIT) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS, personalKeyLimitReachedMessage());
+      int updatedCount = tracker.getSessionCount() + 1;
+      //check personal key limit
+      if (client.getRole(Constants.CLIENT_OWNER) != null) {
+        if (updatedCount > PERSONAL_KEY_LIMIT) {
+          return new ValidationResult(Status.TOO_MANY_REQUESTS, personalKeyLimitReachedMessage());
+        }
+        updateSessionTracker(tracker, PERSONAL_KEY_LIMIT, updatedCount);
       }
-      updateSessionTracker(tracker,PERSONAL_KEY_LIMIT,updatedCount);
-    }
-    //check project key limit
-    if (client.getRole(Constants.SHARED_OWNER) != null) {
-      if (updatedCount > PROJECT_KEY_LIMIT) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS, projectKeyLimitReachedMessage());
+      //check project key limit
+      if (client.getRole(Constants.SHARED_OWNER) != null) {
+        if (updatedCount > PROJECT_KEY_LIMIT) {
+          return new ValidationResult(Status.TOO_MANY_REQUESTS, projectKeyLimitReachedMessage());
+        }
+        updateSessionTracker(tracker, PROJECT_KEY_LIMIT, updatedCount);
       }
-      updateSessionTracker(tracker,PROJECT_KEY_LIMIT,updatedCount);
-    }
-    return new ValidationResult(Status.OK, null);
-    }catch (Exception e){
-      LOG.error("Error during limit check " + e);
-      return new ValidationResult(Status.INTERNAL_SERVER_ERROR, null);
-    }
+      return new ValidationResult(Status.OK, null);
   }
 
   private void updateSessionTracker(SessionTracker tracker, int maxKeyLimit, int updatedCount) {
