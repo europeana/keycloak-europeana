@@ -101,6 +101,7 @@ spec:
               value: "${PROJECT_KEY_RATE_LIMIT}"
           ports:
             - containerPort: 8080
+            - containerPort: 8443
           livenessProbe:
             httpGet:
               path: /auth/realms/master
