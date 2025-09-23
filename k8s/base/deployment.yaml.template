@@ -15,6 +15,8 @@ spec:
         - name: keycloak
           image: europeana/keycloak
           env:
+            - name: KC_HTTPS_PORT
+              value: "8443"
             - name: KC_HTTP_RELATIVE_PATH
               value: "/auth"
             - name: KC_DB_URL
