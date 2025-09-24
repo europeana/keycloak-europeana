@@ -127,11 +127,3 @@ spec:
             limits:
               memory: "${MEMORY_LIMIT}M"
               cpu: "${CPU_LIMIT}m"
-          volumeMounts:
-              - name: keycloak-tls-secret
-                mountPath: /etc/x509/https
-                readOnly: true
-      volumes:
-        - name: ${K8S_HOSTNAME_SECRET}
-          secret:
-              secretName: ${K8S_HOSTNAME_SECRET}
