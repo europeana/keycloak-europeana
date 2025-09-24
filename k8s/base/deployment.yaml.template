@@ -15,8 +15,8 @@ spec:
         - name: keycloak
           image: europeana/keycloak
           env:
-            - name: KC_PROXY
-              value: "edge"
+            - name: KC_PROXY_HEADERS
+              value: "forwarded"
             - name: KC_HTTPS_ENABLED
               value: "true"
             - name: KC_HTTPS_PORT
@@ -34,8 +34,8 @@ spec:
             - name: KC_DB_SCHEMA
               value: "${KC_DB_SCHEMA}"
             # HTTPS enforced at ingress
-            - name: KC_HTTP_ENABLED
-              value: "true"
+            #- name: KC_HTTP_ENABLED
+            #  value: "true"
             - name: KC_PROXY
               value: "edge"
             - name: KC_HOSTNAME
