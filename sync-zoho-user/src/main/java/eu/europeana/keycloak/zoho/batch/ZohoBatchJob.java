@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.batch;
 
 import com.zoho.crm.api.bulkread.APIException;
 import com.zoho.crm.api.bulkread.ActionHandler;
@@ -23,6 +23,7 @@ public class ZohoBatchJob {
     private static final Logger LOG = Logger.getLogger(ZohoBatchJob.class);
     private static final String CONTACTS = "Contacts";
     private static final String ACCOUNTS = "Accounts";
+    private static final String API_PROJECTS = "API_projects";
 
 
   public String zohoBulkCreateJob(String moduleAPIName) throws Exception {
@@ -98,7 +99,10 @@ public class ZohoBatchJob {
         fieldAPINames.add("Account_Name");
         fieldAPINames.add("Europeana_org_ID");
     }
-
+    else if(StringUtils.equalsIgnoreCase(moduleAPIName, API_PROJECTS)) {
+      fieldAPINames.add("Key");
+      fieldAPINames.add("Last_access");
+    }
     fieldAPINames.add("Modified_Time");
     return fieldAPINames;
   }

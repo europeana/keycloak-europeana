@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.datamodel;
 
 import com.opencsv.bean.CsvBindByPosition;
 import java.time.format.DateTimeFormatter;

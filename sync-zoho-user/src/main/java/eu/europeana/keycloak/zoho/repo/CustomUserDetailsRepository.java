@@ -1,11 +1,14 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.repo;
 
+import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
@@ -34,7 +37,7 @@ public class CustomUserDetailsRepository {
     return em.createQuery(query,String.class).setParameter("groupID", groupId).getResultList();
   }
 
-  public Map<String,KeycloakUser> listAllUserMails(String realmName) {
+  public Map<String, KeycloakUser> listAllUserMails(String realmName) {
 
     Map<String,KeycloakUser> userDetailsMap = new HashMap<>();
     String nativeQueryString = """
@@ -73,5 +76,44 @@ public class CustomUserDetailsRepository {
       userDetailsMap.put(email,new KeycloakUser(id,username,email,firstName,lastName,roles));
     }
     return userDetailsMap;
+  }
+
+  public Map<String, KeycloakClient> getAllClients(String realmName) {
+
+    Map<String, KeycloakClient> clientMap = new HashMap<>();
+    String nativeQueryString = """
+        SELECT c.client_id as apikey,kr.name as role_name,ra.name as attribute_name,ra.value as attribute_value
+        FROM
+        {h-schema}CLIENT c
+        JOIN
+        {h-schema}KEYCLOAK_ROLE kr ON kr.client = c.id
+        JOIN
+        {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id
+        WHERE kr.name in ('client_owner','shared_owner')
+        AND  c.realm_id = %s       
+        """.formatted("'" + realmName + "'");
+
+    Query nativeQuery = em.createNativeQuery(nativeQueryString);
+    List<Object[]> rows = nativeQuery.getResultList();
+
+    for (Object[] row : rows) {
+
+      String apikey = (String) row[0];
+      String role_name = (String) row[1];
+      String attribute_name = (String) row[2];
+      String attribute_value = (String) row[3];
+
+      KeycloakClient client = clientMap.get(apikey);
+      if (client == null) {
+        Map<String,String> attributemap = new HashMap<>();
+        if(StringUtils.isNotEmpty(attribute_name)) {
+          attributemap.put(attribute_name, attribute_value);
+        }
+        clientMap.put(apikey, new KeycloakClient(apikey, role_name,attributemap));
+      } else {
+        client.addAttribute(attribute_name, attribute_value);
+      }
+    }
+    return clientMap;
   }
 }

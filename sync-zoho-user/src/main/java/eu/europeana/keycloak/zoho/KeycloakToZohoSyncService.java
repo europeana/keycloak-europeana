@@ -2,6 +2,12 @@ package eu.europeana.keycloak.zoho;
 
 import com.zoho.crm.api.exception.SDKException;
 import com.zoho.crm.api.util.Choice;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchUpdater;
+import eu.europeana.keycloak.zoho.datamodel.APIProject;
+import eu.europeana.keycloak.zoho.datamodel.Contact;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
+import eu.europeana.keycloak.zoho.repo.CustomUserDetailsRepository;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,15 +24,11 @@ import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import com.zoho.crm.api.HeaderMap;
-import com.zoho.crm.api.record.APIException;
 import com.zoho.crm.api.record.ActionHandler;
-import com.zoho.crm.api.record.ActionResponse;
-import com.zoho.crm.api.record.ActionWrapper;
 import com.zoho.crm.api.record.BodyWrapper;
 import com.zoho.crm.api.record.Field;
 import com.zoho.crm.api.record.RecordOperations;
 import com.zoho.crm.api.record.Record;
-import com.zoho.crm.api.record.SuccessResponse;
 import com.zoho.crm.api.util.APIResponse;
 
 /**
@@ -34,6 +36,7 @@ import com.zoho.crm.api.util.APIResponse;
  */
 
 public class KeycloakToZohoSyncService {
+
   private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
   public static final String CLIENT_OWNER = "client_owner";
   public static final String SHARED_OWNER = "shared_owner";
@@ -41,12 +44,13 @@ public class KeycloakToZohoSyncService {
   public static final String API_USER = "API User";
   public static final String API_CUSTOMER = "API Customer";
   private final  EntityManager entityManager;
-
   private final CustomUserDetailsRepository repo;
   private final RealmModel realm;
   private final List<String> updatedContacts = new ArrayList<>();
-  private Map<String,KeycloakUser> userdetails = new HashMap<>();
+  private Map<String, KeycloakUser> userdetails = new HashMap<>();
+  private Map<String, KeycloakClient> clientdetails = new HashMap<>();
   private List<String> testUserIds = new ArrayList<>();
+  private  ZohoBatchUpdater updater ;
 
   /**
    * Initialize KeycloakToZohoSyncService
@@ -56,6 +60,7 @@ public class KeycloakToZohoSyncService {
     this.realm = session.getContext().getRealm();
     this.entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
     this.repo = new CustomUserDetailsRepository(entityManager);
+    this.updater = new ZohoBatchUpdater();
   }
 
   public List<String> getUpdatedContactList(){
@@ -108,7 +113,7 @@ public class KeycloakToZohoSyncService {
     HeaderMap headerInstance = new HeaderMap();
     APIResponse<ActionHandler> response = recordOperations.createRecords(bodyWrapper,
         headerInstance);
-    return processResponse(response);
+    return updater.processResponse(response);
   }
 
   private static List<Choice<String>> getParticipationChoice(Set<String> participationLevel) {
@@ -138,29 +143,7 @@ public class KeycloakToZohoSyncService {
     request.setData(records);
     LOG.info("Updating  zoho contact id :" + recordId);
     APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,new HeaderMap());
-    return  processResponse(response);
-  }
-
-  private boolean processResponse(APIResponse<ActionHandler> response){
-    if (response != null && response.isExpected()) {
-      if (response.getObject() instanceof ActionWrapper actionWrapper) {
-        for (ActionResponse actionResponse : actionWrapper.getData()) {
-          if (actionResponse instanceof SuccessResponse) {
-            return true;
-          } else if (actionResponse instanceof APIException exception) {
-            LOG.error("Status: " + exception.getStatus().getValue() +
-                " Code:" + exception.getCode().getValue()+
-                " Message: "+ exception.getMessage().getValue());
-            return false;
-          }
-        }
-      } else if (response.getObject() instanceof APIException exception) {
-        LOG.error(" Status: " + exception.getStatus().getValue() + " Code:" + exception.getCode().getValue()+" Message: "+ exception.getMessage().getValue());
-        return false;
-      }
-    }
-    LOG.error("Unexpected response from zoho");
-    return false;
+    return  updater.processResponse(response);
   }
 
   /**
@@ -214,7 +197,7 @@ public class KeycloakToZohoSyncService {
    * Control if actual updates in ZOHO to be made by the sync job.   *
    * @return boolean
    */
-  public boolean isSyncEnabled() {
+    public boolean isSyncEnabled() {
     String enableKeycloakToZohoSync = System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC");
     return StringUtils.isNotEmpty(enableKeycloakToZohoSync) && "true".equals(enableKeycloakToZohoSync);
   }
@@ -345,4 +328,36 @@ public class KeycloakToZohoSyncService {
     return participationLevels;
   }
 
+  public void updateAPIProjects(List<APIProject> apiProjects) {
+    try {
+      clientdetails = repo.getAllClients(realm.getName());
+      Map<Long,KeycloakClient> apiProjectsToUpdate = new HashMap<>();
+      for (APIProject project : apiProjects) {
+        String projectKey = project.getKey();
+        //fetch the lastAccess Date attribute from client
+        KeycloakClient client = clientdetails.get(projectKey);
+        if (client !=null && !project.getLastAccess().equals(client.getLastAccessDate())) {
+          // if the last access date value is changed , then consider it for updating in zoho
+          LOG.info("Last Access date for client : " + client.getLastAccessDate());
+          apiProjectsToUpdate.put(Long.parseLong(project.getId()),client);
+        }
+      }
+      if(isSyncEnabled()) {
+        updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_Project");
+      }
+    } catch (SDKException e) {
+      LOG.error("Error occurred while updating API_Project: " + e.getMessage());
+    }
+  }
+  private List<Record> getListOfRecordsToUpdate(Map<Long, KeycloakClient> apiProjectsToUpdate) {
+    List<Record> records = new ArrayList<>();
+    for(Map.Entry<Long,KeycloakClient> entry : apiProjectsToUpdate.entrySet()){
+      //prepare record to update and add it in list
+      Record recordToUpdate = new Record();
+      recordToUpdate.setId(entry.getKey());
+      recordToUpdate.addKeyValue("lastAccess",entry.getValue().getLastAccessDate());
+      records.add(recordToUpdate);
+    }
+    return records;
+  }
 }

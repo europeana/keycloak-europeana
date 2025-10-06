@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.datamodel;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -3,6 +3,11 @@ package eu.europeana.keycloak.zoho;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.zoho.crm.api.exception.SDKException;
 import eu.europeana.api.common.zoho.ZohoConnect;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchDownload;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchJob;
+import eu.europeana.keycloak.zoho.datamodel.APIProject;
+import eu.europeana.keycloak.zoho.datamodel.Account;
+import eu.europeana.keycloak.zoho.datamodel.Contact;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.ext.Provider;
 import java.io.FileReader;
@@ -45,6 +50,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private final  KeycloakToZohoSyncService kzSync ;
     private List<Account> accounts;
     private List<Contact> contacts;
+    private List<APIProject> apiProjects;
     HashMap<String, Institute4Hash> instituteMap    = new HashMap<>();
     HashMap<String, String>         modifiedUserMap = new HashMap<>();
 
@@ -73,6 +79,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
         String accountsJob;
         String contactsJob;
+        String apiProjectsJob;
         int    nrUpdatedUsers = 0;
         int nrOfNewlyAddedContactsInZoho =0;
 
@@ -81,18 +88,23 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             try {
                 accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
                 contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
+                apiProjectsJob = zohoBatchJob.zohoBulkCreateJob("API_projects");
             } catch (Exception e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
             }
+
             ZohoBatchDownload zohoBatchDownload = new ZohoBatchDownload();
             try {
                 createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
+                createApiProjects(zohoBatchDownload.downloadResult(Long.valueOf(apiProjectsJob)));
+
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
                     nrUpdatedUsers = updateKCUsers();
+                    synchroniseAPIProjects();
                 }
             } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
@@ -102,6 +114,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
         conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
+    }
+
+    private void synchroniseAPIProjects() {
+        kzSync.updateAPIProjects(apiProjects);
     }
 
     private int createNewZohoContacts(List<Contact> contacts) {
@@ -133,6 +149,15 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private void createContacts(String pathToContactsCsv) throws IOException {
         contacts = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
             .withType(Contact.class)
+            .withSkipLines(1)
+            .build()
+            .parse();
+        Files.deleteIfExists(Paths.get(pathToContactsCsv));
+    }
+
+    private void createApiProjects(String pathToContactsCsv) throws IOException {
+        apiProjects = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
+            .withType(APIProject.class)
             .withSkipLines(1)
             .build()
             .parse();
