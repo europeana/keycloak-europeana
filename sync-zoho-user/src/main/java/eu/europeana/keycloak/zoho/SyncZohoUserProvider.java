@@ -102,9 +102,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
                     synchroniseContacts(days);
-                    nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
-                    nrUpdatedUsers = updateKCUsers();
-                    synchroniseAPIProjects();
+                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
+                     nrUpdatedUsers = updateKCUsers();
+                     synchroniseAPIProjects();
                 }
             } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
@@ -112,7 +112,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             }
         }
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
-        conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
+        //conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 

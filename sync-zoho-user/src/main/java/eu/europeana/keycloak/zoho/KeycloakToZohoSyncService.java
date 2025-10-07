@@ -9,6 +9,8 @@ import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import eu.europeana.keycloak.zoho.repo.CustomUserDetailsRepository;
 import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -336,26 +338,38 @@ public class KeycloakToZohoSyncService {
         String projectKey = project.getKey();
         //fetch the lastAccess Date attribute from client
         KeycloakClient client = clientdetails.get(projectKey);
-        if (client !=null && !project.getLastAccess().equals(client.getLastAccessDate())) {
+        if (client !=null &&
+            StringUtils.isNotEmpty(client.getLastAccessDate())
+         && isDateChanged(project.getLastAccess(), client.getLastAccessDate())) {
           // if the last access date value is changed , then consider it for updating in zoho
           LOG.info("Last Access date for client : " + client.getLastAccessDate());
           apiProjectsToUpdate.put(Long.parseLong(project.getId()),client);
         }
       }
       if(isSyncEnabled()) {
-        updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_Project");
+        updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_projects");
       }
     } catch (SDKException e) {
       LOG.error("Error occurred while updating API_Project: " + e.getMessage());
     }
   }
+
+  private static boolean isDateChanged(String date1, String date2) {
+    try {
+      return !OffsetDateTime.parse(date2).isEqual(OffsetDateTime.parse(date1));
+    } catch (DateTimeParseException e) {
+      LOG.error("Unable to parse input date to OffsetDateTime - " + date1 + " and " + date2);
+      return false;
+    }
+  }
+
   private List<Record> getListOfRecordsToUpdate(Map<Long, KeycloakClient> apiProjectsToUpdate) {
     List<Record> records = new ArrayList<>();
     for(Map.Entry<Long,KeycloakClient> entry : apiProjectsToUpdate.entrySet()){
       //prepare record to update and add it in list
       Record recordToUpdate = new Record();
       recordToUpdate.setId(entry.getKey());
-      recordToUpdate.addKeyValue("lastAccess",entry.getValue().getLastAccessDate());
+      recordToUpdate.addKeyValue("Last_access", OffsetDateTime.parse(entry.getValue().getLastAccessDate()));
       records.add(recordToUpdate);
     }
     return records;

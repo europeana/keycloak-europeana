@@ -11,6 +11,7 @@ import com.zoho.crm.api.record.Record;
 import com.zoho.crm.api.record.RecordOperations;
 import com.zoho.crm.api.record.SuccessResponse;
 import com.zoho.crm.api.util.APIResponse;
+import java.util.ArrayList;
 import java.util.List;
 import org.jboss.logging.Logger;
 
@@ -39,7 +40,7 @@ public class ZohoBatchUpdater {
       List<Record> currentBatch = records.subList(i, endIndex);
       //call zoho update
       LOG.info("Processing batch number "+ ((i/BATCH_SIZE)+1) + " Records from - " + (i+1) + " To- "+ endIndex);
-      if (!callZohoBatchUpdate(currentBatch, moduleName)) {
+      if (!callZohoBatchUpdate(new ArrayList<>(currentBatch), moduleName)) {
         LOG.error("Further batches if any ,wont be processed due to failure");
         return;
       }
