@@ -14,11 +14,11 @@ import org.hibernate.internal.SessionImpl;
 import org.hibernate.query.sql.internal.NativeQueryImpl;
 import org.jboss.logging.Logger;
 
-public class CustomUserDetailsRepository {
+public class CustomQueryRepository {
 
-  private static final Logger LOG = Logger.getLogger(CustomUserDetailsRepository.class);
+  private static final Logger LOG = Logger.getLogger(CustomQueryRepository.class);
   private final EntityManager em;
-  public CustomUserDetailsRepository(EntityManager em) {
+  public CustomQueryRepository(EntityManager em) {
     this.em = em;
   }
 
@@ -80,7 +80,6 @@ public class CustomUserDetailsRepository {
 
   public Map<String, KeycloakClient> getAllClients(String realmName) {
 
-    Map<String, KeycloakClient> clientMap = new HashMap<>();
     String nativeQueryString = """
         SELECT c.client_id as apikey,kr.name as role_name,ra.name as attribute_name,ra.value as attribute_value
         FROM
@@ -90,14 +89,14 @@ public class CustomUserDetailsRepository {
         JOIN
         {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id
         WHERE kr.name in ('client_owner','shared_owner')
-        AND  c.realm_id = %s       
+        AND  c.realm_id = %s      
         """.formatted("'" + realmName + "'");
 
     Query nativeQuery = em.createNativeQuery(nativeQueryString);
     List<Object[]> rows = nativeQuery.getResultList();
 
+    Map<String, KeycloakClient> clientMap = new HashMap<>();
     for (Object[] row : rows) {
-
       String apikey = (String) row[0];
       String role_name = (String) row[1];
       String attribute_name = (String) row[2];

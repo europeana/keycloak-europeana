@@ -7,7 +7,7 @@ import eu.europeana.keycloak.zoho.datamodel.APIProject;
 import eu.europeana.keycloak.zoho.datamodel.Contact;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
-import eu.europeana.keycloak.zoho.repo.CustomUserDetailsRepository;
+import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
 import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -46,13 +46,13 @@ public class KeycloakToZohoSyncService {
   public static final String API_USER = "API User";
   public static final String API_CUSTOMER = "API Customer";
   private final  EntityManager entityManager;
-  private final CustomUserDetailsRepository repo;
+  private final CustomQueryRepository repo;
   private final RealmModel realm;
   private final List<String> updatedContacts = new ArrayList<>();
   private Map<String, KeycloakUser> userdetails = new HashMap<>();
   private Map<String, KeycloakClient> clientdetails = new HashMap<>();
   private List<String> testUserIds = new ArrayList<>();
-  private  ZohoBatchUpdater updater ;
+  private  final ZohoBatchUpdater updater ;
 
   /**
    * Initialize KeycloakToZohoSyncService
@@ -61,7 +61,7 @@ public class KeycloakToZohoSyncService {
   public KeycloakToZohoSyncService(KeycloakSession session){
     this.realm = session.getContext().getRealm();
     this.entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-    this.repo = new CustomUserDetailsRepository(entityManager);
+    this.repo = new CustomQueryRepository(entityManager);
     this.updater = new ZohoBatchUpdater();
   }
 
@@ -169,7 +169,7 @@ public class KeycloakToZohoSyncService {
 
   private void handleUserDissociation(Contact contact) throws SDKException {
     //dissociate the associated contact i.e. change the user_account_id  to null and remove API related participation levels
-    if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
+    if(isSyncEnabled("ZOHO_CONTACT_SYNC") && StringUtils.isNotEmpty(contact.getUserAccountId())){
       if(updateZohoContact(Long.parseLong(contact.getId()),null, removeAPIRelatedParticipation(contact.getContactParticipation()))){
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
       }
@@ -183,7 +183,7 @@ public class KeycloakToZohoSyncService {
       Set<String> participationLevel = calculateParticipationLevel(keycloakUser.getAssociatedRoleList(),contact.getContactParticipation());
       //If Secondary mail is present then consider the private/project keys of that user
       updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-      if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel)
+      if (isSyncEnabled("ZOHO_CONTACT_SYNC") && isToUpdateContact(contact, keycloakUser,participationLevel)
         && updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)
       ) {
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
@@ -199,9 +199,9 @@ public class KeycloakToZohoSyncService {
    * Control if actual updates in ZOHO to be made by the sync job.   *
    * @return boolean
    */
-    public boolean isSyncEnabled() {
-    String enableKeycloakToZohoSync = System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC");
-    return StringUtils.isNotEmpty(enableKeycloakToZohoSync) && "true".equals(enableKeycloakToZohoSync);
+    public boolean isSyncEnabled(String flagName) {
+    String flag = System.getenv(flagName);
+    return StringUtils.isNotEmpty(flag) && "true".equals(flag);
   }
 
   private static Set<String> removeAPIRelatedParticipation(String contactParticipation) {
@@ -272,7 +272,7 @@ public class KeycloakToZohoSyncService {
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList(),null);
-          if(isSyncEnabled()){
+          if(isSyncEnabled("ZOHO_CONTACT_SYNC")){
             LOG.info("Creating zoho contact " + user.getEmail());
            if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,participationLevel)){
              newContacts.add(user.getEmail());
@@ -346,7 +346,7 @@ public class KeycloakToZohoSyncService {
           apiProjectsToUpdate.put(Long.parseLong(project.getId()),client);
         }
       }
-      if(isSyncEnabled()) {
+      if(isSyncEnabled("ZOHO_API_PROJECTS_SYNC")) {
         updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_projects");
       }
     } catch (SDKException e) {

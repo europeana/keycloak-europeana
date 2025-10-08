@@ -80,7 +80,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         String accountsJob;
         String contactsJob;
         String apiProjectsJob;
-        int    nrUpdatedUsers = 0;
+        int nrUpdatedUsers = 0;
         int nrOfNewlyAddedContactsInZoho =0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
@@ -101,18 +101,18 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 createApiProjects(zohoBatchDownload.downloadResult(Long.valueOf(apiProjectsJob)));
 
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                    synchroniseContacts(days);
+                     synchroniseContacts(days);
                      nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
-                     nrUpdatedUsers = updateKCUsers();
-                     synchroniseAPIProjects();
+                     nrUpdatedUsers = updateUsersInKeyCloak();
                 }
+                synchroniseAPIProjects();
             } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
                 return "Error downloading bulk job.";
             }
         }
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
-        //conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
+        conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 
@@ -193,7 +193,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
     }
 
-    private int updateKCUsers() {
+    private int updateUsersInKeyCloak() {
         int updated = 0;
         LOG.info("Checking if updated contacts exist in Keycloak ...");
         for (Map.Entry<String, String> affiliatedUser : modifiedUserMap.entrySet()) {
@@ -203,7 +203,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 //In case zoho orgID does not match with existing affiliation in keycloak then update the keycloak affiliation
                 String affiliationValue = user.getFirstAttribute("affiliation");
                 boolean isToUpdateAffiliation = (StringUtils.isNotBlank(zohoOrgId) ? !zohoOrgId.equals(
-                    affiliationValue) : StringUtils.isNotBlank(affiliationValue));
+                    affiliationValue) : StringUtils.isNotBlank(affiliationValue)) ;
 
                 if (isToUpdateAffiliation) {
                     user.setSingleAttribute("affiliation", zohoOrgId);
