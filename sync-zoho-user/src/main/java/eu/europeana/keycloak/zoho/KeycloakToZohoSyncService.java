@@ -45,12 +45,13 @@ public class KeycloakToZohoSyncService {
   public static final String ACCOUNT_HOLDER = "Account holder";
   public static final String API_USER = "API User";
   public static final String API_CUSTOMER = "API Customer";
+  public static final String ZOHO_CONTACT_SYNC = "ZOHO_CONTACT_SYNC";
   private final  EntityManager entityManager;
   private final CustomQueryRepository repo;
   private final RealmModel realm;
   private final List<String> updatedContacts = new ArrayList<>();
   private Map<String, KeycloakUser> userdetails = new HashMap<>();
-  private Map<String, KeycloakClient> clientdetails = new HashMap<>();
+
   private List<String> testUserIds = new ArrayList<>();
   private  final ZohoBatchUpdater updater ;
 
@@ -169,7 +170,7 @@ public class KeycloakToZohoSyncService {
 
   private void handleUserDissociation(Contact contact) throws SDKException {
     //dissociate the associated contact i.e. change the user_account_id  to null and remove API related participation levels
-    if(isSyncEnabled("ZOHO_CONTACT_SYNC") && StringUtils.isNotEmpty(contact.getUserAccountId())){
+    if(isSyncEnabled(ZOHO_CONTACT_SYNC) && StringUtils.isNotEmpty(contact.getUserAccountId())){
       if(updateZohoContact(Long.parseLong(contact.getId()),null, removeAPIRelatedParticipation(contact.getContactParticipation()))){
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
       }
@@ -183,7 +184,7 @@ public class KeycloakToZohoSyncService {
       Set<String> participationLevel = calculateParticipationLevel(keycloakUser.getAssociatedRoleList(),contact.getContactParticipation());
       //If Secondary mail is present then consider the private/project keys of that user
       updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-      if (isSyncEnabled("ZOHO_CONTACT_SYNC") && isToUpdateContact(contact, keycloakUser,participationLevel)
+      if (isSyncEnabled(ZOHO_CONTACT_SYNC) && isToUpdateContact(contact, keycloakUser,participationLevel)
         && updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)
       ) {
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
@@ -196,7 +197,8 @@ public class KeycloakToZohoSyncService {
   }
 
   /**
-   * Control if actual updates in ZOHO to be made by the sync job.   *
+   * Control if actual updates in ZOHO to be made by the sync job.
+   * @param flagName name of the environment variable
    * @return boolean
    */
     public boolean isSyncEnabled(String flagName) {
@@ -272,7 +274,7 @@ public class KeycloakToZohoSyncService {
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList(),null);
-          if(isSyncEnabled("ZOHO_CONTACT_SYNC")){
+          if(isSyncEnabled(ZOHO_CONTACT_SYNC)){
             LOG.info("Creating zoho contact " + user.getEmail());
            if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,participationLevel)){
              newContacts.add(user.getEmail());
@@ -330,20 +332,25 @@ public class KeycloakToZohoSyncService {
     return participationLevels;
   }
 
+  /**
+   * Compares the keycloak projectClients and zoho projects  and
+   * calls zoho for updating last Access date
+   * @param apiProjects  List of Objects containing records from zoho API_Projects module.
+   */
   public void updateAPIProjects(List<APIProject> apiProjects) {
     try {
-      clientdetails = repo.getProjectClients(realm.getName());
+      Map<String, KeycloakClient> projectClients = repo.getProjectClients(realm.getName());
       Map<Long,KeycloakClient> apiProjectsToUpdate = new HashMap<>();
-      for (APIProject project : apiProjects) {
-        String projectKey = project.getKey();
+      for (APIProject zohoProject : apiProjects) {
+        String projectKey = zohoProject.getKey();
         //fetch the lastAccess Date attribute from client
-        KeycloakClient client = clientdetails.get(projectKey);
+        KeycloakClient client = projectClients.get(projectKey);
         if (client !=null &&
             StringUtils.isNotEmpty(client.getLastAccessDate())
-         && isDateChanged(project.getLastAccess(), client.getLastAccessDate())) {
+         && isDateChanged(zohoProject.getLastAccess(), client.getLastAccessDate())) {
           // if the last access date value is changed , then consider it for updating in zoho
           LOG.info("Last Access date for client : " + client.getLastAccessDate());
-          apiProjectsToUpdate.put(Long.parseLong(project.getId()),client);
+          apiProjectsToUpdate.put(Long.parseLong(zohoProject.getId()),client);
         }
       }
       LOG.info("Project Ids to be updated in ZOHO -"+apiProjectsToUpdate.entrySet());
@@ -359,7 +366,7 @@ public class KeycloakToZohoSyncService {
     try {
       return !OffsetDateTime.parse(date2).isEqual(OffsetDateTime.parse(date1));
     } catch (DateTimeParseException e) {
-      LOG.error("Unable to parse input date to OffsetDateTime - " + date1 + " and " + date2);
+      LOG.error("Unable to parse input date to OffsetDateTime - " + date1 + " and " + date2 + " : "+e);
       return false;
     }
   }
