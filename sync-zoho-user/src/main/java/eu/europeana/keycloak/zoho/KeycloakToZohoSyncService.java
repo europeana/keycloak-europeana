@@ -332,7 +332,7 @@ public class KeycloakToZohoSyncService {
 
   public void updateAPIProjects(List<APIProject> apiProjects) {
     try {
-      clientdetails = repo.getAllClients(realm.getName());
+      clientdetails = repo.getProjectClients(realm.getName());
       Map<Long,KeycloakClient> apiProjectsToUpdate = new HashMap<>();
       for (APIProject project : apiProjects) {
         String projectKey = project.getKey();
@@ -346,6 +346,7 @@ public class KeycloakToZohoSyncService {
           apiProjectsToUpdate.put(Long.parseLong(project.getId()),client);
         }
       }
+      LOG.info("Project Ids to be updated in ZOHO -"+apiProjectsToUpdate.entrySet());
       if(isSyncEnabled("ZOHO_API_PROJECTS_SYNC")) {
         updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_projects");
       }

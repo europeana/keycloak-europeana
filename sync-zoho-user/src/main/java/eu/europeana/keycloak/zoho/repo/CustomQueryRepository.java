@@ -78,7 +78,7 @@ public class CustomQueryRepository {
     return userDetailsMap;
   }
 
-  public Map<String, KeycloakClient> getAllClients(String realmName) {
+  public Map<String, KeycloakClient> getProjectClients(String realmName) {
 
     String nativeQueryString = """
         SELECT c.client_id as apikey,kr.name as role_name,ra.name as attribute_name,ra.value as attribute_value
@@ -88,8 +88,8 @@ public class CustomQueryRepository {
         {h-schema}KEYCLOAK_ROLE kr ON kr.client = c.id
         JOIN
         {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id
-        WHERE kr.name in ('client_owner','shared_owner')
-        AND  c.realm_id = %s      
+        WHERE kr.name in ('shared_owner')
+        AND  c.realm_id = %s 
         """.formatted("'" + realmName + "'");
 
     Query nativeQuery = em.createNativeQuery(nativeQueryString);
