@@ -1,6 +1,6 @@
 package eu.europeana.keycloak.validation.service;
 
-import eu.europeana.keycloak.timer.CustomScheduledTask;
+import eu.europeana.keycloak.timer.AbstractCustomScheduledTask;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.util.Constants;
 import java.util.List;
@@ -17,16 +17,15 @@ import org.keycloak.models.RealmModel;
 /**
  *  Performs operations based on session tracking cache and then clears it.
  */
-public class ClearSessionTrackingCacheTask extends CustomScheduledTask {
+public class ClearSessionTrackingCacheTask extends AbstractCustomScheduledTask {
 
   private static final Logger LOG = Logger.getLogger(ClearSessionTrackingCacheTask.class);
 
-  /**
-   * Instantiate the ClearSessionTrackingCacheTask using specific name.
-   */
-  public ClearSessionTrackingCacheTask() {
-    super("clearSessionTrackingCache");
+  @Override
+  public String getTaskName() {
+    return "clearSessionTrackingCache";
   }
+
   @Override
   public void process(KeycloakSession session) {
     clearSessionTrackingCache(session);

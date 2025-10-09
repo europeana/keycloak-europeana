@@ -19,7 +19,7 @@ public class FixedRateTaskScheduler {
   public static final int MINUTES_IN_HOUR = 60;
   public static final long MILLISECONDS_IN_A_MINUTE = 6000L;
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-  private final CustomScheduledTask task;
+  private final AbstractCustomScheduledTask task;
   private final int intervalMinutes;
 
   /**
@@ -27,7 +27,7 @@ public class FixedRateTaskScheduler {
    * @param task to be scheduled
    * @param intervalMinutes between 2 consecutive task executions
    */
-  public FixedRateTaskScheduler(CustomScheduledTask task, int intervalMinutes) {
+  public FixedRateTaskScheduler(AbstractCustomScheduledTask task, int intervalMinutes) {
     this.task = task;
     this.intervalMinutes = intervalMinutes;
   }

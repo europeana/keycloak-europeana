@@ -1,7 +1,7 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import eu.europeana.keycloak.timer.CustomScheduledTask;
+import eu.europeana.keycloak.timer.AbstractCustomScheduledTask;
 import eu.europeana.keycloak.timer.FixedRateTaskScheduler;
 
 import java.time.LocalDateTime;
@@ -13,9 +13,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 
-public class FixedRateTaskSchedulerTest {
+ class FixedRateTaskSchedulerTest {
   @Mock
-  private CustomScheduledTask customScheduledTask;
+  private AbstractCustomScheduledTask customScheduledTask;
   @ParameterizedTest
   @CsvSource({
       "0,10,10",
