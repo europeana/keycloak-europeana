@@ -21,7 +21,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 public class CustomAdminResourceProviderFactory implements RealmResourceProviderFactory {
 
   public static final String PROVIDER_ID="admin";
-  private final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
+  private static final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
     return new CustomAdminResourceProvider(keycloakSession);

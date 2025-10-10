@@ -159,7 +159,7 @@ public class ApiKeyValidationService {
       return new ValidationResult(Status.OK, null);
     }
 
-    SesstionTrackerUpdator updater = new SesstionTrackerUpdator(
+    SessionTrackerUpdater updater = new SessionTrackerUpdater(
         Constants.FORMATTER.format(LocalDateTime.now()), keyType);
     sessionTrackerCache.compute(client.getClientId(), updater);
 

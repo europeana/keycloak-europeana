@@ -24,7 +24,7 @@ public class EuropeanaEventListenerProviderFactory implements EventListenerProvi
     @Override
     public EventListenerProvider create(KeycloakSession session) {
         this.session = session;
-        return new EuropeanaEventListenerProvider(LOG, LOG_PREFIX,session);
+        return new EuropeanaEventListenerProvider(LOG, LOG_PREFIX, session);
     }
 
     @Override

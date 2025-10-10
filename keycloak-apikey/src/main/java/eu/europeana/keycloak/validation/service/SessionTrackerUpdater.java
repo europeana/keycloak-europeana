@@ -10,10 +10,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 /**
- *
+ * Class to track sessions for clients/keys
+ * @author shweta
  */
-public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker, SessionTracker>,
-    Serializable {
+public class SessionTrackerUpdater implements BiFunction<String, SessionTracker, SessionTracker>, Serializable {
+
   AtomicReference<ErrorMessage> resultReference = new AtomicReference<>();
 
   public static final int PERSONAL_KEY_LIMIT = KeycloakUtils.getEnvInt(Constants.PERSONAL_KEY_RATE_LIMIT, Constants.DEFAULT_PERSONAL_KEY_RATE_LIMIT);
@@ -24,7 +25,7 @@ public class SesstionTrackerUpdator implements BiFunction<String, SessionTracker
   private String lastAccessDate;
   private String keyType;
 
-  public SesstionTrackerUpdator(String lastAccessDate,String keyType) {
+  public SessionTrackerUpdater(String lastAccessDate, String keyType) {
     this.lastAccessDate = lastAccessDate;
     this.keyType =keyType;
   }

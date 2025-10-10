@@ -7,6 +7,7 @@ import org.jboss.logging.Logger;
  * Utility class to define commonly used operations.
  */
 public final class KeycloakUtils {
+
   private static final Logger LOG  = Logger.getLogger(KeycloakUtils.class);
 
   private KeycloakUtils() {}
