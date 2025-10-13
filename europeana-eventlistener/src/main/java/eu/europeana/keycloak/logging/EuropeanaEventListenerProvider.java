@@ -1,26 +1,61 @@
 package eu.europeana.keycloak.logging;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
+import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.models.ClientModel;
+import org.keycloak.models.KeycloakSession;
 
 public class EuropeanaEventListenerProvider implements EventListenerProvider {
-
 
     private final String prefix;
     private final  Logger log;
 
-    public EuropeanaEventListenerProvider(Logger log, String prefix) {
+    KeycloakSession session;
+
+    public EuropeanaEventListenerProvider(Logger log, String prefix,KeycloakSession session) {
         this.log = log;
         this.prefix = prefix;
+        this.session = session;
     }
 
+    /** Upon successful keycloak login by user(user-password based login), the {@link EventType} 'LOGIN' is triggered and for client credential based login
+     *  the 'CLIENT_LOGIN' event is triggered
+     * Method is overridden for logging the event details and set the lastAccess time on corresponding apikey of user.
+     * @param event to be triggered
+     */
     @Override
     public void onEvent(Event event) {
         String msg = prefix + formatEventLog(event);
         log.info(msg);
+        if(EventType.LOGIN.equals(event.getType()) || EventType.CLIENT_LOGIN.equals(event.getType())){
+            updateLastAccessTimeOfApikey(event);
+        }
+    }
+
+    /**
+     * Updates the role attribute 'lastAccess' on the personal or project keys (i.e client)
+     * @param event keycloak event
+     */
+    private void updateLastAccessTimeOfApikey(Event event) {
+        ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), event.getClientId());
+        String lastAccessDateString = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(
+            ZoneOffset.UTC).format(new Date().toInstant());
+
+        Stream.of("client_owner","shared_owner")
+            .map(client::getRole)
+            .filter(Objects::nonNull)
+            .forEach(roleModel -> roleModel.setAttribute("lastAccess",
+                List.of(lastAccessDateString)));
     }
 
     @Override

@@ -1,5 +1,10 @@
 package eu.europeana.keycloak.validation.provider;
 
+import eu.europeana.keycloak.timer.FixedRateTaskScheduler;
+import eu.europeana.keycloak.KeycloakUtils;
+import eu.europeana.keycloak.validation.service.ClearSessionTrackingCacheTask;
+import eu.europeana.keycloak.validation.util.Constants;
+import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -16,6 +21,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 public class CustomAdminResourceProviderFactory implements RealmResourceProviderFactory {
 
   public static final String PROVIDER_ID="admin";
+  private static final Logger LOG = Logger.getLogger(CustomAdminResourceProviderFactory.class);
   @Override
   public RealmResourceProvider create(KeycloakSession keycloakSession) {
     return new CustomAdminResourceProvider(keycloakSession);
@@ -28,7 +34,17 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
 
   @Override
   public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-//specific postInit actions not required e.g. establish connections to resources that other providers have instantiated
+    int intervalMinutes = KeycloakUtils.getEnvInt(Constants.SESSION_DURATION_FOR_RATE_LIMITING,
+        Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT);
+
+    LOG.info("Configured Session Duration - "+ intervalMinutes);
+    if(intervalMinutes < 0 || intervalMinutes > Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT) {
+      LOG.info("Session duration not valid, defaulting to " +  Constants.DEFAULT_SESSION_DURATION_RATE_LIMIT + " minutes");
+    }
+
+    //schedule the cache cleanup task
+    FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ClearSessionTrackingCacheTask(),intervalMinutes);
+    scheduler.scheduleTask(keycloakSessionFactory);
   }
 
   @Override
@@ -40,4 +56,5 @@ public class CustomAdminResourceProviderFactory implements RealmResourceProvider
   public String getId() {
     return PROVIDER_ID;
   }
+
 }
