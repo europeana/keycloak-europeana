@@ -2,11 +2,15 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.util.Constants;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -14,7 +18,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.infinispan.Cache;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -75,6 +82,46 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     Apikey apikey = clientCreationService.registerKey(userForKeyCreation,Constants.PROJECT_KEY,null);
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
+
+  @Path("/sessioncount")
+  @GET
+  public Response viewCache(){
+    this.setupCors("GET");
+    try {
+      ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+      if (!result.isSuccess()) {
+        return this.cors.builder(
+            Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      }
+      //allow project key creation only to the authenticated users who have admin role
+      UserModel userModel = result.getUser();
+      if (userModel.getRoleMappingsStream()
+          .noneMatch(p -> Constants.ADMIN_ROLE_NAME.equals(p.getName()))) {
+        return this.cors.builder(
+            Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+      }
+      return getCachedSessionDetails();
+    }
+    catch (Exception e){
+       return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)).build();
+    }
+  }
+
+  private Response getCachedSessionDetails() {
+    JsonObjectBuilder cachedObject = Json.createObjectBuilder();
+    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache("sessionTrackerCache");
+    for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
+      JsonObjectBuilder details = Json.createObjectBuilder();
+      details.add("sessionCount",entry.getValue().getSessionCount());
+      details.add("LastAccessDate",entry.getValue().getLastAccessDate());
+      details.add("rateLimitReached",StringUtils.getIfEmpty(entry.getValue().getLastRateLimitReachingTime(),()->""));
+      cachedObject.add(entry.getKey(),details);
+    }
+    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
+
+  }
+
   private void setupCors(String allowedMethod) {
     this.cors = Cors.add(session.getContext().getHttpRequest())
         .auth().allowedMethods(allowedMethod)

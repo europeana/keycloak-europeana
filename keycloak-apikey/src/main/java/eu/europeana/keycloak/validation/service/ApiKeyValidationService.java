@@ -6,12 +6,14 @@ import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
+import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.infinispan.Cache;
 import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.http.HttpRequest;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientProvider;
@@ -21,22 +23,12 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
-import org.infinispan.Cache;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 
 /**
  * Provides operations for apikey validation.
  */
 public class ApiKeyValidationService {
-
   private static final Logger LOG  = Logger.getLogger(ApiKeyValidationService.class);
-  public static final String SESSION_TRACKER_CACHE = "sessionTrackerCache";
-  public static final String SESSION_DURATION_FOR_RATE_LIMITING = "SESSION_DURATION_FOR_RATE_LIMITING";
-  public static final String PERSONAL_KEY_RATE_LIMIT = "PERSONAL_KEY_RATE_LIMIT";
-  public static final String PROJECT_KEY_RATE_LIMIT = "PROJECT_KEY_RATE_LIMIT";
-  public static final int DEFAULT_PROJECT_KEY_RATE_LIMIT = 10000;
-  public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT = 1000;
-  public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT = 60;
   private final KeycloakSession session;
   private final RealmModel realm;
 
@@ -151,75 +143,39 @@ public class ApiKeyValidationService {
    * @return validation result object
    */
   public ValidationResult performRateLimitCheck(ClientModel client) {
-    InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(SESSION_TRACKER_CACHE);
-    if (sessionTrackerCache == null) {
-      LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
-          + " not found. Cannot perform rate limit check");
+
+      InfinispanConnectionProvider provider = session.getProvider(
+          InfinispanConnectionProvider.class);
+      Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(
+          Constants.SESSION_TRACKER_CACHE);
+      if (sessionTrackerCache == null) {
+        LOG.error("Infinispan cache " + Constants.SESSION_TRACKER_CACHE
+            + " not found. Cannot perform rate limit check");
+        return new ValidationResult(Status.OK, null);
+      }
+
+    String keyType = getKeyType(client);
+    if (StringUtils.isEmpty(keyType)) {
       return new ValidationResult(Status.OK, null);
     }
 
-    AtomicReference<ValidationResult> resultReference = new AtomicReference<>();
+    SessionTrackerUpdater updater = new SessionTrackerUpdater(
+        Constants.FORMATTER.format(LocalDateTime.now()), keyType);
+    sessionTrackerCache.compute(client.getClientId(), updater);
 
-    //If the client id reflects a personal key check against the personal key limit and respond with a HTTP 429 error code “429_limit_personal”
-    sessionTrackerCache.compute(client.getClientId(),
-        (key, existingTracker) -> {
-          SessionTracker tracker = (existingTracker != null) ? existingTracker : new SessionTracker(key, 0);
-          //check the limits for allowed number of sessions for each apikey (keycloak client)
-          ValidationResult limitCheckResult = checkMaximumSessionLimitForClient(client, tracker);
-          if (limitCheckResult.isSuccess()) {
-            tracker.setSessionCount(tracker.getSessionCount() + 1);
-          }
-          resultReference.set(limitCheckResult);
-          return tracker;
-        });
-
-    return resultReference.get();
+    ErrorMessage errorMessage = updater.resultReference.get();
+    Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
+    return new ValidationResult(status, errorMessage);
   }
 
-
-  /**
-   * Method interact with custom distributed cache 'sessionTrackerCache'
-   * The number of sessions per time limit are validated , updated if required for the client.
-   * @param client keycloak Client object
-   * @return ValidationResult object . Result staus is OK in case unable to perform the rate limit check
-   */
-
-  private ValidationResult checkMaximumSessionLimitForClient(ClientModel client, SessionTracker sessionTracker) {
-      int sessionCount = sessionTracker.getSessionCount();
-      int rateLimitDuration = getEnvInt(SESSION_DURATION_FOR_RATE_LIMITING,
-          DEFAULT_SESSION_DURATION_RATE_LIMIT);
-      //check personal key limit
-      int personalKeyLimit = getEnvInt(PERSONAL_KEY_RATE_LIMIT, DEFAULT_PERSONAL_KEY_RATE_LIMIT);
-      if (client.getRole(Constants.CLIENT_OWNER) != null && sessionCount >= personalKeyLimit) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(personalKeyLimit),
-                    String.valueOf(rateLimitDuration))
-                .formatErrorMessage(String.valueOf(personalKeyLimit),
-                    String.valueOf(rateLimitDuration)));
-      }
-      //check project key limit
-      int projectKeyLimit = getEnvInt(PROJECT_KEY_RATE_LIMIT, DEFAULT_PROJECT_KEY_RATE_LIMIT);
-      if (client.getRole(Constants.SHARED_OWNER) != null && sessionCount >= projectKeyLimit) {
-        return new ValidationResult(Status.TOO_MANY_REQUESTS,
-            ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(projectKeyLimit),
-                String.valueOf(rateLimitDuration)));
-      }
-    return new ValidationResult(Status.OK, null);
-  }
-
-  private int getEnvInt(String envVar, int defaultValue) {
-    String evVarValue = System.getenv(envVar);
-    if(StringUtils.isBlank(evVarValue)){
-     LOG.error("Environment variable "+envVar+ " is not configured. Using default value "+ defaultValue);
-     return defaultValue;
+  private String getKeyType(ClientModel client) {
+    if(client.getRole(Constants.CLIENT_OWNER) != null){
+      return Constants.PERSONAL_KEY;
     }
-    try{
-       return Integer.parseInt(evVarValue);
-    }catch (NumberFormatException ex){
-       LOG.error("Invalid number format for environment variable "+envVar+"="+evVarValue+" Using default value "+ defaultValue);
-       return defaultValue;
+    if(client.getRole(Constants.SHARED_OWNER) != null){
+      return Constants.PROJECT_KEY;
     }
+    return "";
   }
 
 

@@ -1,28 +1,29 @@
 package eu.europeana.keycloak.validation.datamodel;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
 import java.util.Objects;
 
 public class SessionTracker implements Serializable {
+
   private static final long serialVersionUID = 1L;
   private String id;
   private int sessionCount;
+  private String lastAccessDate;
+  private String lastRateLimitReachingTime;
 
-  private LocalDateTime lastAccessDate;
-
-  public SessionTracker(String id, int sessionCount) {
+  public SessionTracker(String id, int sessionCount, String lastAccessDate) {
     this.id = id;
     this.sessionCount = sessionCount;
-    this.lastAccessDate = LocalDateTime.now();
-  }
+    this.lastAccessDate = lastAccessDate ;
+   }
 
   public String getId() {
     return id;
   }
 
   public void setId(String id) {
-    this.id = id;
+   this.id=id;
   }
 
   public int getSessionCount() {
@@ -33,13 +34,22 @@ public class SessionTracker implements Serializable {
     this.sessionCount = sessionCount;
   }
 
-  public LocalDateTime getLastAccessDate() {
+  public String getLastAccessDate() {
     return lastAccessDate;
   }
 
-  public void setLastAccessDate(LocalDateTime lastAccessDate) {
+  public void setLastAccessDate(String lastAccessDate) {
     this.lastAccessDate = lastAccessDate;
   }
+
+  public String getLastRateLimitReachingTime() {
+    return lastRateLimitReachingTime;
+  }
+
+  public void setLastRateLimitReachingTime(String lastRateLimitReachingTime) {
+    this.lastRateLimitReachingTime = lastRateLimitReachingTime;
+  }
+
 
   @Override
   public boolean equals(Object obj) {
@@ -48,7 +58,8 @@ public class SessionTracker implements Serializable {
     SessionTracker that = (SessionTracker) obj;
     return Objects.equals(id, that.id) &&
         Objects.equals(sessionCount, that.sessionCount) &&
-        Objects.equals(lastAccessDate,that.lastAccessDate);
+        Objects.equals(lastAccessDate,that.lastAccessDate)&&
+        Objects.equals(lastRateLimitReachingTime,that.lastRateLimitReachingTime);
   }
 
 }
