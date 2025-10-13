@@ -32,6 +32,8 @@ import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 import eu.europeana.keycloak.SlackConnection;
 
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.ZOHO_API_PROJECTS_SYNC;
+
 /**
  * Created by luthien on 14/11/2022.
  */
@@ -75,7 +77,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
-        LOG.info("ZohoSync called. " + " Keycloak to zoho sync set to -  "+System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC"));
+        LOG.info("ZohoSync called. " + " Keycloak to zoho sync set to -  "+System.getenv(ZOHO_API_PROJECTS_SYNC));
 
         String accountsJob;
         String contactsJob;

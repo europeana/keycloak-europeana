@@ -15,16 +15,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.CONTACTS;
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.ACCOUNTS;
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.API_PROJECTS;
 
 /**
  * Created by luthien on 22/04/2024.
  */
 public class ZohoBatchJob {
     private static final Logger LOG = Logger.getLogger(ZohoBatchJob.class);
-    private static final String CONTACTS = "Contacts";
-    private static final String ACCOUNTS = "Accounts";
-    private static final String API_PROJECTS = "API_projects";
-
 
   public String zohoBulkCreateJob(String moduleAPIName) throws Exception {
     String jobID = "";

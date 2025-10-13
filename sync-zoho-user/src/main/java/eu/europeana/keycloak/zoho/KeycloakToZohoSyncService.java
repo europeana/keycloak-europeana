@@ -8,6 +8,7 @@ import eu.europeana.keycloak.zoho.datamodel.Contact;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
+import eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary;
 import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -37,15 +38,9 @@ import com.zoho.crm.api.util.APIResponse;
  * Service to check and sync specific fields for the zoho contact or create new contact in zoho
  */
 
-public class KeycloakToZohoSyncService {
+public class KeycloakToZohoSyncService extends KeycloakZohoVocabulary {
 
   private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
-  public static final String CLIENT_OWNER = "client_owner";
-  public static final String SHARED_OWNER = "shared_owner";
-  public static final String ACCOUNT_HOLDER = "Account holder";
-  public static final String API_USER = "API User";
-  public static final String API_CUSTOMER = "API Customer";
-  public static final String ZOHO_CONTACT_SYNC = "ZOHO_CONTACT_SYNC";
   private final  EntityManager entityManager;
   private final CustomQueryRepository repo;
   private final RealmModel realm;
@@ -354,7 +349,7 @@ public class KeycloakToZohoSyncService {
         }
       }
       LOG.info("Project Ids to be updated in ZOHO -"+apiProjectsToUpdate.entrySet());
-      if(isSyncEnabled("ZOHO_API_PROJECTS_SYNC")) {
+      if (isSyncEnabled(ZOHO_API_PROJECTS_SYNC)) {
         updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_projects");
       }
     } catch (SDKException e) {
