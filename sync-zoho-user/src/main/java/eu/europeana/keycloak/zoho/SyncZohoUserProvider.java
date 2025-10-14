@@ -88,8 +88,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         if (zohoConnect.getOrCreateAccessToZoho()) {
             ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
             try {
-                accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
-                contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
+//                accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
+//                contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
                 apiProjectsJob = zohoBatchJob.zohoBulkCreateJob("API_projects");
             } catch (Exception e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
@@ -98,23 +98,23 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
             ZohoBatchDownload zohoBatchDownload = new ZohoBatchDownload();
             try {
-                createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
-                createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
+                //createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
+                //createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
                 createApiProjects(zohoBatchDownload.downloadResult(Long.valueOf(apiProjectsJob)));
 
-                if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                     synchroniseContacts(days);
-                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
-                     nrUpdatedUsers = updateUsersInKeyCloak();
-                }
+//                if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
+//                     //synchroniseContacts(days);
+//                     //nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
+//                     //nrUpdatedUsers = updateUsersInKeyCloak();
+//                }
                 synchroniseAPIProjects();
             } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
                 return "Error downloading bulk job.";
             }
         }
-        SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
-        conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
+//        SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
+//        conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
     }
 
