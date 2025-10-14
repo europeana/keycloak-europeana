@@ -1,24 +1,25 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.repo;
 
+import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.hibernate.internal.SessionFactoryImpl;
-import org.hibernate.internal.SessionImpl;
-import org.hibernate.query.sql.internal.NativeQueryImpl;
-import org.jboss.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 
-public class CustomUserDetailsRepository {
-
-  private static final Logger LOG = Logger.getLogger(CustomUserDetailsRepository.class);
+public class CustomQueryRepository {
   private final EntityManager em;
-  public CustomUserDetailsRepository(EntityManager em) {
+  public CustomQueryRepository(EntityManager em) {
     this.em = em;
   }
 
+  /**
+   * Fetch the ID of the test group -'Europeana Test Users'
+   * @return groupID from keycloak table 'KEYCLOAK_GROUP' or null if no record found
+   */
   public  String findTestGroupId(){
     String query ="SELECT gi.id FROM  GroupEntity gi WHERE gi.name=:groupname";
     try {
@@ -34,7 +35,7 @@ public class CustomUserDetailsRepository {
     return em.createQuery(query,String.class).setParameter("groupID", groupId).getResultList();
   }
 
-  public Map<String,KeycloakUser> listAllUserMails(String realmName) {
+  public Map<String, KeycloakUser> listAllUserMails(String realmName) {
 
     Map<String,KeycloakUser> userDetailsMap = new HashMap<>();
     String nativeQueryString = """
@@ -56,12 +57,6 @@ public class CustomUserDetailsRepository {
 
     List<Object[]> rows = nativeQuery.getResultList();
 
-    if(((NativeQueryImpl<?>) nativeQuery).getSession() instanceof SessionImpl session){
-      if(session.getSessionFactory() instanceof SessionFactoryImpl factory){
-        LOG.info(" DB Schema name : "+factory.getProperties().get("hibernate.default_schema"));
-      }
-    }
-
     for(Object[] row : rows){
 
       String id = (String) row[0];
@@ -73,5 +68,47 @@ public class CustomUserDetailsRepository {
       userDetailsMap.put(email,new KeycloakUser(id,username,email,firstName,lastName,roles));
     }
     return userDetailsMap;
+  }
+
+  /**
+    Fetch the list of clients representing project keys for given realm
+    @param realmName name of the realm
+    @return map of zoho project ids and respective keycloak clients
+   */
+  public Map<String, KeycloakClient> getProjectClients(String realmName) {
+
+    String nativeQueryString = """
+        SELECT c.client_id as apikey,ra.name as attribute_name,ra.value as attribute_value
+        FROM
+        {h-schema}CLIENT c
+        JOIN
+        {h-schema}KEYCLOAK_ROLE kr ON kr.client = c.id
+        JOIN
+        {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id
+        WHERE kr.name in ('shared_owner')
+        AND  c.realm_id = :realmName 
+        """;
+
+    Query nativeQuery = em.createNativeQuery(nativeQueryString).setParameter("realmName" ,realmName);
+    List<Object[]> rows = nativeQuery.getResultList();
+
+    Map<String, KeycloakClient> clientMap = new HashMap<>();
+    for (Object[] row : rows) {
+      String apikey = String.valueOf(row[0]);
+      String attributeName = String.valueOf(row[1]);
+      String attributeValue = String.valueOf(row[2]);
+
+      KeycloakClient client = clientMap.get(apikey);
+      if (client == null) {
+        Map<String,String> attributemap = new HashMap<>();
+        if(StringUtils.isNotEmpty(attributeName)) {
+          attributemap.put(attributeName, attributeValue);
+        }
+        clientMap.put(apikey, new KeycloakClient(apikey,attributemap));
+      } else {
+        client.addAttribute(attributeName, attributeValue);
+      }
+    }
+    return clientMap;
   }
 }

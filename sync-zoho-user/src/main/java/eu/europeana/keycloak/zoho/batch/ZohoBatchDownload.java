@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.zoho;
+package eu.europeana.keycloak.zoho.batch;
 
 import com.zoho.crm.api.bulkread.APIException;
 import com.zoho.crm.api.bulkread.BulkReadOperations;

@@ -2,7 +2,16 @@ package eu.europeana.keycloak.zoho;
 
 import com.zoho.crm.api.exception.SDKException;
 import com.zoho.crm.api.util.Choice;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchUpdater;
+import eu.europeana.keycloak.zoho.datamodel.APIProject;
+import eu.europeana.keycloak.zoho.datamodel.Contact;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakClient;
+import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
+import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
+import eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary;
 import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,35 +27,28 @@ import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import com.zoho.crm.api.HeaderMap;
-import com.zoho.crm.api.record.APIException;
 import com.zoho.crm.api.record.ActionHandler;
-import com.zoho.crm.api.record.ActionResponse;
-import com.zoho.crm.api.record.ActionWrapper;
 import com.zoho.crm.api.record.BodyWrapper;
 import com.zoho.crm.api.record.Field;
 import com.zoho.crm.api.record.RecordOperations;
 import com.zoho.crm.api.record.Record;
-import com.zoho.crm.api.record.SuccessResponse;
 import com.zoho.crm.api.util.APIResponse;
 
 /**
  * Service to check and sync specific fields for the zoho contact or create new contact in zoho
  */
 
-public class KeycloakToZohoSyncService {
-  private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
-  public static final String CLIENT_OWNER = "client_owner";
-  public static final String SHARED_OWNER = "shared_owner";
-  public static final String ACCOUNT_HOLDER = "Account holder";
-  public static final String API_USER = "API User";
-  public static final String API_CUSTOMER = "API Customer";
-  private final  EntityManager entityManager;
+public class KeycloakToZohoSyncService extends KeycloakZohoVocabulary {
 
-  private final CustomUserDetailsRepository repo;
+  private static final Logger LOG = Logger.getLogger(KeycloakToZohoSyncService.class);
+  private final  EntityManager entityManager;
+  private final CustomQueryRepository repo;
   private final RealmModel realm;
   private final List<String> updatedContacts = new ArrayList<>();
-  private Map<String,KeycloakUser> userdetails = new HashMap<>();
+  private Map<String, KeycloakUser> userdetails = new HashMap<>();
+
   private List<String> testUserIds = new ArrayList<>();
+  private  final ZohoBatchUpdater updater ;
 
   /**
    * Initialize KeycloakToZohoSyncService
@@ -55,7 +57,8 @@ public class KeycloakToZohoSyncService {
   public KeycloakToZohoSyncService(KeycloakSession session){
     this.realm = session.getContext().getRealm();
     this.entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-    this.repo = new CustomUserDetailsRepository(entityManager);
+    this.repo = new CustomQueryRepository(entityManager);
+    this.updater = new ZohoBatchUpdater();
   }
 
   public List<String> getUpdatedContactList(){
@@ -108,7 +111,7 @@ public class KeycloakToZohoSyncService {
     HeaderMap headerInstance = new HeaderMap();
     APIResponse<ActionHandler> response = recordOperations.createRecords(bodyWrapper,
         headerInstance);
-    return processResponse(response);
+    return updater.processResponse(response);
   }
 
   private static List<Choice<String>> getParticipationChoice(Set<String> participationLevel) {
@@ -138,29 +141,7 @@ public class KeycloakToZohoSyncService {
     request.setData(records);
     LOG.info("Updating  zoho contact id :" + recordId);
     APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,new HeaderMap());
-    return  processResponse(response);
-  }
-
-  private boolean processResponse(APIResponse<ActionHandler> response){
-    if (response != null && response.isExpected()) {
-      if (response.getObject() instanceof ActionWrapper actionWrapper) {
-        for (ActionResponse actionResponse : actionWrapper.getData()) {
-          if (actionResponse instanceof SuccessResponse) {
-            return true;
-          } else if (actionResponse instanceof APIException exception) {
-            LOG.error("Status: " + exception.getStatus().getValue() +
-                " Code:" + exception.getCode().getValue()+
-                " Message: "+ exception.getMessage().getValue());
-            return false;
-          }
-        }
-      } else if (response.getObject() instanceof APIException exception) {
-        LOG.error(" Status: " + exception.getStatus().getValue() + " Code:" + exception.getCode().getValue()+" Message: "+ exception.getMessage().getValue());
-        return false;
-      }
-    }
-    LOG.error("Unexpected response from zoho");
-    return false;
+    return  updater.processResponse(response);
   }
 
   /**
@@ -184,7 +165,7 @@ public class KeycloakToZohoSyncService {
 
   private void handleUserDissociation(Contact contact) throws SDKException {
     //dissociate the associated contact i.e. change the user_account_id  to null and remove API related participation levels
-    if(isSyncEnabled() && StringUtils.isNotEmpty(contact.getUserAccountId())){
+    if(isSyncEnabled(ZOHO_CONTACT_SYNC) && StringUtils.isNotEmpty(contact.getUserAccountId())){
       if(updateZohoContact(Long.parseLong(contact.getId()),null, removeAPIRelatedParticipation(contact.getContactParticipation()))){
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
       }
@@ -198,7 +179,7 @@ public class KeycloakToZohoSyncService {
       Set<String> participationLevel = calculateParticipationLevel(keycloakUser.getAssociatedRoleList(),contact.getContactParticipation());
       //If Secondary mail is present then consider the private/project keys of that user
       updateParticipationBasedOnsecondaryMail(contact.getSecondaryEmail(), participationLevel);
-      if (isSyncEnabled() && isToUpdateContact(contact, keycloakUser,participationLevel)
+      if (isSyncEnabled(ZOHO_CONTACT_SYNC) && isToUpdateContact(contact, keycloakUser,participationLevel)
         && updateZohoContact(Long.parseLong(contact.getId()), keycloakUser.getId(), participationLevel)
       ) {
         updatedContacts.add(contact.getId() + ":" + contact.getEmail());
@@ -211,12 +192,13 @@ public class KeycloakToZohoSyncService {
   }
 
   /**
-   * Control if actual updates in ZOHO to be made by the sync job.   *
+   * Control if actual updates in ZOHO to be made by the sync job.
+   * @param flagName name of the environment variable
    * @return boolean
    */
-  public boolean isSyncEnabled() {
-    String enableKeycloakToZohoSync = System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC");
-    return StringUtils.isNotEmpty(enableKeycloakToZohoSync) && "true".equals(enableKeycloakToZohoSync);
+    public boolean isSyncEnabled(String flagName) {
+    String flag = System.getenv(flagName);
+    return StringUtils.isNotEmpty(flag) && "true".equals(flag);
   }
 
   private static Set<String> removeAPIRelatedParticipation(String contactParticipation) {
@@ -287,7 +269,7 @@ public class KeycloakToZohoSyncService {
           String firstName = user.getFirstName();
           String lastName = populateLastNameForContact(user, firstName);
           Set<String> participationLevel = calculateParticipationLevel(user.getAssociatedRoleList(),null);
-          if(isSyncEnabled()){
+          if(isSyncEnabled(ZOHO_CONTACT_SYNC)){
             LOG.info("Creating zoho contact " + user.getEmail());
            if(createZohoContact(user.getId(),user.getEmail(), firstName, lastName,participationLevel)){
              newContacts.add(user.getEmail());
@@ -345,4 +327,54 @@ public class KeycloakToZohoSyncService {
     return participationLevels;
   }
 
+  /**
+   * Compares the keycloak projectClients and zoho projects  and
+   * calls zoho for updating last Access date
+   * @param apiProjects  List of Objects containing records from zoho API_Projects module.
+   */
+  public void updateAPIProjects(List<APIProject> apiProjects) {
+    try {
+      Map<String, KeycloakClient> projectClients = repo.getProjectClients(realm.getName());
+      Map<Long,KeycloakClient> apiProjectsToUpdate = new HashMap<>();
+      for (APIProject zohoProject : apiProjects) {
+        String projectKey = zohoProject.getKey();
+        //fetch the lastAccess Date attribute from client
+        KeycloakClient client = projectClients.get(projectKey);
+        if (client !=null &&
+            StringUtils.isNotEmpty(client.getLastAccessDate())
+         && isDateChanged(zohoProject.getLastAccess(), client.getLastAccessDate())) {
+          // if the last access date value is changed , then consider it for updating in zoho
+          LOG.info("Last Access date for client : " + client.getLastAccessDate());
+          apiProjectsToUpdate.put(Long.parseLong(zohoProject.getId()),client);
+        }
+      }
+      LOG.info("Project Ids to be updated in ZOHO -"+apiProjectsToUpdate.entrySet());
+      if (isSyncEnabled(ZOHO_API_PROJECTS_SYNC)) {
+        updater.updateInBatches(getListOfRecordsToUpdate(apiProjectsToUpdate),"API_projects");
+      }
+    } catch (SDKException e) {
+      LOG.error("Error occurred while updating API_Project: " + e.getMessage());
+    }
+  }
+
+  private static boolean isDateChanged(String date1, String date2) {
+    try {
+      return !OffsetDateTime.parse(date2).isEqual(OffsetDateTime.parse(date1));
+    } catch (DateTimeParseException e) {
+      LOG.error("Unable to parse input date to OffsetDateTime - " + date1 + " and " + date2 + " : "+e);
+      return false;
+    }
+  }
+
+  private List<Record> getListOfRecordsToUpdate(Map<Long, KeycloakClient> apiProjectsToUpdate) {
+    List<Record> records = new ArrayList<>();
+    for(Map.Entry<Long,KeycloakClient> entry : apiProjectsToUpdate.entrySet()){
+      //prepare record to update and add it in list
+      Record recordToUpdate = new Record();
+      recordToUpdate.setId(entry.getKey());
+      recordToUpdate.addKeyValue("Last_access", OffsetDateTime.parse(entry.getValue().getLastAccessDate()));
+      records.add(recordToUpdate);
+    }
+    return records;
+  }
 }

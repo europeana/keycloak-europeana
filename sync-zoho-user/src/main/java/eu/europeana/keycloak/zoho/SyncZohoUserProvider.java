@@ -3,6 +3,11 @@ package eu.europeana.keycloak.zoho;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.zoho.crm.api.exception.SDKException;
 import eu.europeana.api.common.zoho.ZohoConnect;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchDownload;
+import eu.europeana.keycloak.zoho.batch.ZohoBatchJob;
+import eu.europeana.keycloak.zoho.datamodel.APIProject;
+import eu.europeana.keycloak.zoho.datamodel.Account;
+import eu.europeana.keycloak.zoho.datamodel.Contact;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.ext.Provider;
 import java.io.FileReader;
@@ -27,6 +32,8 @@ import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
 import eu.europeana.keycloak.SlackConnection;
 
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.ZOHO_API_PROJECTS_SYNC;
+
 /**
  * Created by luthien on 14/11/2022.
  */
@@ -45,6 +52,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private final  KeycloakToZohoSyncService kzSync ;
     private List<Account> accounts;
     private List<Contact> contacts;
+    private List<APIProject> apiProjects;
     HashMap<String, Institute4Hash> instituteMap    = new HashMap<>();
     HashMap<String, String>         modifiedUserMap = new HashMap<>();
 
@@ -69,11 +77,12 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
-        LOG.info("ZohoSync called. " + " Keycloak to zoho sync set to -  "+System.getenv("ENABLE_KEYCLOAK_TO_ZOHO_SYNC"));
+        LOG.info("ZohoSync called. " + " Keycloak to zoho sync set to -  "+System.getenv(ZOHO_API_PROJECTS_SYNC));
 
         String accountsJob;
         String contactsJob;
-        int    nrUpdatedUsers = 0;
+        String apiProjectsJob;
+        int nrUpdatedUsers = 0;
         int nrOfNewlyAddedContactsInZoho =0;
 
         if (zohoConnect.getOrCreateAccessToZoho()) {
@@ -81,19 +90,24 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             try {
                 accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
                 contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
+                apiProjectsJob = zohoBatchJob.zohoBulkCreateJob("API_projects");
             } catch (Exception e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause());
                 return "Error creating bulk job.";
             }
+
             ZohoBatchDownload zohoBatchDownload = new ZohoBatchDownload();
             try {
                 createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
                 createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
+                createApiProjects(zohoBatchDownload.downloadResult(Long.valueOf(apiProjectsJob)));
+
                 if (accounts != null && !accounts.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                    synchroniseContacts(days);
-                    nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
-                    nrUpdatedUsers = updateKCUsers();
+                     synchroniseContacts(days);
+                     nrOfNewlyAddedContactsInZoho = createNewZohoContacts(contacts);
+                     nrUpdatedUsers = updateUsersInKeyCloak();
                 }
+                synchroniseAPIProjects();
             } catch (IOException | SDKException  e) {
                 LOG.info("Message: " + e.getMessage() + "; cause: " + e.getCause() + e.getStackTrace());
                 return "Error downloading bulk job.";
@@ -102,6 +116,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
         conn.publishStatusReport(generateStatusReport(nrUpdatedUsers,nrOfNewlyAddedContactsInZoho));
         return "Done.";
+    }
+
+    private void synchroniseAPIProjects() {
+        kzSync.updateAPIProjects(apiProjects);
     }
 
     private int createNewZohoContacts(List<Contact> contacts) {
@@ -139,6 +157,15 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         Files.deleteIfExists(Paths.get(pathToContactsCsv));
     }
 
+    private void createApiProjects(String pathToContactsCsv) throws IOException {
+        apiProjects = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
+            .withType(APIProject.class)
+            .withSkipLines(1)
+            .build()
+            .parse();
+        Files.deleteIfExists(Paths.get(pathToContactsCsv));
+    }
+
     private void synchroniseContacts(int days) {
         OffsetDateTime toThisTimeAgo = OffsetDateTime.now().minusDays(days);
         for (Account account : accounts) {
@@ -168,7 +195,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
     }
 
-    private int updateKCUsers() {
+    private int updateUsersInKeyCloak() {
         int updated = 0;
         LOG.info("Checking if updated contacts exist in Keycloak ...");
         for (Map.Entry<String, String> affiliatedUser : modifiedUserMap.entrySet()) {
@@ -178,7 +205,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 //In case zoho orgID does not match with existing affiliation in keycloak then update the keycloak affiliation
                 String affiliationValue = user.getFirstAttribute("affiliation");
                 boolean isToUpdateAffiliation = (StringUtils.isNotBlank(zohoOrgId) ? !zohoOrgId.equals(
-                    affiliationValue) : StringUtils.isNotBlank(affiliationValue));
+                    affiliationValue) : StringUtils.isNotBlank(affiliationValue)) ;
 
                 if (isToUpdateAffiliation) {
                     user.setSingleAttribute("affiliation", zohoOrgId);
