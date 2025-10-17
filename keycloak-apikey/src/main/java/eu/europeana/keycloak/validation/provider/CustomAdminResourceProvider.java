@@ -155,22 +155,21 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
 
-    List<String> inetralClient = new ArrayList<>();
+    //fetch the internal client list
+    List<String> internalClient = new ArrayList<>();
     Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
     clients.forEach( client -> {
       RoleModel role = client.getRole(Constants.SHARED_OWNER);
       if (role != null) {
-
         List<String> scope = role.getAttributes().get("scope");
-       if (!scope.isEmpty() && scope.contains("internal")) {
-         inetralClient.add(client.getClientId());
+        if (scope != null && !scope.isEmpty() && scope.contains("internal")) {
+          internalClient.add(client.getClientId());
        }
 
       }
-
     });
 
-    return this.cors.builder(Response.status(Status.OK).entity(inetralClient)).build();
+    return this.cors.builder(Response.status(Status.OK).entity(internalClient)).build();
   }
 
 }
