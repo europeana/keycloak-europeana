@@ -161,7 +161,8 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       RoleModel role = client.getRole(Constants.SHARED_OWNER);
       if (role != null) {
 
-       if (role.getAttributes().get("scope").contains("internal")) {
+        List<String> scope = role.getAttributes().get("scope");
+       if (!scope.isEmpty() && scope.contains("internal")) {
          inetralClient.add(client.getClientId());
        }
 
