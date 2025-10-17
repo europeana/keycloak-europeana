@@ -31,6 +31,10 @@ import org.keycloak.models.*;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
+import static eu.europeana.keycloak.validation.util.Constants.SHARED_OWNER;
+import static eu.europeana.keycloak.validation.util.Constants.ROLE_ATTRIBUTE_SCOPE_INTERNAL;
+import static eu.europeana.keycloak.validation.util.Constants.ROLE_ATTRIBUTE_SCOPE;
+
 /**
  * Provider class for additional admin resources
  */
@@ -155,21 +159,30 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
 
-    //fetch the internal client list
-    List<String> internalClient = new ArrayList<>();
+    //fetch the project and internal ids list
+    List<String> projects = new ArrayList<>();
+    List<String> internal = new ArrayList<>();
     Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
     clients.forEach( client -> {
-      RoleModel role = client.getRole(Constants.SHARED_OWNER);
+      RoleModel role = client.getRole(SHARED_OWNER);
       if (role != null) {
-        List<String> scope = role.getAttributes().get("scope");
-        if (scope != null && !scope.isEmpty() && scope.contains("internal")) {
-          internalClient.add(client.getClientId());
-       }
+        Stream<String> scope = role.getAttributeStream(ROLE_ATTRIBUTE_SCOPE);
+        if (scope != null && scope.anyMatch(a-> StringUtils.equals(ROLE_ATTRIBUTE_SCOPE_INTERNAL, a))) {
+          internal.add(client.getClientId());
+        } else {
+          projects.add(client.getClientId());
+        }
+//        List<String> scope = role.getAttributes().get(ROLE_ATTRIBUTE_SCOPE);
+//        if (scope != null && !scope.isEmpty() && scope.contains(ROLE_ATTRIBUTE_SCOPE_INTERNAL)) {
+//          internal.add(client.getClientId());
+//       } else {
+//          projects.add(client.getClientId());
+//        }
 
       }
     });
 
-    return this.cors.builder(Response.status(Status.OK).entity(internalClient)).build();
+    return this.cors.builder(Response.status(Status.OK).entity(internal)).build();
   }
 
 }
