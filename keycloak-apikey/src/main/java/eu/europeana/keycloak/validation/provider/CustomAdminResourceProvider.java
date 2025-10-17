@@ -8,6 +8,7 @@ import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -169,21 +170,17 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
         Stream<String> scope = role.getAttributeStream(ROLE_ATTRIBUTE_SCOPE);
         if (scope != null && scope.anyMatch(a-> StringUtils.equals(ROLE_ATTRIBUTE_SCOPE_INTERNAL, a))) {
           internal.add(client.getClientId());
-          System.out.println(client.getClientId());
         } else {
           projects.add(client.getClientId());
         }
-//        List<String> scope = role.getAttributes().get(ROLE_ATTRIBUTE_SCOPE);
-//        if (scope != null && !scope.isEmpty() && scope.contains(ROLE_ATTRIBUTE_SCOPE_INTERNAL)) {
-//          internal.add(client.getClientId());
-//       } else {
-//          projects.add(client.getClientId());
-//        }
-
       }
     });
 
-    return this.cors.builder(Response.status(Status.OK).entity(projects)).build();
+    JsonObjectBuilder cachedObject = Json.createObjectBuilder();
+    cachedObject.add("projects", (JsonArrayBuilder) projects);
+    cachedObject.add("internal" , (JsonArrayBuilder) internal);
+
+    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
   }
 
 }
