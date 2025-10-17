@@ -18,12 +18,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.infinispan.Cache;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.UserModel;
+import org.keycloak.models.*;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
@@ -135,6 +139,37 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     return Cors.add(session.getContext().getHttpRequest(), Response.ok())
         .auth().allowedMethods("POST")
         .preflight().build();
+  }
+
+  @Path("/client")
+  @GET
+  public Response getRegisteredClients() {
+    this.setupCors("GET");
+    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+    if (!result.isSuccess()) {
+      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+    }
+    // Only allowed to the authenticated users who have admin role
+    UserModel userModel = result.getUser();
+    if (userModel.getRoleMappingsStream().noneMatch(p -> Constants.ADMIN_ROLE_NAME.equals(p.getName()))) {
+      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+    }
+
+    List<String> inetralClient = new ArrayList<>();
+    Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
+    clients.forEach( client -> {
+      RoleModel role = client.getRole(Constants.SHARED_OWNER);
+      if (role != null) {
+
+       if (role.getAttributes().get("scope").contains("internal")) {
+         inetralClient.add(client.getClientId());
+       }
+
+      }
+
+    });
+
+    return this.cors.builder(Response.status(Status.OK).entity(inetralClient)).build();
   }
 
 }
