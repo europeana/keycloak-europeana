@@ -169,6 +169,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
         Stream<String> scope = role.getAttributeStream(ROLE_ATTRIBUTE_SCOPE);
         if (scope != null && scope.anyMatch(a-> StringUtils.equals(ROLE_ATTRIBUTE_SCOPE_INTERNAL, a))) {
           internal.add(client.getClientId());
+          System.out.println(client.getClientId());
         } else {
           projects.add(client.getClientId());
         }
@@ -182,7 +183,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       }
     });
 
-    return this.cors.builder(Response.status(Status.OK).entity(internal)).build();
+    return this.cors.builder(Response.status(Status.OK).entity(projects)).build();
   }
 
 }
