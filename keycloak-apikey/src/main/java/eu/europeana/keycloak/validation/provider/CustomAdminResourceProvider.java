@@ -9,6 +9,7 @@ import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
 import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -164,6 +165,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     List<String> projects = new ArrayList<>();
     List<String> internal = new ArrayList<>();
     Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
+
     clients.forEach( client -> {
       RoleModel role = client.getRole(SHARED_OWNER);
       if (role != null) {
@@ -176,11 +178,11 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       }
     });
 
-    JsonObjectBuilder cachedObject = Json.createObjectBuilder();
-    cachedObject.add("projects", (JsonArrayBuilder) projects);
-    cachedObject.add("internal" , (JsonArrayBuilder) internal);
+    JsonObject registeredClients = Json.createObjectBuilder()
+            .add("projects", Json.createArrayBuilder(projects))
+            .add("internal", Json.createArrayBuilder(internal)).build();
 
-    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
+    return this.cors.builder(Response.status(Status.OK).entity(registeredClients.toString())).build();
   }
 
 }
