@@ -37,7 +37,7 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getResultList();
 
 
-       rae.stream().forEach(r -> System.out.println(r.getName() + " " +r.getValue()));
+       rae.stream().forEach(r -> System.out.println(r.getId() + " " + r.getName() + " " +r.getValue()));
 
     }
 }
