@@ -48,7 +48,7 @@ public class UserCountProvider implements RealmResourceProvider {
         int internalKeys = countKeysByRoleAndAttribute(SHARED_OWNER, ROLE_ATTRIBUTE_SCOPE, ROLE_ATTRIBUTE_SCOPE_INTERNAL);
         return toJson(countUsers(session.getContext().getRealm()),
                 countKeysByRole(SHARED_OWNER),
-                (countKeysByRole(CLIENT_OWNER) - internalKeys),
+                countKeysByRole(CLIENT_OWNER),
                 internalKeys);
     }
 
@@ -100,7 +100,7 @@ public class UserCountProvider implements RealmResourceProvider {
         obj.add("RegisteredClients",
                    Json.createObjectBuilder()
                            .add("Personal", nrOfPrivatekeys)
-                           .add("Project", nrOfProjectkeys)
+                           .add("Project", nrOfProjectkeys - internalkeys)
                            .add("Internal", internalkeys));
 
         return obj.build().toString();

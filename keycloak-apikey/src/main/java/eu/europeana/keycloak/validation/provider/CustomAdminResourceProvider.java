@@ -161,8 +161,10 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
 
     EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
     CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
-    List<String> projects = clientRepo.getProjectKeys();
     List<String> internal = clientRepo.getInternalKeys();
+
+    List<String> projects = clientRepo.getProjectKeys();
+    projects.removeAll(internal); // remove the internal keys from project keys
 
     JsonObject registeredClients = Json.createObjectBuilder()
             .add("projects", Json.createArrayBuilder(projects))
