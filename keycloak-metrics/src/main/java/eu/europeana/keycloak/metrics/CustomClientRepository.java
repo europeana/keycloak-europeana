@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import org.keycloak.models.jpa.entities.RoleAttributeEntity;
 
 import javax.management.relation.Role;
+import java.util.List;
 import java.util.stream.Stream;
 
 /** Contains methods to interact directly with the Keycloak DB via JPA
@@ -29,16 +30,15 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getSingleResult();
     }
 
-    public Long findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
+    public void findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
 //        RoleAttributeEntity roleAttribute = new RoleAttributeEntity();
 //        roleAttribute.setName(attributeName);
 //        roleAttribute.setValue(attributeValue);
-        String query = "SELECT count(kr.id) FROM RoleEntity kr, RoleAttributeEntity rae where rae.id = kr.id and kr.name =:roleNameVal and kr.id = rae.id and rae.name =:name and rae.value =:value";
-         return em.createQuery(query, Long.class)
-                .setParameter("roleNameVal", roleName)
-                 .setParameter("name", attributeName)
-                 .setParameter("value", attributeValue)
+        String query = "SELECT kr.attributes FROM RoleEntity kr, RoleAttributeEntity rae where rae.id = kr.id and kr.name =:roleNameVal and kr.id = rae.id";
+         List<RoleAttributeEntity> rae =  em.createQuery(query, RoleAttributeEntity.class)
+                .setParameter("roleNameVal", roleName).getResultList();
 
-                 .getSingleResult();
+
+         System.out.println(rae);
     }
 }

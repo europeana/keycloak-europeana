@@ -44,7 +44,7 @@ public class UserCountProvider implements RealmResourceProvider {
         return toJson(countUsers(session.getContext().getRealm()),
             countKeysByRole(SHARED_OWNER),
             countKeysByRole(CLIENT_OWNER),
-            countKeysByRoleAttribute(SHARED_OWNER, "scope", "internal"));
+            0);
     }
 
     private int countKeysByRole(String roleName){
@@ -54,12 +54,12 @@ public class UserCountProvider implements RealmResourceProvider {
         return clientCount.intValue();
     }
 
-    private int countKeysByRoleAttribute(String roleName, String attname, String value){
-        EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
-        Long clientCount = clientRepo.findKeyByRoleName1(roleName, attname, value);
-        return clientCount.intValue();
-    }
+//    private int countKeysByRoleAttribute(String roleName, String attname, String value){
+//        EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
+//        CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
+//        //Long clientCount = clientRepo.findKeyByRoleName1(roleName, attname, value);
+//        return clientCount.intValue();
+//    }
 
     private int countUsers(RealmModel realm) {
         return session.users().getUsersCount(realm);
