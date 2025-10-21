@@ -3,7 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.KeycloakUtils;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
-import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.utils.Constants;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicReference;

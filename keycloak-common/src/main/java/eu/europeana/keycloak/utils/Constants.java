@@ -1,4 +1,4 @@
-package eu.europeana.keycloak.validation.util;
+package eu.europeana.keycloak.utils;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;

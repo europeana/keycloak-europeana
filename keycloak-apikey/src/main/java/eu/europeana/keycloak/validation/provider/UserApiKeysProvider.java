@@ -3,7 +3,7 @@ package eu.europeana.keycloak.validation.provider;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.ListApiKeysService;
-import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.utils.Constants;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.Path;

@@ -17,6 +17,14 @@
     <packaging>jar</packaging>
 
     <dependencies>
+
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>keycloak-common</artifactId>
+            <version>${version}</version>
+
+        </dependency>
+
         <!-- fix the critical dependency of the older transitive dependency in Keycloak-services v23.0.7 -->
         <dependency>
             <groupId>org.yaml</groupId>
@@ -44,12 +52,7 @@
             <version>${keycloak.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-model-jpa</artifactId>
-            <version>${keycloak.version}</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>

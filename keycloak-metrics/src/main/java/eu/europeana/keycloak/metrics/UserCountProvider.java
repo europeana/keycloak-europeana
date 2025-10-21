@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.metrics;
 
+import eu.europeana.keycloak.repo.CustomClientRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Path;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
@@ -14,16 +15,16 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.ext.Provider;
 import java.time.Instant;
 
+import static eu.europeana.keycloak.utils.Constants.SHARED_OWNER;
+import static eu.europeana.keycloak.utils.Constants.ROLE_ATTRIBUTE_SCOPE_INTERNAL;
+import static eu.europeana.keycloak.utils.Constants.ROLE_ATTRIBUTE_SCOPE;
+import static eu.europeana.keycloak.utils.Constants.CLIENT_OWNER;
+
 /**
  * Simple user count endpoint
  */
 @Provider
 public class UserCountProvider implements RealmResourceProvider {
-
-    public static final String CLIENT_OWNER          = "client_owner";
-    public static final String SHARED_OWNER          = "shared_owner";
-    public static final String ATTRIBUTE_SCOPE       = "scope";
-    public static final String ATTRIBUTE_SCOPE_VALUE = "internal";
 
     private final KeycloakSession session;
 
@@ -44,7 +45,7 @@ public class UserCountProvider implements RealmResourceProvider {
     @GET
     @Produces("application/json; charset=utf-8")
     public String get() {
-        int internalKeys = countKeysByRoleAndAttribute(SHARED_OWNER, ATTRIBUTE_SCOPE, ATTRIBUTE_SCOPE_VALUE);
+        int internalKeys = countKeysByRoleAndAttribute(SHARED_OWNER, ROLE_ATTRIBUTE_SCOPE, ROLE_ATTRIBUTE_SCOPE_INTERNAL);
         return toJson(countUsers(session.getContext().getRealm()),
                 countKeysByRole(SHARED_OWNER),
                 (countKeysByRole(CLIENT_OWNER) - internalKeys),
@@ -93,7 +94,6 @@ public class UserCountProvider implements RealmResourceProvider {
      */
     private String toJson(int nrOfUsers,int nrOfProjectkeys,int nrOfPrivatekeys, int internalkeys) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
-
         obj.add("type", "OverallTotal");
         obj.add("created", Instant.now().toString());
         obj.add("NumberOfUsers", nrOfUsers);

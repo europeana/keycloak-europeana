@@ -1,16 +1,16 @@
 package eu.europeana.keycloak.validation.provider;
 
+import eu.europeana.keycloak.repo.CustomClientRepository;
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
-import eu.europeana.keycloak.validation.util.Constants;
 import jakarta.json.Json;
-import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
@@ -29,14 +29,12 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.infinispan.Cache;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
+import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.*;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
-import static eu.europeana.keycloak.validation.util.Constants.SHARED_OWNER;
-import static eu.europeana.keycloak.validation.util.Constants.ROLE_ATTRIBUTE_SCOPE_INTERNAL;
-import static eu.europeana.keycloak.validation.util.Constants.ROLE_ATTRIBUTE_SCOPE;
-
+import static eu.europeana.keycloak.utils.Constants.*;
 /**
  * Provider class for additional admin resources
  */
@@ -65,13 +63,13 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
   public Response createProjectKey(){
     this.setupCors("POST");
-    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+    ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     //allow project key creation only to the authenticated users who have admin role
     UserModel userModel = result.getUser();
-    if(userModel.getRoleMappingsStream().noneMatch(p->Constants.ADMIN_ROLE_NAME.equals(p.getName()))){
+    if(userModel.getRoleMappingsStream().noneMatch(p->ADMIN_ROLE_NAME.equals(p.getName()))){
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
 
@@ -80,7 +78,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
         .getDecodedFormParameters();
     UserModel userForKeyCreation = session.users().getUserByEmail(session.getContext().getRealm(),decodedFormParameters.getFirst("email"));
     //Return error if the type is not for project key or no user exists for the specified email or project name is empty
-    if(!Constants.PROJECT_KEY.equals(decodedFormParameters.getFirst("type"))
+    if(!PROJECT_KEY.equals(decodedFormParameters.getFirst("type"))
         || StringUtils.isBlank(decodedFormParameters.getFirst("name"))
         || userForKeyCreation ==null){
       return this.cors.builder(Response.status(Status.BAD_REQUEST)).build();
@@ -89,7 +87,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     //Create new key and associate it to user
     KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
         null, decodedFormParameters.getFirst("name"));
-    Apikey apikey = clientCreationService.registerKey(userForKeyCreation,Constants.PROJECT_KEY,null);
+    Apikey apikey = clientCreationService.registerKey(userForKeyCreation,PROJECT_KEY,null);
     return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
   }
 
@@ -98,7 +96,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   public Response viewCache(){
     this.setupCors("GET");
     try {
-      ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+      ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
       if (!result.isSuccess()) {
         return this.cors.builder(
             Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
@@ -106,7 +104,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       //allow project key creation only to the authenticated users who have admin role
       UserModel userModel = result.getUser();
       if (userModel.getRoleMappingsStream()
-          .noneMatch(p -> Constants.ADMIN_ROLE_NAME.equals(p.getName()))) {
+          .noneMatch(p -> ADMIN_ROLE_NAME.equals(p.getName()))) {
         return this.cors.builder(
             Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
       }
@@ -151,31 +149,20 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   @GET
   public Response getRegisteredClients() {
     this.setupCors("GET");
-    ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
+    ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
     // Only allowed to the authenticated users who have admin role
     UserModel userModel = result.getUser();
-    if (userModel.getRoleMappingsStream().noneMatch(p -> Constants.ADMIN_ROLE_NAME.equals(p.getName()))) {
+    if (userModel.getRoleMappingsStream().noneMatch(p -> ADMIN_ROLE_NAME.equals(p.getName()))) {
       return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
 
-    //fetch the project and internal ids list
-    List<String> projects = new ArrayList<>();
-    List<String> internal = new ArrayList<>();
-    Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
-    clients.forEach( client -> {
-      RoleModel role = client.getRole(SHARED_OWNER);
-      if (role != null) {
-        Stream<String> scope = role.getAttributeStream(ROLE_ATTRIBUTE_SCOPE);
-        if (scope != null && scope.anyMatch(a-> StringUtils.equals(ROLE_ATTRIBUTE_SCOPE_INTERNAL, a))) {
-          internal.add(client.getClientId());
-        } else {
-          projects.add(client.getClientId());
-        }
-      }
-    });
+    EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
+    CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
+    List<String> projects = clientRepo.getProjectKeys();
+    List<String> internal = clientRepo.getInternalKeys();
 
     JsonObject registeredClients = Json.createObjectBuilder()
             .add("projects", Json.createArrayBuilder(projects))

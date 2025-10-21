@@ -1,7 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
-import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.utils.Constants;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
