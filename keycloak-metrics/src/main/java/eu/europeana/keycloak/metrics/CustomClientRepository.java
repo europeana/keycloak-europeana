@@ -33,12 +33,14 @@ public class CustomClientRepository {
 //        RoleAttributeEntity roleAttribute = new RoleAttributeEntity();
 //        roleAttribute.setName(attributeName);
 //        roleAttribute.setValue(attributeValue);
-        String query = "SELECT kr.attributes FROM  ClientEntity c , RoleEntity kr where kr.clientId = c.id and kr.name =:roleNameVal " ;
+        String query = "SELECT kr.attributes FROM  ClientEntity c , RoleEntity kr, RoleAttributeEntity rae where kr.clientId = c.id and kr.name =:roleNameVal " +
+                "and rae.role.name = kr.name" ;
          List<RoleAttributeEntity> rae =  em.createQuery(query, RoleAttributeEntity.class)
                 .setParameter("roleNameVal", roleName).getResultList();
 
+         System.out.println(rae.size());
 
-       rae.stream().forEach(r -> System.out.println(r.getRole() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
+       rae.stream().forEach(r -> System.out.println(r.getRole().getName() + "  " + r.getRole().getId() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
 
     }
 }
