@@ -40,13 +40,5 @@ public class CustomClientRepository {
 
        rae.stream().forEach(r -> System.out.println(r.getRole() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
 
-        query = "SELECT kr.name, kr.id FROM  ClientEntity c , RoleEntity kr where kr.clientId = c.id and kr.name =:roleNameVal " ;
-
-        List<RoleEntity> role =  em.createQuery(query, RoleEntity.class)
-                .setParameter("roleNameVal", roleName).getResultList();
-
-        role.stream().forEach(r -> System.out.println(r.getName() + "  " + r.getId() + " "));
-
-
     }
 }
