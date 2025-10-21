@@ -1,10 +1,6 @@
 package eu.europeana.keycloak.metrics;
 
 import jakarta.persistence.EntityManager;
-import org.keycloak.models.jpa.entities.RoleAttributeEntity;
-import org.keycloak.models.jpa.entities.RoleEntity;
-
-import java.util.List;
 
 /** Contains methods to interact directly with the Keycloak DB via JPA
  * to retrieve specific client-related information
@@ -29,24 +25,13 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getSingleResult();
     }
 
-    public void findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
-//        RoleAttributeEntity roleAttribute = new RoleAttributeEntity();
-//        roleAttribute.setName(attributeName);
-//        roleAttribute.setValue(attributeValue);
-        String query = "SELECT c.clientId FROM  ClientEntity c , RoleEntity kr, RoleAttributeEntity rae where kr.clientId = c.id and kr.name =:roleNameVal " +
+    public Long findKeyByRoleNameAndAttributePair(String roleName, String attributeName, String attributeValue) {
+        String query = "SELECT count(c.id) FROM  ClientEntity c , RoleEntity kr, RoleAttributeEntity rae where kr.clientId = c.id and kr.name =:roleNameVal " +
                 "and rae.role.name = kr.name and rae.role.id = kr.id and rae.name = :name and rae.value= :value" ;
-         List<String> rae =  em.createQuery(query, String.class)
+         return em.createQuery(query, Long.class)
                 .setParameter("roleNameVal", roleName)
-                 .setParameter("name", attributeName)
-                 .setParameter("value", attributeValue)
-
-                 .getResultList();
-
-         System.out.println(rae);
-//        System.out.println(rae.size());
-
-//
-//       rae.stream().forEach(r -> System.out.println(r.getRole().getName() + "  " + r.getRole().getId() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
+                .setParameter("name", attributeName)
+                .setParameter("value", attributeValue).getSingleResult();
 
     }
 }

@@ -20,8 +20,11 @@ import java.time.Instant;
 @Provider
 public class UserCountProvider implements RealmResourceProvider {
 
-    public static final String CLIENT_OWNER = "client_owner";
-    public static final String SHARED_OWNER = "shared_owner";
+    public static final String CLIENT_OWNER          = "client_owner";
+    public static final String SHARED_OWNER          = "shared_owner";
+    public static final String ATTRIBUTE_SCOPE       = "scope";
+    public static final String ATTRIBUTE_SCOPE_VALUE = "internal";
+
     private final KeycloakSession session;
 
     /** Constructs new UserCountProvider with the provided keycloak session
@@ -41,10 +44,11 @@ public class UserCountProvider implements RealmResourceProvider {
     @GET
     @Produces("application/json; charset=utf-8")
     public String get() {
+        int internalKeys = countKeysByRoleAndAttribute(SHARED_OWNER, ATTRIBUTE_SCOPE, ATTRIBUTE_SCOPE_VALUE);
         return toJson(countUsers(session.getContext().getRealm()),
-            countKeysByRole(SHARED_OWNER),
-            countKeysByRole(CLIENT_OWNER),
-            countKeysByRoleAttribute(SHARED_OWNER, "scope", "internal"));
+                countKeysByRole(SHARED_OWNER),
+                (countKeysByRole(CLIENT_OWNER) - internalKeys),
+                internalKeys);
     }
 
     private int countKeysByRole(String roleName){
@@ -54,11 +58,10 @@ public class UserCountProvider implements RealmResourceProvider {
         return clientCount.intValue();
     }
 
-    private int countKeysByRoleAttribute(String roleName, String attname, String value){
+    private int countKeysByRoleAndAttribute(String roleName, String attributeName, String attributeValue){
         EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
-        clientRepo.findKeyByRoleName1(roleName, attname, value);
-        return 0;
+        return clientRepo.findKeyByRoleNameAndAttributePair(roleName, attributeName, attributeValue).intValue();
     }
 
     private int countUsers(RealmModel realm) {
@@ -71,15 +74,34 @@ public class UserCountProvider implements RealmResourceProvider {
     }
 
 
+    /**
+     * form a json
+     *       {
+     *         "created": "2025-10-03T11:51:23.823215506Z",
+     *         "NumberOfUsers": 6475,
+     *        "RegisteredClients": {
+     *                  "Personal": 32,
+     *                  "Project": 132,
+     *                  "Internal": 3
+     *          }
+     *      }
+     * @param nrOfUsers
+     * @param nrOfProjectkeys
+     * @param nrOfPrivatekeys
+     * @param internalkeys
+     * @return
+     */
     private String toJson(int nrOfUsers,int nrOfProjectkeys,int nrOfPrivatekeys, int internalkeys) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
         obj.add("type", "OverallTotal");
         obj.add("created", Instant.now().toString());
         obj.add("NumberOfUsers", nrOfUsers);
-        obj.add("NumberOfProjectClients",nrOfProjectkeys);
-        obj.add("NumberOfPersonalClients",nrOfPrivatekeys);
-        obj.add("Internal",internalkeys);
+        obj.add("RegisteredClients",
+                   Json.createObjectBuilder()
+                           .add("Personal", nrOfPrivatekeys)
+                           .add("Project", nrOfProjectkeys)
+                           .add("Internal", internalkeys));
 
         return obj.build().toString();
     }
