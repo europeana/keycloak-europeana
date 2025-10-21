@@ -1,6 +1,9 @@
 package eu.europeana.keycloak.metrics;
 
 import jakarta.persistence.EntityManager;
+import org.keycloak.models.jpa.entities.RoleAttributeEntity;
+
+import java.util.stream.Stream;
 
 /** Contains methods to interact directly with the Keycloak DB via JPA
  * to retrieve specific client-related information
@@ -25,15 +28,13 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getSingleResult();
     }
 
-    public Long findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
+    public Stream<RoleAttributeEntity> findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
         String query =
-                "SELECT count(c.id) FROM ClientEntity c, RoleEntity kr , RoleAttributeEntity rae where kr.clientId = c.id and kr.name = :roleNameVal and rae.id = kr.id " +
-                        "and rae.name = :name and rae.value = :value";
-        return em.createQuery(query, Long.class)
-                .setParameter("roleNameVal", roleName)
-                .setParameter("name", attributeName)
-                .setParameter("value", attributeValue)
-                .getSingleResult();
+                "SELECT kr.attributes FROM ClientEntity c, RoleEntity kr where kr.clientId = c.id and kr.name = :roleNameVal " ;
+        return em.createQuery(query, RoleAttributeEntity.class)
+                .setParameter("roleNameVal", roleName).getResultStream();
+//                .setParameter("name", attributeName)
+//                .setParameter("value", attributeValue)
 
     }
 }
