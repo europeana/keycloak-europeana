@@ -3,9 +3,7 @@ package eu.europeana.keycloak.metrics;
 import jakarta.persistence.EntityManager;
 import org.keycloak.models.jpa.entities.RoleAttributeEntity;
 
-import javax.management.relation.Role;
 import java.util.List;
-import java.util.stream.Stream;
 
 /** Contains methods to interact directly with the Keycloak DB via JPA
  * to retrieve specific client-related information
@@ -39,6 +37,6 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getResultList();
 
 
-         System.out.println(rae);
+         System.out.println("rae " + rae);
     }
 }
