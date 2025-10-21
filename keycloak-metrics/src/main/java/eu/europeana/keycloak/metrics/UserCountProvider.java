@@ -28,6 +28,7 @@ public class UserCountProvider implements RealmResourceProvider {
      * @param session current keycloak session
      */
     public UserCountProvider(KeycloakSession session) {this.session = session;}
+
     @Override
     public Object getResource() {
         return this;
@@ -42,13 +43,21 @@ public class UserCountProvider implements RealmResourceProvider {
     public String get() {
         return toJson(countUsers(session.getContext().getRealm()),
             countKeysByRole(SHARED_OWNER),
-            countKeysByRole(CLIENT_OWNER));
+            countKeysByRole(CLIENT_OWNER),
+            countKeysByRoleAttribute(SHARED_OWNER, "scope", "internal"));
     }
 
     private int countKeysByRole(String roleName){
         EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
         Long clientCount = clientRepo.findKeyByRoleName(roleName);
+        return clientCount.intValue();
+    }
+
+    private int countKeysByRoleAttribute(String roleName, String attname, String value){
+        EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
+        CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
+        Long clientCount = clientRepo.findKeyByRoleName1(roleName, attname, value);
         return clientCount.intValue();
     }
 
@@ -62,7 +71,7 @@ public class UserCountProvider implements RealmResourceProvider {
     }
 
 
-    private String toJson(int nrOfUsers,int nrOfProjectkeys,int nrOfPrivatekeys) {
+    private String toJson(int nrOfUsers,int nrOfProjectkeys,int nrOfPrivatekeys, int internalkeys) {
         JsonObjectBuilder obj = Json.createObjectBuilder();
 
         obj.add("type", "OverallTotal");
@@ -70,6 +79,8 @@ public class UserCountProvider implements RealmResourceProvider {
         obj.add("NumberOfUsers", nrOfUsers);
         obj.add("NumberOfProjectClients",nrOfProjectkeys);
         obj.add("NumberOfPersonalClients",nrOfPrivatekeys);
+        obj.add("Internal",internalkeys);
+
         return obj.build().toString();
     }
 }

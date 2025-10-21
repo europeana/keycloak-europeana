@@ -24,4 +24,16 @@ public class CustomClientRepository {
         return em.createQuery(query, Long.class)
                 .setParameter("roleNameVal", roleName).getSingleResult();
     }
+
+    public Long findKeyByRoleName1(String roleName, String attributeName, String attributeValue) {
+        String query =
+                "SELECT count(c.id) FROM ClientEntity c, RoleEntity kr , RoleAttributeEntity rae where kr.clientId = c.id and kr.name = :roleNameVal and rae.id = kr.id " +
+                        "and rae.name = :name and rae.value = :value";
+        return em.createQuery(query, Long.class)
+                .setParameter("roleNameVal", roleName)
+                .setParameter("name", attributeName)
+                .setParameter("value", attributeValue)
+                .getSingleResult();
+
+    }
 }

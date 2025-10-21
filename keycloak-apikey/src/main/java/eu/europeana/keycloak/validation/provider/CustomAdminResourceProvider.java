@@ -165,7 +165,6 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     List<String> projects = new ArrayList<>();
     List<String> internal = new ArrayList<>();
     Stream<ClientModel> clients = session.clients().getClientsStream(session.getContext().getRealm());
-
     clients.forEach( client -> {
       RoleModel role = client.getRole(SHARED_OWNER);
       if (role != null) {
