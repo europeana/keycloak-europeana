@@ -33,18 +33,20 @@ public class CustomClientRepository {
 //        RoleAttributeEntity roleAttribute = new RoleAttributeEntity();
 //        roleAttribute.setName(attributeName);
 //        roleAttribute.setValue(attributeValue);
-        String query = "SELECT kr.attributes FROM  ClientEntity c , RoleEntity kr, RoleAttributeEntity rae where kr.clientId = c.id and kr.name =:roleNameVal " +
+        String query = "SELECT c.clientId FROM  ClientEntity c , RoleEntity kr, RoleAttributeEntity rae where kr.clientId = c.id and kr.name =:roleNameVal " +
                 "and rae.role.name = kr.name and rae.role.id = kr.id and rae.name = :name and rae.value= :value" ;
-         List<RoleAttributeEntity> rae =  em.createQuery(query, RoleAttributeEntity.class)
+         List<String> rae =  em.createQuery(query, String.class)
                 .setParameter("roleNameVal", roleName)
                  .setParameter("name", attributeName)
                  .setParameter("value", attributeValue)
 
                  .getResultList();
 
-         System.out.println(rae.size());
+         System.out.println(rae);
+//        System.out.println(rae.size());
 
-       rae.stream().forEach(r -> System.out.println(r.getRole().getName() + "  " + r.getRole().getId() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
+//
+//       rae.stream().forEach(r -> System.out.println(r.getRole().getName() + "  " + r.getRole().getId() + "  " + r.getId() + " " + r.getName() + " " +r.getValue()));
 
     }
 }
