@@ -37,8 +37,7 @@ public class CustomClientRepository {
                 .setParameter("roleNameVal", roleName).getResultList();
 
 
-         System.out.println("rae " + rae.get(0).getName() + " ::::: " + rae.get(0).getValue());
-        System.out.println("rae " + rae.get(5).getName() + " ::::: " + rae.get(5).getValue());
+       rae.stream().forEach(r -> System.out.println(r.getName() + " " +r.getValue()));
 
     }
 }
