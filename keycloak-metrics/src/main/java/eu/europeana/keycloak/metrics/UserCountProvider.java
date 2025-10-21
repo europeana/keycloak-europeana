@@ -57,7 +57,7 @@ public class UserCountProvider implements RealmResourceProvider {
     private int countKeysByRoleAttribute(String roleName, String attname, String value){
         EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
         CustomClientRepository clientRepo = new CustomClientRepository(entityManager);
-        Long clientCount = clientRepo.findKeyByRoleName1(roleName, attname, value).spliterator().getExactSizeIfKnown();
+        Long clientCount = clientRepo.findKeyByRoleName1(roleName, attname, value);
         return clientCount.intValue();
     }
 
