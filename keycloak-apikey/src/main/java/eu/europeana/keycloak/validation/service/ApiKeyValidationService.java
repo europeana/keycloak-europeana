@@ -3,7 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
-import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.utils.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
 import java.time.LocalDateTime;

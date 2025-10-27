@@ -2,7 +2,7 @@ package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.timer.AbstractCustomScheduledTask;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
-import eu.europeana.keycloak.validation.util.Constants;
+import eu.europeana.keycloak.utils.Constants;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
