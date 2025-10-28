@@ -11,11 +11,11 @@ spec:
     name: keycloak-deployment
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: 900
+      stabilizationWindowSeconds: 600
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 300
