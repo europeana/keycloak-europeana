@@ -149,7 +149,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   @GET
   public Response getRegisteredClients() {
     this.setupCors("GET");
-    ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
+    ValidationResult result = service.validateAuthToken(null);
     if (!result.isSuccess()) {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
     }
