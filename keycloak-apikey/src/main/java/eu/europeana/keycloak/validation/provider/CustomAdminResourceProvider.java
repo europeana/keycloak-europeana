@@ -149,14 +149,9 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
   @GET
   public Response getRegisteredClients() {
     this.setupCors("GET");
-    ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
+    ValidationResult result = service.validateAuthToken(null);
     if (!result.isSuccess()) {
       return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
-    }
-    // Only allowed to the authenticated users who have admin role
-    UserModel userModel = result.getUser();
-    if (userModel.getRoleMappingsStream().noneMatch(p -> ADMIN_ROLE_NAME.equals(p.getName()))) {
-      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
     }
 
     EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
