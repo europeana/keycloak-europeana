@@ -128,7 +128,11 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
    * @return time reamining till the new quota is assigned
    */
   private long getRemainingTimeUtilReset(LocalDateTime dateTime) {
-    return  (RATE_LIMIT_DURATION - dateTime.getMinute()) * 60 ;
+    int minutesElapsed =  dateTime.getMinute() % RATE_LIMIT_DURATION;
+    if (minutesElapsed == 0) {
+      return ((RATE_LIMIT_DURATION * 60 ) - dateTime.getSecond());  // totalSeconds - seconds elapsed (for the new time window slot)
+    } else {
+      return (((RATE_LIMIT_DURATION - minutesElapsed) * 60) - dateTime.getSecond()); // remaining seconds - seconds elapsed
+    }
   }
-
 }

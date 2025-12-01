@@ -20,8 +20,8 @@ public final class Constants {
   public static final String ROLE_ATTRIBUTE_LAST_RATELIMIT_REACHING_DATE   = "rateLimitReached";
   public static final String CREATION_DATE_PATTERN                         = "yyyy-MM-dd'T'HH:mm:ss'Z'";
   public static final String CLIENT_STATE_DISABLED                         = "disabled";
-  public static final String PERSONAL_KEY                                  = "PersonalKey";
-  public static final String PROJECT_KEY                                   = "ProjectKey";
+  public static final String PERSONAL_KEY                                  = "personal";
+  public static final String PROJECT_KEY                                   = "project";
   public static final String GRANT_TYPE_PASSWORD                           = "password";
   public static final String GRANT_TYPE_CLIENT_CRED                        = "client_credentials";
   public static final String APIKEY_NOT_REGISTERED                         = "API key %s is not registered";
