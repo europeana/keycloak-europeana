@@ -71,11 +71,13 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       result = service.performRateLimitCheck(client,keyType);
     }
     if (result!= null && result.getErrorResponse() != null) {
-      return Response.status(result.getHttpStatus())
+      Response.ResponseBuilder response = Response.status(result.getHttpStatus())
               .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy.toString())
-              .header(RATE_LIMIT_HEADER, result.getRateLimit().toString())
-              .entity(result.getErrorResponse())
-              .build();
+              .entity(result.getErrorResponse());
+      if (result.getRateLimit() != null) {
+        response.header(RATE_LIMIT_HEADER, result.getRateLimit().toString());
+      }
+      return response.build();
     }
     return Response.status(Status.NO_CONTENT)
             .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
