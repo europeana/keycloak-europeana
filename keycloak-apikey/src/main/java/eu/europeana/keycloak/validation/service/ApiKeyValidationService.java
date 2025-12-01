@@ -223,8 +223,11 @@ public class ApiKeyValidationService {
    * @return rate limit policy
    */
   public RateLimitPolicy getRateLimitPolicy(String keyType) {
-    SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType);
-   return updater.getRateLimitPolicy(keyType);
+    if (StringUtils.isNotEmpty(keyType)) {
+      SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType);
+      return updater.getRateLimitPolicy(keyType);
+    }
+    return null;
   }
 
 }
