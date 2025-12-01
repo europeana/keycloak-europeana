@@ -72,8 +72,8 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     }
     if (result!= null && result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus())
-              .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
-              .header(RATE_LIMIT_HEADER, result.getRateLimit())
+              .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy.toString())
+              .header(RATE_LIMIT_HEADER, result.getRateLimit().toString())
               .entity(result.getErrorResponse())
               .build();
     }

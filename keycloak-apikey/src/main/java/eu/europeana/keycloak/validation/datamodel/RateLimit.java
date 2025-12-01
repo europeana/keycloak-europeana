@@ -55,4 +55,11 @@ public class RateLimit {
     public void setT(long t) {
         this.t = t;
     }
+
+    @Override
+    public String toString() {
+        return "\"" + vendorIdentifier + "\";" +
+                "r=" + r +
+                ";t=" + t ;
+    }
 }

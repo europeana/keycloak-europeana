@@ -26,9 +26,6 @@ public class RateLimitPolicy {
      */
     private long w;
 
-    public RateLimitPolicy(String vendorIdentifier) {
-    }
-
     public RateLimitPolicy(String vendorIdentifier, long q, long w) {
         this.vendorIdentifier = vendorIdentifier;
         this.q = q;
@@ -59,4 +56,10 @@ public class RateLimitPolicy {
         this.w = w;
     }
 
+    @Override
+    public String toString() {
+        return "\"" + vendorIdentifier + "\";" +
+                "q=" + q +
+                ";w=" + w ;
+    }
 }
