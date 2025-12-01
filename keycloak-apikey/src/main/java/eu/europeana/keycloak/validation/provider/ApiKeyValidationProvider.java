@@ -2,6 +2,7 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
@@ -23,6 +24,9 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
+
+import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_HEADER;
+import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_POLICY_HEADER;
 
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
@@ -57,6 +61,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
 
     String keyType = service.getKeyType(client);
+    // get the rate Limit Policy if the key is valid
+    RateLimitPolicy rateLimitPolicy = service.getRateLimitPolicy(keyType);
+
     if (result.getErrorResponse() == null) {
       result = service.validateClient(client,keyType);
     }
@@ -64,9 +71,16 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
       result = service.performRateLimitCheck(client,keyType);
     }
     if (result!= null && result.getErrorResponse() != null) {
-      return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
+      return Response.status(result.getHttpStatus())
+              .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
+              .header(RATE_LIMIT_HEADER, result.getRateLimit())
+              .entity(result.getErrorResponse())
+              .build();
     }
-    return Response.status(Status.NO_CONTENT).build();
+    return Response.status(Status.NO_CONTENT)
+            .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
+            .header(RATE_LIMIT_HEADER, result.getRateLimit())
+            .build();
   }
 
 

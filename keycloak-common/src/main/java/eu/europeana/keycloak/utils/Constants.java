@@ -42,6 +42,10 @@ public final class Constants {
   public static final int DEFAULT_PERSONAL_KEY_RATE_LIMIT                  = 1000;
   public static final int DEFAULT_SESSION_DURATION_RATE_LIMIT              = 60;
 
+  public static final String RATE_LIMIT_POLICY_HEADER                      = "RateLimit-Policy";
+  public static final String RATE_LIMIT_HEADER                             = "RateLimit";
+
+
   public static final DateTimeFormatter FORMATTER                          = DateTimeFormatter
                                                                               .ofPattern(CREATION_DATE_PATTERN)
                                                                               .withZone(ZoneOffset.UTC);

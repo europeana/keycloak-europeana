@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.utils.Constants;
@@ -159,7 +160,7 @@ public class ApiKeyValidationService {
 
     ErrorMessage errorMessage = updater.resultReference.get();
     Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
-    return new ValidationResult(status, errorMessage);
+    return new ValidationResult(status, errorMessage, updater.rateLimitReference.get());
   }
 
   /**
@@ -216,6 +217,16 @@ public class ApiKeyValidationService {
      return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
     }
     return authorizeToken(authHeader,grantType);
+  }
+
+  /**
+   * Will fetch the Rate Limit policy for the given key type
+   * @return rate limit policy
+   */
+  public RateLimitPolicy getRateLimitPolicy(String keyType) {
+    SessionTrackerUpdater updater = new SessionTrackerUpdater(
+            Constants.FORMATTER.format(LocalDateTime.now()), keyType);
+   return updater.getRateLimitPolicy(keyType);
   }
 
 }

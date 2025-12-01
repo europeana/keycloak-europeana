@@ -10,6 +10,7 @@ public class ValidationResult {
   private final Status httpStatus;
   private final ErrorMessage response;
   private  UserModel user;
+  private RateLimit rateLimit;
 
   /** Constructs the ValidationResult instance
    * @param httpStatus Http Status
@@ -19,9 +20,23 @@ public class ValidationResult {
     this.httpStatus = httpStatus;
     this.response = response;
   }
+
+  /**
+   * Constructs the ValidationResult instance
+   * @param httpStatus Http Status
+   * @param response ErrorMessage
+   * @param rateLimit rate limit
+   */
+  public ValidationResult(Status httpStatus, ErrorMessage response, RateLimit rateLimit) {
+    this.httpStatus = httpStatus;
+    this.response = response;
+    this.rateLimit = rateLimit;
+  }
+
   public Status getHttpStatus() {
     return httpStatus;
   }
+
   public ErrorMessage getErrorResponse() {
     return response ;
   }
@@ -36,5 +51,9 @@ public class ValidationResult {
 
   public boolean isSuccess(){
    return Status.OK.equals(httpStatus);
+  }
+
+  public RateLimit getRateLimit() {
+    return rateLimit;
   }
 }
