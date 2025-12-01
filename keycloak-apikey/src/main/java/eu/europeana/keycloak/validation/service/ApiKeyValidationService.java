@@ -46,37 +46,37 @@ public class ApiKeyValidationService {
    * @param grantType type of the token,it can be for client_credentials or password based
    * @return ValidationResult
    */
-  public ValidationResult authorizeToken(String tokenString,String grantType) {
-      //As we want to send different message when the token is inactive , first get the token verified without the ifActive check.
-      AuthResult authResult=  AuthenticationManager.verifyIdentityToken(
-          this.session, this.realm, session.getContext().getUri(),
-          session.getContext().getConnection(), false, true,null, false,
-          tokenString, session.getContext().getRequestHeaders());
+  public ValidationResult authorizeToken(String tokenString, String grantType) {
+    //As we want to send different message when the token is inactive , first get the token verified without the ifActive check.
+    AuthResult authResult = AuthenticationManager.verifyIdentityToken(
+            this.session, this.realm, session.getContext().getUri(),
+            session.getContext().getConnection(), false, true, null, false,
+            tokenString, session.getContext().getRequestHeaders());
 
-      if (authResult == null || authResult.getClient() == null) {
-        return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_INVALID_401);
-      }
-      if(!authResult.getToken().isActive()) {
-        return new ValidationResult(Status.UNAUTHORIZED,ErrorMessage.TOKEN_EXPIRED_401);
-      }
-      return validateClientScope(authResult,grantType);
+    if (authResult == null || authResult.getClient() == null) {
+      return new ValidationResult(Status.UNAUTHORIZED, ErrorMessage.TOKEN_INVALID_401);
+    }
+    if (!authResult.getToken().isActive()) {
+      return new ValidationResult(Status.UNAUTHORIZED, ErrorMessage.TOKEN_EXPIRED_401);
+    }
+    return validateClientScope(authResult, grantType);
   }
 
-  private ValidationResult validateClientScope(AuthResult authResult,String grantType) {
-    ClientModel client =authResult.getClient();
+  private ValidationResult validateClientScope(AuthResult authResult, String grantType) {
+    ClientModel client = authResult.getClient();
     Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
     if (clientScopes == null || !clientScopes.containsKey(Constants.CLIENT_SCOPE_APIKEYS)) {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
-      return new ValidationResult( Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
+      return new ValidationResult(Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
     return validateTokenGrant(authResult, grantType);
   }
 
   private static ValidationResult validateTokenGrant(AuthResult authResult, String grantType) {
-    if(!isValidGrantType(authResult, grantType)){
+    if (!isValidGrantType(authResult, grantType)) {
       return new ValidationResult(Status.FORBIDDEN, ErrorMessage.USER_MISSING_403);
     }
-    ValidationResult result = new ValidationResult(Status.OK,null);
+    ValidationResult result = new ValidationResult(Status.OK, null);
     result.setUser(authResult.getUser());
     return result;
   }
@@ -120,19 +120,19 @@ public class ApiKeyValidationService {
     return true;
   }
 
-
-
   /**
    * Validates the input kyecloak client (i.e. apikey)
    * @param client ClientModel representing the apikey
+   * @param keyType indicating type of apikey e.g. 'PersonalKey','ProjectKey' or empty
    * @return validation result object
    */
-  public ValidationResult validateClient(ClientModel client) {
-    if(client ==null){
+  public ValidationResult validateClient(ClientModel client, String keyType) {
+    //check if key with keyType exists
+    if (client == null || StringUtils.isEmpty(keyType)) {
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_INVALID_401);
     }
     //check if key not deprecated and currently active
-    if(!client.isEnabled()){
+    if (!client.isEnabled()) {
       return new ValidationResult(Status.BAD_REQUEST, ErrorMessage.KEY_DISABLED_401);
     }
     return new ValidationResult(Status.OK, null);
@@ -140,27 +140,21 @@ public class ApiKeyValidationService {
 
   /** Performs the rate limit check for the input client.
    * @param client Keycloak client
+   * @param keyType indicating type of apikey e.g. 'PersonalKey','ProjectKey' or empty
    * @return validation result object
    */
-  public ValidationResult performRateLimitCheck(ClientModel client) {
-
-      InfinispanConnectionProvider provider = session.getProvider(
-          InfinispanConnectionProvider.class);
-      Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(
-          Constants.SESSION_TRACKER_CACHE);
-      if (sessionTrackerCache == null) {
-        LOG.error("Infinispan cache " + Constants.SESSION_TRACKER_CACHE
-            + " not found. Cannot perform rate limit check");
-        return new ValidationResult(Status.OK, null);
-      }
-
-    String keyType = getKeyType(client);
-    if (StringUtils.isEmpty(keyType)) {
+  public ValidationResult performRateLimitCheck(ClientModel client, String keyType) {
+    InfinispanConnectionProvider provider = session.getProvider(
+            InfinispanConnectionProvider.class);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(
+            Constants.SESSION_TRACKER_CACHE);
+    if (sessionTrackerCache == null) {
+      LOG.error("Infinispan cache " + Constants.SESSION_TRACKER_CACHE
+              + " not found. Cannot perform rate limit check");
       return new ValidationResult(Status.OK, null);
     }
-
     SessionTrackerUpdater updater = new SessionTrackerUpdater(
-        Constants.FORMATTER.format(LocalDateTime.now()), keyType);
+            Constants.FORMATTER.format(LocalDateTime.now()), keyType);
     sessionTrackerCache.compute(client.getClientId(), updater);
 
     ErrorMessage errorMessage = updater.resultReference.get();
@@ -168,11 +162,19 @@ public class ApiKeyValidationService {
     return new ValidationResult(status, errorMessage);
   }
 
-  private String getKeyType(ClientModel client) {
-    if(client.getRole(Constants.CLIENT_OWNER) != null){
+  /**
+   * Calculate the type of apikey based on specific roles associated to the client.   *
+   * @param client  representing an apikey
+   * @return key Type
+   */
+  public String getKeyType(ClientModel client) {
+    if (client == null) {
+      return "";
+    }
+    if (client.getRole(Constants.CLIENT_OWNER) != null) {
       return Constants.PERSONAL_KEY;
     }
-    if(client.getRole(Constants.SHARED_OWNER) != null){
+    if (client.getRole(Constants.SHARED_OWNER) != null) {
       return Constants.PROJECT_KEY;
     }
     return "";

@@ -56,13 +56,13 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     ValidationResult result = service.validateAuthToken(null);
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
 
+    String keyType = service.getKeyType(client);
     if (result.getErrorResponse() == null) {
-      result = service.validateClient(client);
+      result = service.validateClient(client,keyType);
     }
     if (result.getErrorResponse() == null){
-      result = service.performRateLimitCheck(client);
+      result = service.performRateLimitCheck(client,keyType);
     }
-    //TODO - Update Logic to consume the validated IP
     if (result!= null && result.getErrorResponse() != null) {
       return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
     }
