@@ -50,9 +50,11 @@ public class FixedRateTaskScheduler {
   /**
    * The task execution time needs to be aligned such that it aligned with clock minute, in
    * clustered environment this is essential to avoid the task being registered at different times on each pod ,
-   * thereby being run at different times by each.
+   * thereby being run at different times by each pod.
    *  For Interval of 15 minutes aligned to clock time, the expectation is that task executed at each 15th clock minute e.g.3.15 am,3.30 am etc.
-   *  e.g. If interval is 15 minutes and current time is 3.12 am , delay will be 3 minutes and the next execution will be at 3.15 am.
+   *  e.g.
+   *  Interval is 15 minutes and current time is 3.12 am , delay will be 3 minutes(180000 millis) and the next execution will be at 3.15 am.
+   *  Interval is 10 minutes and current time is 3.10 am , delay will be 10 minutes(600000 millis) and the next execution will be at 3.20 am.
    *  For intervals which are more than 60 minutes the initial delay will be calculated considering the minutes of the interval duration.
    *  e.g. If interval is 72 minutes (1hr 12 minutes) and  current time is 3.10 am ,delay will be 2 minutes and next execution will be at 3.12 am
    * @param intervalInMinutes interval between 2 tasks in minutes
@@ -61,7 +63,6 @@ public class FixedRateTaskScheduler {
   public long calculateInitialDelayInMillis(int intervalInMinutes) {
 
     int interval = intervalInMinutes;
-
     //check valid interval value provided
     if (intervalInMinutes <= 0)
       return 0;
