@@ -68,22 +68,9 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     }
     if (result.getErrorResponse() == null){
       rateLimitPolicy = service.getRateLimitPolicy(keyType);
-      result = service.performRateLimitCheck(client,keyType);
+      result          = service.performRateLimitCheck(client,keyType);
     }
-    if (result!= null && result.getErrorResponse() != null) {
-      Response.ResponseBuilder response = Response.status(result.getHttpStatus()).entity(result.getErrorResponse());
-      if (rateLimitPolicy != null) {
-        response.header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy.toString());
-      }
-      if (result.getRateLimit() != null) {
-        response.header(RATE_LIMIT_HEADER, result.getRateLimit().toString());
-      }
-      return response.build();
-    }
-    return Response.status(Status.NO_CONTENT)
-            .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
-            .header(RATE_LIMIT_HEADER, result.getRateLimit())
-            .build();
+    return buildResponse(result, rateLimitPolicy);
   }
 
 
@@ -161,6 +148,29 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
           .preflight().build();
   }
 
+
+  /**
+   * Build the validate apikey response with the rate limit headers
+   * @param result
+   * @param rateLimitPolicy
+   * @return
+   */
+  private Response buildResponse(ValidationResult result, RateLimitPolicy rateLimitPolicy) {
+    if (result != null && result.getErrorResponse() != null) {
+      Response.ResponseBuilder response = Response.status(result.getHttpStatus()).entity(result.getErrorResponse());
+      if (rateLimitPolicy != null) {
+        response.header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy.toString());
+      }
+      if (result.getRateLimit() != null) {
+        response.header(RATE_LIMIT_HEADER, result.getRateLimit().toString());
+      }
+      return response.build();
+    }
+    return Response.status(Status.NO_CONTENT)
+            .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
+            .header(RATE_LIMIT_HEADER, result.getRateLimit())
+            .build();
+  }
 
 
   private static List<ClientModel> getPersonalKeys(UserModel userModel) {
