@@ -55,9 +55,9 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
 
   /**
    * Updates the session tracker object with the session counts
-   * NOTE : the best would be to change the infinitespan to instead of counting up,
+   * NOTE : the best would be to change it in the infinispan instead of counting up,
    *       to decrease from the limit so that the limit could be initialized every hour
-   *       with either a predefined limit or a custom limit defined for that client
+   *       with either a predefined limit or a custom limit defined for that client.
    * @param tracker
    * @return
    */
@@ -111,15 +111,23 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
    * @return
    */
   public RateLimitPolicy getRateLimitPolicy(String keyType) {
-    return new RateLimitPolicy(keyType, getSessionKeyLimit(keyType),RATE_LIMIT_DURATION * 60);
+    return new RateLimitPolicy(getVendorIdentifier(keyType), getSessionKeyLimit(keyType),RATE_LIMIT_DURATION * 60L);
   }
 
   private int getSessionKeyLimit(String keyType) {
-    switch (keyType) {
-      case PERSONAL_KEY : return PERSONAL_KEY_LIMIT;
-      case PROJECT_KEY  : return PROJECT_KEY_LIMIT;
-      default: return 0;
-    }
+      return switch (keyType) {
+          case PERSONAL_KEY -> PERSONAL_KEY_LIMIT;
+          case PROJECT_KEY -> PROJECT_KEY_LIMIT;
+          default -> 0;
+      };
+  }
+
+  private String getVendorIdentifier(String keyType){
+      return switch (keyType) {
+          case PERSONAL_KEY -> PERSONAL;
+          case PROJECT_KEY -> PROJECT;
+          default -> null;
+      };
   }
 
   /**
@@ -130,9 +138,9 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
   private long getRemainingTimeUtilReset(LocalDateTime dateTime) {
     int minutesElapsed =  dateTime.getMinute() % RATE_LIMIT_DURATION;
     if (minutesElapsed == 0) {
-      return ((RATE_LIMIT_DURATION * 60 ) - dateTime.getSecond());  // totalSeconds - seconds elapsed (for the new time window slot)
+      return ((RATE_LIMIT_DURATION * 60L ) - dateTime.getSecond());  // totalSeconds - seconds elapsed (for the new time window slot)
     } else {
-      return (((RATE_LIMIT_DURATION - minutesElapsed) * 60) - dateTime.getSecond()); // remaining seconds - seconds elapsed
+      return (((RATE_LIMIT_DURATION - minutesElapsed) * 60L) - dateTime.getSecond()); // remaining seconds - seconds elapsed
     }
   }
 }
