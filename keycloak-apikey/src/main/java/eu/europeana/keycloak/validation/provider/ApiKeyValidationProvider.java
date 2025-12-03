@@ -2,6 +2,7 @@ package eu.europeana.keycloak.validation.provider;
 
 import eu.europeana.keycloak.validation.datamodel.Apikey;
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
 import eu.europeana.keycloak.validation.service.ApiKeyValidationService;
 import eu.europeana.keycloak.validation.service.KeyCloakClientCreationService;
@@ -23,6 +24,9 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
+
+import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_HEADER;
+import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_POLICY_HEADER;
 
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
@@ -57,16 +61,16 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
 
     String keyType = service.getKeyType(client);
+
+    RateLimitPolicy rateLimitPolicy = null;
     if (result.getErrorResponse() == null) {
       result = service.validateClient(client,keyType);
     }
     if (result.getErrorResponse() == null){
-      result = service.performRateLimitCheck(client,keyType);
+      rateLimitPolicy = service.getRateLimitPolicy(keyType);
+      result          = service.performRateLimitCheck(client,keyType);
     }
-    if (result!= null && result.getErrorResponse() != null) {
-      return Response.status(result.getHttpStatus()).entity(result.getErrorResponse()).build();
-    }
-    return Response.status(Status.NO_CONTENT).build();
+    return buildResponse(result, rateLimitPolicy);
   }
 
 
@@ -144,6 +148,29 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
           .preflight().build();
   }
 
+
+  /**
+   * Build the validate apikey response with the rate limit headers
+   * @param result
+   * @param rateLimitPolicy
+   * @return
+   */
+  private Response buildResponse(ValidationResult result, RateLimitPolicy rateLimitPolicy) {
+    if (result != null && result.getErrorResponse() != null) {
+      Response.ResponseBuilder response = Response.status(result.getHttpStatus()).entity(result.getErrorResponse());
+      if (rateLimitPolicy != null) {
+        response.header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy.toString());
+      }
+      if (result.getRateLimit() != null) {
+        response.header(RATE_LIMIT_HEADER, result.getRateLimit().toString());
+      }
+      return response.build();
+    }
+    return Response.status(Status.NO_CONTENT)
+            .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
+            .header(RATE_LIMIT_HEADER, result.getRateLimit())
+            .build();
+  }
 
 
   private static List<ClientModel> getPersonalKeys(UserModel userModel) {

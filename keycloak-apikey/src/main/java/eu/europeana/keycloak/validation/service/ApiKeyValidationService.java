@@ -1,9 +1,9 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
-import eu.europeana.keycloak.utils.Constants;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response.Status;
 import java.time.LocalDateTime;
@@ -23,6 +23,8 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
+
+import static eu.europeana.keycloak.utils.Constants.*;
 
 /**
  * Provides operations for apikey validation.
@@ -65,7 +67,7 @@ public class ApiKeyValidationService {
   private ValidationResult validateClientScope(AuthResult authResult, String grantType) {
     ClientModel client = authResult.getClient();
     Map<String, ClientScopeModel> clientScopes = client.getClientScopes(true);
-    if (clientScopes == null || !clientScopes.containsKey(Constants.CLIENT_SCOPE_APIKEYS)) {
+    if (clientScopes == null || !clientScopes.containsKey(CLIENT_SCOPE_APIKEYS)) {
       LOG.error("Client ID " + client.getClientId() + " is missing scope- apikeys");
       return new ValidationResult(Status.FORBIDDEN, ErrorMessage.SCOPE_MISSING_403);
     }
@@ -90,10 +92,10 @@ public class ApiKeyValidationService {
    * @return boolean
    */
   private static boolean isValidGrantType(AuthResult authResult, String grantType) {
-   if (Constants.GRANT_TYPE_PASSWORD.equals(grantType) ){
+   if (GRANT_TYPE_PASSWORD.equals(grantType) ){
     return authResult.getToken().getOtherClaims().get("client_id") == null;
    }
-   if (Constants.GRANT_TYPE_CLIENT_CRED.equals(grantType) ){
+   if (GRANT_TYPE_CLIENT_CRED.equals(grantType) ){
      return authResult.getToken().getOtherClaims().get("client_id") != null;
    }
    return true;
@@ -109,12 +111,12 @@ public class ApiKeyValidationService {
     ClientProvider clientProvider = session.clients();
     ClientModel client = clientProvider.getClientByClientId(realm, apikey);
     if(client ==null ){
-      LOG.error(String.format(Constants.APIKEY_NOT_REGISTERED, apikey));
+      LOG.error(String.format(APIKEY_NOT_REGISTERED, apikey));
       return false;
     }
     //check if key not deprecated and currently active
     if(!client.isEnabled()){
-      LOG.error(String.format(Constants.APIKEY_NOT_ACTIVE, client.getClientId()));
+      LOG.error(String.format(APIKEY_NOT_ACTIVE, client.getClientId()));
       return false;
      }
     return true;
@@ -146,20 +148,18 @@ public class ApiKeyValidationService {
   public ValidationResult performRateLimitCheck(ClientModel client, String keyType) {
     InfinispanConnectionProvider provider = session.getProvider(
             InfinispanConnectionProvider.class);
-    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(
-            Constants.SESSION_TRACKER_CACHE);
+    Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(SESSION_TRACKER_CACHE);
     if (sessionTrackerCache == null) {
-      LOG.error("Infinispan cache " + Constants.SESSION_TRACKER_CACHE
+      LOG.error("Infinispan cache " + SESSION_TRACKER_CACHE
               + " not found. Cannot perform rate limit check");
       return new ValidationResult(Status.OK, null);
     }
-    SessionTrackerUpdater updater = new SessionTrackerUpdater(
-            Constants.FORMATTER.format(LocalDateTime.now()), keyType);
+    SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType);
     sessionTrackerCache.compute(client.getClientId(), updater);
 
     ErrorMessage errorMessage = updater.resultReference.get();
     Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
-    return new ValidationResult(status, errorMessage);
+    return new ValidationResult(status, errorMessage, updater.rateLimitReference.get());
   }
 
   /**
@@ -171,11 +171,11 @@ public class ApiKeyValidationService {
     if (client == null) {
       return "";
     }
-    if (client.getRole(Constants.CLIENT_OWNER) != null) {
-      return Constants.PERSONAL_KEY;
+    if (client.getRole(CLIENT_OWNER) != null) {
+      return PERSONAL_KEY;
     }
-    if (client.getRole(Constants.SHARED_OWNER) != null) {
-      return Constants.PROJECT_KEY;
+    if (client.getRole(SHARED_OWNER) != null) {
+      return PROJECT_KEY;
     }
     return "";
   }
@@ -191,7 +191,7 @@ public class ApiKeyValidationService {
     String authorization = httpHeaders!=null?httpHeaders.getHeaderString(HttpHeaders.AUTHORIZATION):null;
     if (authorization != null) {
       try {
-        Pattern pattern = Pattern.compile(Constants.APIKEY_PATTERN);
+        Pattern pattern = Pattern.compile(APIKEY_PATTERN);
         Matcher matcher = pattern.matcher(authorization);
         if (matcher.find()) {
           return matcher.group(1);
@@ -216,6 +216,18 @@ public class ApiKeyValidationService {
      return new ValidationResult( Status.UNAUTHORIZED,ErrorMessage.TOKEN_MISSING_401);
     }
     return authorizeToken(authHeader,grantType);
+  }
+
+  /**
+   * Will fetch the Rate Limit policy for the given key type
+   * @return rate limit policy
+   */
+  public RateLimitPolicy getRateLimitPolicy(String keyType) {
+    if (StringUtils.isNotEmpty(keyType)) {
+      SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType);
+      return updater.getRateLimitPolicy(keyType);
+    }
+    return null;
   }
 
 }
