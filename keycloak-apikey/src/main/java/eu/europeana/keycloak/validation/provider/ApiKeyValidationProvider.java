@@ -71,7 +71,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     RateLimitPolicy rateLimitPolicy = null;
     if (result.getErrorResponse() == null) {
       rateLimitPolicy = service.getRateLimitPolicy(keyType, clientRole);
-      result = service.performRateLimitCheck(client.getClientId(), keyType, rateLimitPolicy.getQ());
+      result = service.performRateLimitCheck(client.getClientId(), keyType, rateLimitPolicy);
     }
     return buildResponse(result, rateLimitPolicy);
   }

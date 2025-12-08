@@ -151,10 +151,10 @@ public class ApiKeyValidationService {
      *
      * @param clientId  Keycloak client Id
      * @param keyType   indicating type of apikey e.g. 'PersonalKey','ProjectKey' or empty
-     * @param rateLimit indicates max rateLimit quota for the key.
+     * @param rateLimitPolicy indicates max rateLimitPolicy quota for the key.
      * @return validation result object
      */
-    public ValidationResult performRateLimitCheck(String clientId, String keyType, int rateLimit) {
+    public ValidationResult performRateLimitCheck(String clientId, String keyType, RateLimitPolicy rateLimitPolicy) {
 
         InfinispanConnectionProvider provider = session.getProvider(
                 InfinispanConnectionProvider.class);
@@ -164,7 +164,7 @@ public class ApiKeyValidationService {
                     + " not found. Cannot perform rate limit check");
             return new ValidationResult(Status.OK, null);
         }
-        SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType, rateLimit);
+        SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType, rateLimitPolicy);
         sessionTrackerCache.compute(clientId, updater);
 
         ErrorMessage errorMessage = updater.resultReference.get();
@@ -284,7 +284,7 @@ public class ApiKeyValidationService {
      * @param client keycloak client
      * @return roleModel object designated for representing apikey related roles else null
      */
-    public static RoleModel getClientRoleForKeyOwnership(ClientModel client) {
+    public RoleModel getClientRoleForKeyOwnership(ClientModel client) {
         if (client != null) {
             if (client.getRole(SHARED_OWNER) != null) {
                 return client.getRole(SHARED_OWNER);
