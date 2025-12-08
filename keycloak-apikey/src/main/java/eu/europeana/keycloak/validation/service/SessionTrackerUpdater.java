@@ -23,9 +23,9 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
     AtomicReference<ErrorMessage> resultReference = new AtomicReference<>();
     AtomicReference<RateLimit> rateLimitReference = new AtomicReference<>();
 
-    private String lastAccessDate;
-    private String keyType;
-    private RateLimitPolicy rateLimitPolicy;
+    private final String lastAccessDate;
+    private final String keyType;
+    private final RateLimitPolicy rateLimitPolicy;
 
     public SessionTrackerUpdater(String lastAccessDate, String keyType, RateLimitPolicy rateLimitPolicy) {
         this.lastAccessDate = lastAccessDate;
@@ -46,7 +46,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         SessionTracker tracker = (existingTracker != null) ? existingTracker :
                 new SessionTracker(key, rateLimitPolicy.getQ(), lastAccessDate);
         //check the limits for allowed number of sessions for apikey (keycloak client) and get the validation result
-        resultReference.set(validateAndUpdateSessionTracker(tracker));
+        resultReference.set(validateAndUpdateSessionTracker(tracker,rateLimitPolicy.getVendorIdentifier(),rateLimitPolicy.getQ()));
         return tracker;
     }
 
@@ -60,18 +60,18 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      * @param tracker object to update
      * @return error message if any
      */
-    private ErrorMessage validateAndUpdateSessionTracker(SessionTracker tracker) {
+    private ErrorMessage validateAndUpdateSessionTracker(SessionTracker tracker,String policyType,int rateLimit) {
         int updatedCount = tracker.getSessionCount() - 1;
         LocalDateTime lastAccessDate = LocalDateTime.now();
 
         // check if the client has exhausted the limit
         if (updatedCount == -1) {
-            rateLimitReference.set(new RateLimit(rateLimitPolicy.getVendorIdentifier(), 0, getRemainingTimeUtilReset(lastAccessDate)));
-            return PROJECT_KEY.equals(keyType) ? projectKeyLimitReachedMessage() : personalKeyLimitReachedMessage();
+            rateLimitReference.set(new RateLimit(policyType, 0, getRemainingTimeUtilReset(lastAccessDate)));
+            return PROJECT_KEY.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit) : personalKeyLimitReachedMessage(rateLimit);
         }
         // if the key is NOT exhausted, update tracker and rate limit
         updateSessionTracker(tracker, updatedCount, lastAccessDate);
-        rateLimitReference.set(new RateLimit(rateLimitPolicy.getVendorIdentifier(), updatedCount, getRemainingTimeUtilReset(lastAccessDate)));
+        rateLimitReference.set(new RateLimit(policyType, updatedCount, getRemainingTimeUtilReset(lastAccessDate)));
 
         return null;
     }
@@ -92,14 +92,14 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         }
     }
 
-    private ErrorMessage projectKeyLimitReachedMessage() {
-        return ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(rateLimitPolicy.getQ()), String.valueOf(RATE_LIMIT_DURATION));
+    private ErrorMessage projectKeyLimitReachedMessage(int limit) {
+        return ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(limit), String.valueOf(RATE_LIMIT_DURATION));
     }
 
-    private ErrorMessage personalKeyLimitReachedMessage() {
-        return ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(rateLimitPolicy.getQ()),
+    private ErrorMessage personalKeyLimitReachedMessage(int limit) {
+        return ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(limit),
                         String.valueOf(RATE_LIMIT_DURATION))
-                .formatErrorMessage(String.valueOf(rateLimitPolicy.getQ()), String.valueOf(RATE_LIMIT_DURATION));
+                .formatErrorMessage(String.valueOf(limit), String.valueOf(RATE_LIMIT_DURATION));
     }
 
     /**
