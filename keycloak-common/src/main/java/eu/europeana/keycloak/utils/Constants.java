@@ -27,7 +27,6 @@ public final class Constants {
     public static final String CUSTOM = "custom";
     public static final String PERSONAL_KEY = "PersonalKey";
     public static final String PROJECT_KEY = "ProjectKey";
-
     public static final String GRANT_TYPE_PASSWORD = "password";
     public static final String GRANT_TYPE_CLIENT_CRED = "client_credentials";
     public static final String APIKEY_NOT_REGISTERED = "API key %s is not registered";

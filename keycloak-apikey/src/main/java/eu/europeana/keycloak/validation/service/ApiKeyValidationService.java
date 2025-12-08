@@ -181,10 +181,10 @@ public class ApiKeyValidationService {
     public String getKeyType(RoleModel role) {
         if (role != null) {
             if (SHARED_OWNER.equals(role.getName())) {
-                return PROJECT_KEY;
+                return PROJECT;
             }
             if (CLIENT_OWNER.equals(role.getName())) {
-                return PERSONAL_KEY;
+                return PERSONAL;
             }
         }
         return "";
@@ -242,7 +242,7 @@ public class ApiKeyValidationService {
             Integer clientSpecificRateLimit = getRateLimitSpecificToKey(clientRole);
             boolean isSpecificLimit = clientSpecificRateLimit != null;
 
-            String rateLimitQuotaType = isSpecificLimit ? CUSTOM : getVendorIdentifier(keyType);
+            String rateLimitQuotaType = isSpecificLimit ? CUSTOM : keyType;
             int rateLimitQuota = isSpecificLimit ? clientSpecificRateLimit : getSessionKeyLimit(keyType);
 
             new RateLimitPolicy(rateLimitQuotaType, rateLimitQuota, RATE_LIMIT_DURATION * 60L);
@@ -250,18 +250,10 @@ public class ApiKeyValidationService {
         return null;
     }
 
-    private String getVendorIdentifier(String keyType) {
-        return switch (keyType) {
-            case PERSONAL_KEY -> PERSONAL;
-            case PROJECT_KEY -> PROJECT;
-            default -> null;
-        };
-    }
-
     private int getSessionKeyLimit(String keyType) {
         return switch (keyType) {
-            case PERSONAL_KEY -> PERSONAL_KEY_LIMIT;
-            case PROJECT_KEY -> PROJECT_KEY_LIMIT;
+            case PERSONAL -> PERSONAL_KEY_LIMIT;
+            case PROJECT -> PROJECT_KEY_LIMIT;
             default -> 0;
         };
     }
@@ -292,8 +284,8 @@ public class ApiKeyValidationService {
      * Retrieves the designated roles for key ownership from the given client.
      * Valid roles are 'shared_owner' and 'client_owner'
      *
-     * @param client
-     * @return
+     * @param client keycloak client
+     * @return roleModel object designated for representing apikey related roles else null
      */
     public static RoleModel getClientRoleForKeyOwnership(ClientModel client) {
         if (client != null) {
