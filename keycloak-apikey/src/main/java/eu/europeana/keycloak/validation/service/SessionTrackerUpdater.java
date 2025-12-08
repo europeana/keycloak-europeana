@@ -67,7 +67,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         // check if the client has exhausted the limit
         if (updatedCount == -1) {
             rateLimitReference.set(new RateLimit(policyType, 0, getRemainingTimeUtilReset(lastAccessDate)));
-            return PROJECT_KEY.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit) : personalKeyLimitReachedMessage(rateLimit);
+            return PROJECT.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit) : personalKeyLimitReachedMessage(rateLimit);
         }
         // if the key is NOT exhausted, update tracker and rate limit
         updateSessionTracker(tracker, updatedCount, lastAccessDate);
