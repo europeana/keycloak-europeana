@@ -25,15 +25,13 @@ import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.keycloak.services.resources.Cors;
 
-import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_HEADER;
-import static eu.europeana.keycloak.utils.Constants.RATE_LIMIT_POLICY_HEADER;
+import static eu.europeana.keycloak.utils.Constants.*;
 
 public class ApiKeyValidationProvider implements RealmResourceProvider {
 
   public static final int ALLOWED_NUMBER_OF_DISABLED_KEYS = 3;
   private final KeycloakSession session;
   private final ApiKeyValidationService service;
-
   private final ListApiKeysService listKeysService;
   private Cors cors;
 
@@ -58,17 +56,22 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   public Response validateApiKey(@QueryParam("client_id") String clientId) {
     //validate token,apikey(i.e. clientId) then rateLimit in that order
     ValidationResult result = service.validateAuthToken(null);
+
+    //Fetch client details
     ClientModel client = session.clients().getClientByClientId(session.getContext().getRealm(), clientId);
+    RoleModel clientRole = service.getClientRoleForKeyOwnership(client);
+    String keyType = service.getKeyType(clientRole);
 
-    String keyType = service.getKeyType(client);
-
-    RateLimitPolicy rateLimitPolicy = null;
+    //Only Personal or Project keys are validated further, others considered invalid.
     if (result.getErrorResponse() == null) {
       result = service.validateClient(client,keyType);
     }
+
+    //Calculate and check rate limit policy for the key
+    RateLimitPolicy rateLimitPolicy = null;
     if (result.getErrorResponse() == null){
-      rateLimitPolicy = service.getRateLimitPolicy(keyType);
-      result          = service.performRateLimitCheck(client,keyType);
+      rateLimitPolicy = service.getRateLimitPolicy(keyType,clientRole);
+      result          = service.performRateLimitCheck(client.getClientId(),keyType,rateLimitPolicy.getQ());
     }
     return buildResponse(result, rateLimitPolicy);
   }
@@ -168,7 +171,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     }
     return Response.status(Status.NO_CONTENT)
             .header(RATE_LIMIT_POLICY_HEADER, rateLimitPolicy)
-            .header(RATE_LIMIT_HEADER, result.getRateLimit())
+            .header(RATE_LIMIT_HEADER,(result!=null)? result.getRateLimit():null)
             .build();
   }
 

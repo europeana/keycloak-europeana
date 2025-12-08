@@ -38,6 +38,7 @@ public class ClearSessionTrackingCacheTask extends AbstractCustomScheduledTask {
       updateClient(session,sessionTrackerCache);
       sessionTrackerCache.clear();
       LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
+      return;
     }
     LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
   }
