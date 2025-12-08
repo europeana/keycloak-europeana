@@ -237,17 +237,14 @@ public class ApiKeyValidationService {
      * @return rate limit policy
      */
     public RateLimitPolicy getRateLimitPolicy(String keyType, RoleModel clientRole) {
-        if (StringUtils.isNotEmpty(keyType)) {
-            //Check and  get if any specific rate limit configured for that key.
-            Integer clientSpecificRateLimit = getRateLimitSpecificToKey(clientRole);
-            boolean isSpecificLimit = clientSpecificRateLimit != null;
+        //Check and  get if any specific rate limit configured for that key.
+        Integer clientSpecificRateLimit = getRateLimitSpecificToKey(clientRole);
+        boolean isSpecificLimit = clientSpecificRateLimit != null;
 
-            String rateLimitQuotaType = isSpecificLimit ? CUSTOM : keyType;
-            int rateLimitQuota = isSpecificLimit ? clientSpecificRateLimit : getSessionKeyLimit(keyType);
+        String rateLimitQuotaType = isSpecificLimit ? CUSTOM : keyType;
+        int rateLimitQuota = isSpecificLimit ? clientSpecificRateLimit : getSessionKeyLimit(keyType);
 
-            new RateLimitPolicy(rateLimitQuotaType, rateLimitQuota, RATE_LIMIT_DURATION * 60L);
-        }
-        return null;
+        return new RateLimitPolicy(rateLimitQuotaType, rateLimitQuota, RATE_LIMIT_DURATION * 60L);
     }
 
     private int getSessionKeyLimit(String keyType) {
