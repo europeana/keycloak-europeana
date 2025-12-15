@@ -77,7 +77,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @Produces({MediaType.APPLICATION_JSON})
     public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
 
-        LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+" Project sync - "+ ENABLE_PROJECTS_SYNC);
+        LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+", Project sync - "+ ENABLE_PROJECTS_SYNC);
         if (zohoConnect.getOrCreateAccessToZoho()) {
             try {
                 loadModuleDataFromZoho();

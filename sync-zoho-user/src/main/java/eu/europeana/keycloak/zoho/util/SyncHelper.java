@@ -63,7 +63,7 @@ public class SyncHelper {
         }
         //Check if rateLimitReachedDate is changed in keycloak
         if (isDateChangedInSource(zohoContact.getRateLimitReached(), keycloakUser.getRateLimitReached())) {
-            recordToUpdate.addKeyValue(RATE_LIMIT_REACHED, OffsetDateTime.parse(keycloakUser.getLastAccess()));
+            recordToUpdate.addKeyValue(RATE_LIMIT_REACHED, OffsetDateTime.parse(keycloakUser.getRateLimitReached()));
         }
         //Check if participation level changed
         Set<String> participationLevel = calculateParticipationLevel(zohoContact, keycloakUser,userDetails);
