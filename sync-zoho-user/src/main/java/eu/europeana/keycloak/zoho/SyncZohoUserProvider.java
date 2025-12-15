@@ -113,19 +113,19 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private void loadModuleDataFromZoho() throws Exception {
         //Register Async batch Job to download the details for required modules from ZOHO in csv form.
         ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
-        String accountsJob = zohoBatchJob.zohoBulkCreateJob("Accounts");
-        String contactsJob = zohoBatchJob.zohoBulkCreateJob("Contacts");
-        String apiProjectsJob = zohoBatchJob.zohoBulkCreateJob("API_projects");
+        String accountsJob = zohoBatchJob.zohoBulkCreateJob(ACCOUNTS);
+        String contactsJob = zohoBatchJob.zohoBulkCreateJob(CONTACTS);
+        String apiProjectsJob = zohoBatchJob.zohoBulkCreateJob(API_PROJECTS);
 
         //Keep checking if jobs are finished ,download relevant CSV ones they are complete. Create data list from CSV.
         ZohoBatchDownload batch = new ZohoBatchDownload();
         if(StringUtils.isNotEmpty(accountsJob) && StringUtils.isNotEmpty(contactsJob)) {
-            createAccounts(batch.downloadResult(Long.valueOf(accountsJob)));
-            createContacts(batch.downloadResult(Long.valueOf(contactsJob)));
+            createAccounts(batch.downloadResult(Long.valueOf(accountsJob),ACCOUNTS));
+            createContacts(batch.downloadResult(Long.valueOf(contactsJob),CONTACTS));
             LOG.info("Accounts and Contacts Loaded successfully!! ");
         }
         if(StringUtils.isNotEmpty(apiProjectsJob)) {
-            createApiProjects(batch.downloadResult(Long.valueOf(apiProjectsJob)));
+            createApiProjects(batch.downloadResult(Long.valueOf(apiProjectsJob),API_PROJECTS));
             LOG.info("Api Projects Loaded successfully!! ");
         }
     }

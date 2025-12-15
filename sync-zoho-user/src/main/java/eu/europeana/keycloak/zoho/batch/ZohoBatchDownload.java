@@ -34,7 +34,7 @@ import org.jboss.logging.Logger;
 public class ZohoBatchDownload {
     private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
     private static final String COMPLETED = "COMPLETED";
-    public String downloadResult(Long jobId) throws SDKException {
+    public String downloadResult(Long jobId,String module) throws SDKException {
         BulkReadOperations bulkReadOperations = new BulkReadOperations();
         int maxLoops = 25;
         int loops = 0;
@@ -56,7 +56,7 @@ public class ZohoBatchDownload {
                 Thread.currentThread().interrupt();
             }
         }
-        LOG.error("Retries exhausted ! Status of Bulk download job -" +jobId+ " was not complete!");
+        LOG.error("Retries exhausted ! Status of Bulk download job ID- " +jobId+ " for module "+module+" was not complete!");
         return "";
     }
 
