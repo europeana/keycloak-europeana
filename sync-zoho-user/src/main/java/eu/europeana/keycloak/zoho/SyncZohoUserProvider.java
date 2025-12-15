@@ -60,8 +60,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
         EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        CustomQueryRepository repo = new CustomQueryRepository(entityManager);
-        this.repo = repo;
+        this.repo = new CustomQueryRepository(entityManager);
     }
 
     @Override
@@ -119,14 +118,14 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         String apiProjectsJob = zohoBatchJob.zohoBulkCreateJob("API_projects");
 
         //Keep checking if jobs are finished ,download relevant CSV ones they are complete. Create data list from CSV.
-        ZohoBatchDownload zohoBatchDownload = new ZohoBatchDownload();
+        ZohoBatchDownload batch = new ZohoBatchDownload();
         if(StringUtils.isNotEmpty(accountsJob) && StringUtils.isNotEmpty(contactsJob)) {
-            createAccounts(zohoBatchDownload.downloadResult(Long.valueOf(accountsJob)));
-            createContacts(zohoBatchDownload.downloadResult(Long.valueOf(contactsJob)));
+            createAccounts(batch.downloadResult(Long.valueOf(accountsJob)));
+            createContacts(batch.downloadResult(Long.valueOf(contactsJob)));
             LOG.info("Accounts and Contacts Loaded successfully!! ");
         }
         if(StringUtils.isNotEmpty(apiProjectsJob)) {
-            createApiProjects(zohoBatchDownload.downloadResult(Long.valueOf(apiProjectsJob)));
+            createApiProjects(batch.downloadResult(Long.valueOf(apiProjectsJob)));
             LOG.info("Api Projects Loaded successfully!! ");
         }
     }

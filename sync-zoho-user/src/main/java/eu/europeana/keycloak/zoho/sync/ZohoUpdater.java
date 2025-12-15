@@ -24,7 +24,9 @@ public class ZohoUpdater {
    * @throws SDKException
    */
   public void updateInBatches(List<Record> records, String moduleName) throws SDKException {
-    if(records == null || records.isEmpty()) return;
+    if(records == null || records.isEmpty()) {
+      return;
+    }
     int totalRecords = records.size();
     LOG.info("Batch update process started for module '"+moduleName+"'");
     LOG.info("Total number of records to update - " +  totalRecords);
@@ -61,17 +63,13 @@ public class ZohoUpdater {
 
 
   /**This method is used to update a single contact of zoho with ID and print the response.
-   * @param recordId - The Zoho ID of the record to be updated.
-   *
-   *
+   * @param recordId - The Zoho ID of the record to be updated.   *
    * @return boolean true if contact updated successfully
    * @throws SDKException -
    */
   public boolean callZohoUpdate(long recordId,  Record recordToUpdate) throws SDKException {
-
     List<Record> records = new ArrayList<>();
     records.add(recordToUpdate);
-
     RecordOperations recordOperations = new RecordOperations("Contacts");
     BodyWrapper request = new BodyWrapper();
     request.setData(records);
@@ -105,13 +103,14 @@ public class ZohoUpdater {
   /**
    * Process the APIResponse returned from ZOHO.
    * Checks if call is success and Logs the error
-   * @param response
+   * @param response APIResponse
    * @return  boolean 'true' if response is ok
    */
   public boolean processResponse(APIResponse<ActionHandler> response) {
     if (response != null && response.isExpected()) {
       if (response.getObject() instanceof ActionWrapper actionWrapper) {
         for (ActionResponse actionResponse : actionWrapper.getData()) {
+
           if (actionResponse instanceof SuccessResponse) {
             return true;
           } else if (actionResponse instanceof APIException exception) {

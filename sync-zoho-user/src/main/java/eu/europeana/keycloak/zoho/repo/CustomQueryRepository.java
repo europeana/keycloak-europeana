@@ -7,6 +7,7 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
@@ -61,9 +62,11 @@ public class CustomQueryRepository {
           WHERE kr.name in ('shared_owner')
           AND  c.realm_id = :realmName 
           """;
+  public static final String REALM_NAME = "realmName";
 
 
   private final EntityManager em;
+
   public CustomQueryRepository(EntityManager em) {
     this.em = em;
   }
@@ -80,14 +83,24 @@ public class CustomQueryRepository {
     }
   }
 
-  public  List<String> findTestGroupUsers(String groupId){
+  /**
+   * Fetch list of UserIds belonging to given groupID.
+   * @param groupId keycloak group Id
+   * @return list of user ids
+   */
+  public  List<String> findUsersInGroup(String groupId){
     return em.createQuery(FIND_USER_IDS_BY_GROUP_ID,String.class).setParameter("groupID", groupId).getResultList();
   }
 
+  /**
+   * Fetch details of users belonging to specified realm along with associated rolenames.
+   * @param realmName name of keycloak realm.
+   * @return map of user details with email (lowercase) as key.
+   */
   public Map<String, KeycloakUser> listAllUserMails(String realmName) {
 
     Map<String,KeycloakUser> userDetailsMap = new HashMap<>();
-    Query nativeQuery = em.createNativeQuery(FIND_USER_DETAILS_WITH_ROLES).setParameter("realmName" ,realmName);
+    Query nativeQuery = em.createNativeQuery(FIND_USER_DETAILS_WITH_ROLES).setParameter(REALM_NAME,realmName);
 
     List<Object[]> rows = nativeQuery.getResultList();
 
@@ -106,7 +119,7 @@ public class CustomQueryRepository {
       String lastAccess = privateKey!=null ? privateKey.getLastAccessDate():null;
       String rateLimitReached = privateKey!=null ? privateKey.getRateLimitReached():null;
 
-      userDetailsMap.put(email.toLowerCase(),
+      userDetailsMap.put(email.toLowerCase(Locale.ENGLISH),
               new KeycloakUser(id,username,email,firstName,lastName,roles,lastAccess,rateLimitReached));
     }
     return userDetailsMap;
@@ -117,7 +130,7 @@ public class CustomQueryRepository {
    * The client details contains the apikey and its attributes with value.
    */
   private Map<String, KeycloakClient> getUserPrivateClient(String realmName) {
-     Query nativeQuery = em.createNativeQuery(FIND_USER_PRIVATE_CLIENT_ATTR).setParameter("realmName" ,realmName);
+     Query nativeQuery = em.createNativeQuery(FIND_USER_PRIVATE_CLIENT_ATTR).setParameter(REALM_NAME,realmName);
     List<Object[]> rows = nativeQuery.getResultList();
 
     Map<String, KeycloakClient> clientMap = new HashMap<>();
@@ -153,7 +166,7 @@ public class CustomQueryRepository {
    */
   public Map<String, KeycloakClient> getProjectClients(String realmName) {
 
-    Query nativeQuery = em.createNativeQuery(FIND_PROJECT_CLIENT_ATTR).setParameter("realmName" ,realmName);
+    Query nativeQuery = em.createNativeQuery(FIND_PROJECT_CLIENT_ATTR).setParameter(REALM_NAME,realmName);
     List<Object[]> rows = nativeQuery.getResultList();
 
     Map<String, KeycloakClient> clientMap = new HashMap<>();

@@ -35,7 +35,7 @@ public class AbstractSyncHandler {
     private void loadUserIdsBelongingToTestGroup() {
         String testGroupId   =  repo.findTestGroupId();
         if(testGroupId!=null){
-            testUserIds = repo.findTestGroupUsers(testGroupId);
+            testUserIds = repo.findUsersInGroup(testGroupId);
         }
     }
 

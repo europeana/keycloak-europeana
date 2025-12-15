@@ -23,6 +23,7 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.TEST_PROJEC
  */
 public class ZohoProjectSyncHandler extends AbstractSyncHandler{
     private static final Logger LOG = Logger.getLogger(ZohoProjectSyncHandler.class);
+    public static final String PROJECT_SYNC_MESSAGE = " %s Projects are updated in zoho.";
 
     private  final SyncHelper utils;
     private final List<String> preconfiguredProjectIdsToSync;
@@ -36,6 +37,7 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
      * Compares the keycloak projectClients and zoho projects  and
      * calls zoho for updating project details such as 'lastAccessDate'
      * @param apiProjects  List of Objects containing records from zoho 'API_Projects' module.
+     * @return status
      */
     public String  updateAPIProjects(List<APIProject> apiProjects) {
         try {
@@ -43,11 +45,11 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
 
             ZohoUpdater updater = new ZohoUpdater();
             updater.updateInBatches(generateRequestObject(apiProjectsToUpdate), "API_projects");
+            return (String.format(PROJECT_SYNC_MESSAGE,apiProjectsToUpdate.size()));
 
-            return (apiProjectsToUpdate.size() + " number of projects updated in zoho !");
         } catch (SDKException e) {
             LOG.error("Error occurred while updating API_Project: " + e.getMessage());
-            return "Error occurred while updating API_Project module in zoho !";
+            return "";
         }
     }
 
@@ -95,7 +97,7 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
                 + client.getLastAccessDate() + ", zoho -" + zohoProject.getLastAccess());
 
         // if the last access date value is changed , then consider it for updating in zoho
-        return utils.isDateChanged(zohoProject.getLastAccess(), client.getLastAccessDate());
+        return utils.isDateChangedInSource(zohoProject.getLastAccess(), client.getLastAccessDate());
     }
     private List<Record> generateRequestObject(Map<Long, KeycloakClient> apiProjectsToUpdate) {
         List<Record> records = new ArrayList<>();
