@@ -36,10 +36,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * Retrieves users from Zoho
-     * @return String (completed message)
+     * Runs zoho syn in background
+     * @param days  contacts
+     * @return http 202 is the request is accepted , 409
      */
-
     @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -51,10 +51,11 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         //Update job status in replicated cache , to make status accessible on other POS in cluster
         if(workCache.putIfAbsent(SYNC_JOB_STATUS, RUNNING)!=null) {
            return Response.status(Response.Status.CONFLICT)
-                   .entity("{\"error\" :\"Sync job already running !!\"}")
+                   .entity("{\"error\" :\"Sync job already running.\"}")
                    .build();
         }
 
+        //fetch the realm ID of the current session
         KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
         String realmID = session.getContext().getRealm().getId();
 
@@ -62,18 +63,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         CompletableFuture.runAsync(() -> {
             try{
                 //When we return the immediate response the outer session gets closed , creating new session object for background task
-                KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
-                    //copy realm to backGroundSession
-                    RealmModel realm = backgroundSession.realms().getRealm(realmID);
-                    backgroundSession.getContext().setRealm(realm);
-
-                    LOG.info("Running background task for zoho sync !! ");
-                    ZohoSyncService service = new ZohoSyncService(backgroundSession);
-                    service.runJobInBackground(days);
-                });
-
-            } catch (Exception e) {
-                LOG.error("Error while running zoho sync in background - " + e);
+                runBackgroundJob(days, sessionFactory, realmID);
+            } catch (Throwable t) {
+                LOG.error("Background job failed - " + t);
             } finally {
                 //remove the status from cache ones task is completed.Need to use separate session for this.
                 KeycloakModelUtils.runJobInTransaction(sessionFactory, sessionToUpdateJobStatus -> {
@@ -84,8 +76,35 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             }
         });
         return Response.status(Response.Status.ACCEPTED)
-                .entity("\"message\" : \"Sync job started in background !\"")
+                .entity("\"message\" : \"Sync job started in background.\"")
                 .build();
+    }
+
+    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
+        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
+         try {
+             //copy realm to backGroundSession
+             RealmModel realm = backgroundSession.realms().getRealm(realmID);
+             backgroundSession.getContext().setRealm(realm);
+
+             LOG.info("Running background task for zoho sync !! ");
+             ZohoSyncService service = new ZohoSyncService(backgroundSession);
+             service.runZohoSync(days);
+         } catch (Throwable t) {
+             LOG.error("Error while running zoho sync - " + t);
+             throw t;
+         }
+     });
+    }
+
+    @Path("/job-status/reset")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response overrideSyncJobStatus(){
+        session.getProvider(InfinispanConnectionProvider.class)
+                .getCache("work")
+                .remove(SYNC_JOB_STATUS);
+        return Response.ok().build();
     }
 
     @Override

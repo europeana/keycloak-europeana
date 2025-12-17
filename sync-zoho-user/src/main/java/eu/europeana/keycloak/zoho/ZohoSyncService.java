@@ -51,7 +51,7 @@ public class ZohoSyncService {
         this.repo = new CustomQueryRepository(entityManager);
     }
 
-    String runJobInBackground(int days) {
+    String runZohoSync(int days) {
         LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+", Project sync - "+ ENABLE_PROJECTS_SYNC);
         if (zohoConnect.getOrCreateAccessToZoho()) {
             try {
