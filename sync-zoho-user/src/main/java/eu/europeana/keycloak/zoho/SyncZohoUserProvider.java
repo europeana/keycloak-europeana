@@ -87,10 +87,12 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
              RealmModel realm = backgroundSession.realms().getRealm(realmID);
              backgroundSession.getContext().setRealm(realm);
 
-             LOG.info("Running background task for zoho sync !! ");
+             LOG.info("Running background task for zoho sync !! Realm - "+ backgroundSession.getContext().getRealm().getName());
              ZohoSyncService service = new ZohoSyncService(backgroundSession);
              service.runZohoSync(days);
+
          } catch (Throwable t) {
+             //Throwable is used instead to capture Both Exceptions and Errors from the job
              LOG.error("Error while running zoho sync - " + t);
              throw t;
          }
