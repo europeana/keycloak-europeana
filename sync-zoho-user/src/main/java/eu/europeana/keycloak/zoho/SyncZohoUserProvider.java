@@ -37,7 +37,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
 
     /**
      * Runs zoho syn in background
-     * @param days  contacts
+     * @param days contacts modified in zoho till this many days ago are updated in keycloak.
      * @return http 202 is the request is accepted , 409
      */
     @Path("")
