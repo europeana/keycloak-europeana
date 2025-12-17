@@ -13,12 +13,14 @@ import eu.europeana.keycloak.zoho.sync.ZohoProjectSyncHandler;
 import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -26,9 +28,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
+import org.infinispan.Cache;
 import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserProvider;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -46,6 +51,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     public static final String SLACK_MESSAGE_REQUEST = """
             {"text":" %s "}
             """;
+    public static final String SYNC_JOB_STATUS = "syncJobStatus";
+    public static final String RUNNING = "RUNNING";
     private final RealmModel realm;
     private final UserProvider userProvider;
     private final CustomQueryRepository repo;
@@ -56,7 +63,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     private List<Contact> contacts;
     private List<APIProject> apiProjects;
 
+    KeycloakSession session ;
+
     public SyncZohoUserProvider(KeycloakSession session) {
+        this.session = session;
         this.realm        = session.getContext().getRealm();
         this.userProvider = session.users();
         EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
@@ -75,8 +85,44 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
+    public Response zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
 
+        //Get the status currently running sync job from cache
+        InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
+        Cache<String,String> workCache = provider.getCache("work");
+
+        //Update job status in replicated cache , to make status accessible on other POS in cluster
+        if(workCache.putIfAbsent(SYNC_JOB_STATUS, RUNNING)!=null) {
+           return Response.status(Response.Status.CONFLICT)
+                   .entity("{\"error\" :\"Sync job already running !!\"}")
+                   .build();
+        }
+
+        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+        //Run the process in background
+        CompletableFuture.runAsync(() ->{
+            //When we return the immediate response the outer session gets closed , creating new session object for background task
+           try(KeycloakSession backgroundSession = sessionFactory.create()) {
+               try {
+                   runJobInBackground(days);
+               } catch (Exception e) {
+                   LOG.error("Error while running zoho sync - " + e);
+               } finally {
+                   //remove the status from cache ones task is completed.
+                   backgroundSession.getProvider(InfinispanConnectionProvider.class)
+                           .getCache("work")
+                           .remove(SYNC_JOB_STATUS);
+               }
+           }
+        });
+
+
+        return Response.status(Response.Status.ACCEPTED)
+                .entity("\"message\" : \"Sync job started in background !\"")
+                .build();
+    }
+
+    private String runJobInBackground(int days) {
         LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+", Project sync - "+ ENABLE_PROJECTS_SYNC);
         if (zohoConnect.getOrCreateAccessToZoho()) {
             try {
@@ -90,7 +136,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             //Synchronize API Projects (Zoho APIProject entity represents ProjectKey Client in keycloak )
 
             String projectSyncStatus = synchroniseAPIProjects();
-            String status = contactSyncStatus + "         " +projectSyncStatus;
+            String status = contactSyncStatus + "  " +projectSyncStatus;
             //Publish Status Report For SYNC
             if(StringUtils.isNotEmpty(status)){
                 SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
