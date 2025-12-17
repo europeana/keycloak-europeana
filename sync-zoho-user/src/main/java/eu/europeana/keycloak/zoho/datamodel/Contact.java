@@ -42,6 +42,12 @@ public class Contact {
     private String contactParticipation;
 
     @CsvBindByPosition(position = 10)
+    private String lastAccess;
+
+    @CsvBindByPosition(position = 11)
+    private String rateLimitReached;
+
+    @CsvBindByPosition(position = 12)
     private String modifiedTime;
 
     public String getId() {
@@ -95,14 +101,6 @@ public class Contact {
     public String getSecondaryEmail() { return secondaryEmail; }
 
     public void setSecondaryEmail(String secondaryEmail) { this.secondaryEmail = secondaryEmail; }
-    public OffsetDateTime getModifiedTime(){
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-        return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
-    }
-
-    public void setModifiedTime(String modifiedTime){
-        this.modifiedTime = modifiedTime;
-    }
 
     public String getLeadSource() { return leadSource; }
 
@@ -118,5 +116,30 @@ public class Contact {
 
     public void setContactParticipation(String contactParticipation) {
         this.contactParticipation = contactParticipation;
+    }
+
+    public String getLastAccess() {
+        return lastAccess;
+    }
+
+    public void setLastAccess(String lastAccess) {
+        this.lastAccess = lastAccess;
+    }
+
+    public String getRateLimitReached() {
+        return rateLimitReached;
+    }
+
+    public void setRateLimitReached(String rateLimitReached) {
+        this.rateLimitReached = rateLimitReached;
+    }
+
+    public OffsetDateTime getModifiedTime(){
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        return OffsetDateTime.parse(modifiedTime, dateTimeFormatter);
+    }
+
+    public void setModifiedTime(String modifiedTime){
+        this.modifiedTime = modifiedTime;
     }
 }

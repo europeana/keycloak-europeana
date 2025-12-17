@@ -1,25 +1,20 @@
-package eu.europeana.keycloak.zoho.batch;
+package eu.europeana.keycloak.zoho.sync;
 
 import com.zoho.crm.api.HeaderMap;
 import com.zoho.crm.api.exception.SDKException;
-import com.zoho.crm.api.record.APIException;
-import com.zoho.crm.api.record.ActionHandler;
-import com.zoho.crm.api.record.ActionResponse;
-import com.zoho.crm.api.record.ActionWrapper;
-import com.zoho.crm.api.record.BodyWrapper;
 import com.zoho.crm.api.record.Record;
-import com.zoho.crm.api.record.RecordOperations;
-import com.zoho.crm.api.record.SuccessResponse;
+import com.zoho.crm.api.record.*;
 import com.zoho.crm.api.util.APIResponse;
-import java.util.ArrayList;
-import java.util.List;
 import org.jboss.logging.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Handles operations related to batch update call towards ZOHO
+ * Handles operations related to update calls towards ZOHO
  */
-public class ZohoBatchUpdater {
-  private static final Logger LOG = Logger.getLogger(ZohoBatchUpdater.class);
+public class ZohoUpdater {
+  private static final Logger LOG = Logger.getLogger(ZohoUpdater.class);
   public static final int BATCH_SIZE = 100;
 
   /**
@@ -29,7 +24,9 @@ public class ZohoBatchUpdater {
    * @throws SDKException
    */
   public void updateInBatches(List<Record> records, String moduleName) throws SDKException {
-    if(records == null || records.isEmpty()) return;
+    if(records == null || records.isEmpty()) {
+      return;
+    }
     int totalRecords = records.size();
     LOG.info("Batch update process started for module '"+moduleName+"'");
     LOG.info("Total number of records to update - " +  totalRecords);
@@ -64,16 +61,56 @@ public class ZohoBatchUpdater {
     return processResponse(response);
   }
 
+
+  /**This method is used to update a single contact of zoho with ID and print the response.
+   * @param recordId - The Zoho ID of the record to be updated.   *
+   * @return boolean true if contact updated successfully
+   * @throws SDKException -
+   */
+  public boolean callZohoUpdate(long recordId,  Record recordToUpdate) throws SDKException {
+    List<Record> records = new ArrayList<>();
+    records.add(recordToUpdate);
+    RecordOperations recordOperations = new RecordOperations("Contacts");
+    BodyWrapper request = new BodyWrapper();
+    request.setData(records);
+    LOG.info("Updating  zoho contact id :" + recordId);
+    APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,new HeaderMap());
+    return processResponse(response);
+  }
+
+
+  /**This method is used to create a single contact of zoho with ID and print the response.
+   * @param newRecord request object
+   * @return boolean true if contact created successfully
+   * @throws SDKException -
+   * */
+  public boolean createNewZohoContact(Record newRecord) throws SDKException {
+    String moduleAPIName = "Contacts";
+    RecordOperations recordOperations = new RecordOperations(moduleAPIName);
+    BodyWrapper bodyWrapper = new BodyWrapper();
+
+    List<Record> records = new ArrayList<>();
+    records.add(newRecord);
+    bodyWrapper.setData(records);
+
+    HeaderMap headerInstance = new HeaderMap();
+    APIResponse<ActionHandler> response = recordOperations.createRecords(bodyWrapper,
+            headerInstance);
+    return processResponse(response);
+  }
+
+
   /**
    * Process the APIResponse returned from ZOHO.
    * Checks if call is success and Logs the error
-   * @param response
+   * @param response APIResponse
    * @return  boolean 'true' if response is ok
    */
   public boolean processResponse(APIResponse<ActionHandler> response) {
     if (response != null && response.isExpected()) {
       if (response.getObject() instanceof ActionWrapper actionWrapper) {
         for (ActionResponse actionResponse : actionWrapper.getData()) {
+
           if (actionResponse instanceof SuccessResponse) {
             return true;
           } else if (actionResponse instanceof APIException exception) {

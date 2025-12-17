@@ -12,15 +12,19 @@ public class KeycloakUser {
   private String firstName;
   private String lastName;
   private String associatedRoles;
+  private String lastAccess;
+  private String rateLimitReached;
 
   public KeycloakUser(String id, String username, String email, String firstName, String lastName,
-      String associatedRoles) {
+      String associatedRoles,String lastAccess,String rateLimitReached) {
     this.id = id;
     this.username = username;
     this.email = email;
     this.firstName = firstName;
     this.lastName = lastName;
     this.associatedRoles = associatedRoles;
+    this.lastAccess = lastAccess;
+    this.rateLimitReached =rateLimitReached;
   }
 
   public String getEmail() {
@@ -75,5 +79,21 @@ public class KeycloakUser {
      return  Arrays.asList(getAssociatedRoles().split(","));
     }
     return Collections.emptyList();
+  }
+
+  public String getLastAccess() {
+    return lastAccess;
+  }
+
+  public void setLastAccess(String lastAccess) {
+    this.lastAccess = lastAccess;
+  }
+
+  public String getRateLimitReached() {
+    return rateLimitReached;
+  }
+
+  public void setRateLimitReached(String rateLimitReached) {
+    this.rateLimitReached = rateLimitReached;
   }
 }

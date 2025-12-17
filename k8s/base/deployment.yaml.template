@@ -101,6 +101,10 @@ spec:
               value: "${PERSONAL_KEY_RATE_LIMIT}"
             - name: PROJECT_KEY_RATE_LIMIT
               value: "${PROJECT_KEY_RATE_LIMIT}"
+            - name: TEST_PROJECT_IDS_TO_UPDATE
+              value: "${TEST_PROJECT_IDS_TO_UPDATE}"
+            - name: TEST_CONTACT_IDS_TO_UPDATE
+              value: "${TEST_CONTACT_IDS_TO_UPDATE}"
           ports:
             - containerPort: 8080
           livenessProbe:

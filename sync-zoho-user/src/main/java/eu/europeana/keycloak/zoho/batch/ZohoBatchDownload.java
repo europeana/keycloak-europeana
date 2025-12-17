@@ -32,40 +32,36 @@ import org.jboss.logging.Logger;
  */
 @SuppressWarnings("javasecurity:S6096")
 public class ZohoBatchDownload {
-
     private static final Logger LOG = Logger.getLogger(ZohoBatchDownload.class);
     private static final String COMPLETED = "COMPLETED";
-
-    public String downloadResult(Long jobId) throws SDKException {
-
-            BulkReadOperations bulkReadOperations = new BulkReadOperations();
-            int maxLoops = 20;
-            int loops = 0;
-            while (loops < maxLoops) {
-                APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(
-                    jobId);
-                if (response != null && response.isExpected()) {
-                    ResponseHandler responseHandler = response.getObject();
-                    if (responseHandler instanceof ResponseWrapper responseWrapper
-                        && isJobCompleted(
-                        responseWrapper)) {
-                        return downloadCompleted(jobId);
-                    }
-                }
-                loops++;
-                LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
-                try {
-                Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    LOG.error(e.getStackTrace());
-                    Thread.currentThread().interrupt();
+    public String downloadResult(Long jobId,String module) throws SDKException {
+        BulkReadOperations bulkReadOperations = new BulkReadOperations();
+        int maxLoops = 25;
+        int loops = 0;
+        while (loops < maxLoops) {
+            APIResponse<ResponseHandler> response = bulkReadOperations.getBulkReadJobDetails(jobId);
+            if (response != null && response.isExpected()) {
+                ResponseHandler responseHandler = response.getObject();
+                if (responseHandler instanceof ResponseWrapper responseWrapper
+                        && isJobCompleted(responseWrapper)) {
+                    return downloadCompleted(jobId);
                 }
             }
+            loops++;
+            LOG.debug("Job not yet finished in loop " + loops + ". Retrying in one second.");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                LOG.error(e.getStackTrace());
+                Thread.currentThread().interrupt();
+            }
+        }
+        LOG.error("Retries exhausted ! Status of Bulk download job ID- " +jobId+ " for module "+module+" was not complete!");
         return "";
     }
 
     private boolean isJobCompleted(ResponseWrapper responseWrapper) {
-        List<JobDetail> jobDetails      = responseWrapper.getData();
+        List<JobDetail> jobDetails = responseWrapper.getData();
         for (JobDetail jobDetail : jobDetails){
             if (StringUtils.equalsIgnoreCase(jobDetail.getState().getValue(), COMPLETED)){
                 return true;

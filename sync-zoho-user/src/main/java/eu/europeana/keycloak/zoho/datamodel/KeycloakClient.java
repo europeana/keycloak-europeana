@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class KeycloakClient {
 
-  public static final String RATE_LIMITREACHED = "rateLimitreached";
+  public static final String RATE_LIMITREACHED = "rateLimitReached";
   public static final String LAST_ACCESS = "lastAccess";
   String key;
 
