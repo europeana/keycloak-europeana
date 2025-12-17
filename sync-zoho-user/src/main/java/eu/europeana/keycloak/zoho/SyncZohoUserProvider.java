@@ -4,7 +4,6 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import org.infinispan.Cache;
 import org.jboss.logging.Logger;
 import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.KeycloakSession;
@@ -44,21 +43,22 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
-        //Get the status currently running sync job from cache
-        InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-        Cache<String,String> workCache = provider.getCache("work");
-
-        //Update job status in replicated cache , to make status accessible on other POS in cluster
-        if(workCache.putIfAbsent(SYNC_JOB_STATUS, RUNNING)!=null) {
-           return Response.status(Response.Status.CONFLICT)
-                   .entity("{\"error\" :\"Sync job already running.\"}")
-                   .build();
-        }
 
         //fetch the realm ID of the current session
-        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+        RealmModel realm = session.getContext().getRealm();
         String realmID = session.getContext().getRealm().getId();
 
+        //Get the status of currently running sync job from DB
+        String status = realm.getAttribute(SYNC_JOB_STATUS);
+        if(RUNNING.equals(status)) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity("{\"error\" :\"Sync job already running.\"}")
+                    .build();
+        }
+        //Update the Job status on realm
+        realm.setAttribute(SYNC_JOB_STATUS,RUNNING);
+
+        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
         //Run the process in background
         CompletableFuture.runAsync(() -> {
             try{
@@ -69,9 +69,8 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
             } finally {
                 //remove the status from cache ones task is completed.Need to use separate session for this.
                 KeycloakModelUtils.runJobInTransaction(sessionFactory, sessionToUpdateJobStatus -> {
-                    sessionToUpdateJobStatus.getProvider(InfinispanConnectionProvider.class)
-                            .getCache("work")
-                            .remove(SYNC_JOB_STATUS);
+                    RealmModel realmForStatusUpdate = sessionToUpdateJobStatus.realms().getRealm(realmID);
+                    realmForStatusUpdate.removeAttribute(SYNC_JOB_STATUS);
                 });
             }
         });
