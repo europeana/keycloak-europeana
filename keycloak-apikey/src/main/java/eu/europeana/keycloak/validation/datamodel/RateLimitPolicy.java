@@ -3,9 +3,9 @@ package eu.europeana.keycloak.validation.datamodel;
 /**
  * RateLimit policy object
  * will define the rate-limit policy specific to the user
- * @See: https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html
  *
  * @author srishti singh
+ * @See: https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html
  * @since 1 December 2025
  */
 public class RateLimitPolicy {
@@ -19,14 +19,14 @@ public class RateLimitPolicy {
     /**
      * "q" parameter indicates the quota allocated by this policy measured in quota units.
      */
-    private long q;
+    private Integer q;
 
     /**
      * "w" parameter value conveys a time window.
      */
     private long w;
 
-    public RateLimitPolicy(String vendorIdentifier, long q, long w) {
+    public RateLimitPolicy(String vendorIdentifier, Integer q, long w) {
         this.vendorIdentifier = vendorIdentifier;
         this.q = q;
         this.w = w;
@@ -40,11 +40,11 @@ public class RateLimitPolicy {
         this.vendorIdentifier = vendorIdentifier;
     }
 
-    public long getQ() {
+    public Integer getQ() {
         return q;
     }
 
-    public void setQ(long q) {
+    public void setQ(Integer q) {
         this.q = q;
     }
 
@@ -60,6 +60,6 @@ public class RateLimitPolicy {
     public String toString() {
         return "\"" + vendorIdentifier + "\";" +
                 "q=" + q +
-                ";w=" + w ;
+                ";w=" + w;
     }
 }
