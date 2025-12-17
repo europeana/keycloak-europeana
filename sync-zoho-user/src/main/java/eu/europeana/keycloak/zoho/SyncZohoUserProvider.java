@@ -5,7 +5,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
@@ -51,7 +50,7 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         //Get the status of currently running sync job from DB
         String status = realm.getAttribute(SYNC_JOB_STATUS);
         if(RUNNING.equals(status)) {
-            return Response.status(Response.Status.CONFLICT)
+            return Response.status(Response.Status.OK)
                     .entity("{\"error\" :\"Sync job already running.\"}")
                     .build();
         }
@@ -96,16 +95,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
              throw t;
          }
      });
-    }
-
-    @Path("/job-status/reset")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    public Response overrideSyncJobStatus(){
-        String status = (String) session.getProvider(InfinispanConnectionProvider.class)
-                .getCache("work")
-                .remove(SYNC_JOB_STATUS);
-        return Response.ok().entity("\"message\" : \"Job status cleared! Previous value"+status+"\" ").build();
     }
 
     @Override
