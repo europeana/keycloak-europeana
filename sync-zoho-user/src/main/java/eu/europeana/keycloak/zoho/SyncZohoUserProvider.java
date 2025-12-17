@@ -101,10 +101,10 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response overrideSyncJobStatus(){
-        session.getProvider(InfinispanConnectionProvider.class)
+        String status = (String) session.getProvider(InfinispanConnectionProvider.class)
                 .getCache("work")
                 .remove(SYNC_JOB_STATUS);
-        return Response.ok().build();
+        return Response.ok().entity("\"message\" : \"Job status cleared! Previous value"+status+"\" ").build();
     }
 
     @Override
