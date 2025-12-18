@@ -16,28 +16,38 @@ import org.mockito.Mockito;
  class FixedRateTaskSchedulerTest {
   @Mock
   private AbstractCustomScheduledTask customScheduledTask;
-  @ParameterizedTest
-  @CsvSource({
-      "0,10,10",
-      "2,3,1",
-      "59,60,1",
-      "0,0,0",
-      "10,70,10",
-      "10,72,2",
-      "50,70,10",
-      "0,60,60",
-      "30,60,30",
-      "35,60,25",
-      "10,140,10",
-      "10,137,7"
-  })
-  void testCalculateinitialDelay(int currentMinute,int intervalMinute,int expected){
-      // e.g.  Current minute is 0, interval is 10. Expected delay is 10 - (0 % 10) = 10.
-      FixedRateTaskScheduler fixedRateTaskScheduler = Mockito.spy(new FixedRateTaskScheduler(customScheduledTask, intervalMinute));
-      LocalDateTime mockTime = LocalDateTime.of(2025, Month.JANUARY, 1, 10, currentMinute, 0);
-      when(fixedRateTaskScheduler.getLocalTime()).thenReturn(mockTime);
-      int delay = fixedRateTaskScheduler.calculateInitialDelay(intervalMinute);
-      assertEquals(expected,delay);
-  }
+
+     /** Tests if initial delay is correctly calculated for starting the scheduler by
+      * {@code FixedRateTaskScheduler.calculateInitialDelayInMillis(int)} method
+      * @param currentMinute Simulated value for Minute of hour.
+      * @param currentSeconds Simulated value for Seconds of minute.
+      * @param intervalMinute Simulated value for Interval in minutes.
+      * @param expected Expected value for delay in milliseconds.
+      */
+     @ParameterizedTest
+     @CsvSource({
+             "0,43,10,557_000",
+             "2,59,3,1000",
+             "59,59,60,1000",
+             "0,0,0,0",
+             "10,0,10,600_000",
+             "10,0,70,600_000",
+             "10,23,72,97_000",
+             "50,0,70,600_000",
+             "0,0,60,3_600_000",
+             "30,0,60,1_800_000",
+             "35,0,60,1_500_000",
+             "10,0,140,600_000",
+             "10,0,137,420_000"
+     })
+     void testCalculateinitialDelayInMillis(int currentMinute,int currentSeconds,int intervalMinute,int expected){
+         FixedRateTaskScheduler fixedRateTaskScheduler = Mockito.spy(new FixedRateTaskScheduler(customScheduledTask, intervalMinute));
+         LocalDateTime mockTime = LocalDateTime.of(2025, Month.JANUARY, 1, 10, currentMinute,currentSeconds);
+         when(fixedRateTaskScheduler.getLocalTime()).thenReturn(mockTime);
+         long delay = fixedRateTaskScheduler.calculateInitialDelayInMillis(intervalMinute);
+         assertEquals(expected,delay);
+     }
+
+
 
 }
