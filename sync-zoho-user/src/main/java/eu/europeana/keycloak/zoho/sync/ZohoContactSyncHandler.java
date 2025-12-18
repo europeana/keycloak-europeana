@@ -26,7 +26,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
     private static final Logger LOG = Logger.getLogger(ZohoContactSyncHandler.class);
     public static final String CONTACTS_SYNC_MSG = "%s accounts in Zoho were compared against %s accounts in KeyCloak " +
             "where:  %s accounts are shared and %s contacts were added to Zoho. " +
-            "The affiliation for %s accounts was changed or established.";
+            "\\nThe affiliation for %s accounts was changed or established.";
     private final UserProvider userProvider;
     private final SyncHelper helper;
     private final ZohoUpdater updater;

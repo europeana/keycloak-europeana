@@ -22,7 +22,7 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
  */
 public class ZohoProjectSyncHandler extends AbstractSyncHandler{
     private static final Logger LOG = Logger.getLogger(ZohoProjectSyncHandler.class);
-    public static final String PROJECT_SYNC_MESSAGE = " %s projects were updated in zoho.";
+    public static final String PROJECT_SYNC_MESSAGE = "\\n%s projects were updated in zoho.";
 
     private  final SyncHelper utils;
     private final List<String> preconfiguredProjectIdsToSync;
