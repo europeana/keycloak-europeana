@@ -187,8 +187,8 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
 
     /**
      * Checks if any relevant contact detail is to be updated in zoho and call zoho if required.
-     * <p>Update is skipped for users belonging to test group or if the global sync flag  is OFF.</p>
-     * <p>Update is always performed for the zohoContact ids (preconfigured separately) even if global sync switch is OFF.</p>
+     * <p>Update is skipped for users belonging to test group or if the global sync flag is OFF.</p>
+     * <p>Update is always performed for the 'preconfigured zohoContact ids' even if global sync switch is OFF.</p>
      */
     private void handleZohoContactUpdate(Contact contact, KeycloakUser keycloakUser) throws SDKException {
         if (isPartOfTestGroup(keycloakUser)) {

@@ -4,9 +4,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
-import org.infinispan.Cache;
 import org.jboss.logging.Logger;
-import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
@@ -36,56 +34,67 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * Retrieves users from Zoho
-     * @return String (completed message)
+     * Runs zoho syn in background
+     * @param days contacts modified in zoho till this many days ago are updated in keycloak.
+     * @return http 202 is the request is accepted , 409
      */
-
     @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
-        //Get the status currently running sync job from cache
-        InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
-        Cache<String,String> workCache = provider.getCache("work");
 
-        //Update job status in replicated cache , to make status accessible on other POS in cluster
-        if(workCache.putIfAbsent(SYNC_JOB_STATUS, RUNNING)!=null) {
-           return Response.status(Response.Status.CONFLICT)
-                   .entity("{\"error\" :\"Sync job already running !!\"}")
-                   .build();
-        }
-
-        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+        //fetch the realm ID of the current session
+        RealmModel realm = session.getContext().getRealm();
         String realmID = session.getContext().getRealm().getId();
 
+        //Get the status of currently running sync job from DB
+        String status = realm.getAttribute(SYNC_JOB_STATUS);
+        if(RUNNING.equals(status)) {
+            return Response.status(Response.Status.OK)
+                    .entity("{\"error\" :\"Sync job already running.\"}")
+                    .build();
+        }
+        //Update the Job status on realm
+        realm.setAttribute(SYNC_JOB_STATUS,RUNNING);
+
+        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
         //Run the process in background
         CompletableFuture.runAsync(() -> {
             try{
                 //When we return the immediate response the outer session gets closed , creating new session object for background task
-                KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
-                    //copy realm to backGroundSession
-                    RealmModel realm = backgroundSession.realms().getRealm(realmID);
-                    backgroundSession.getContext().setRealm(realm);
-
-                    LOG.info("Running background task for zoho sync !! ");
-                    ZohoSyncService service = new ZohoSyncService(backgroundSession);
-                    service.runJobInBackground(days);
-                });
-
-            } catch (Exception e) {
-                LOG.error("Error while running zoho sync in background - " + e);
+                runBackgroundJob(days, sessionFactory, realmID);
+            } catch (Throwable t) {
+                LOG.error("Background job failed - " + t);
             } finally {
                 //remove the status from cache ones task is completed.Need to use separate session for this.
                 KeycloakModelUtils.runJobInTransaction(sessionFactory, sessionToUpdateJobStatus -> {
-                    sessionToUpdateJobStatus.getProvider(InfinispanConnectionProvider.class)
-                            .getCache("work")
-                            .remove(SYNC_JOB_STATUS);
+                    RealmModel realmForStatusUpdate = sessionToUpdateJobStatus.realms().getRealm(realmID);
+                    realmForStatusUpdate.removeAttribute(SYNC_JOB_STATUS);
                 });
             }
         });
         return Response.status(Response.Status.ACCEPTED)
-                .entity("\"message\" : \"Sync job started in background !\"")
+                .entity("\"message\" : \"Sync job started in background.\"")
                 .build();
+    }
+
+    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
+        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
+         try {
+             //copy realm to backGroundSession
+             RealmModel realm = backgroundSession.realms().getRealm(realmID);
+             backgroundSession.getContext().setRealm(realm);
+
+             LOG.info("Running background task for zoho sync !! Realm - "+ backgroundSession.getContext().getRealm().getName());
+             ZohoSyncService service = new ZohoSyncService(backgroundSession);
+             service.runZohoSync(days);
+
+         } catch (Throwable t) {
+             //Throwable is used instead to capture Both Exceptions and Errors from the job
+             LOG.error("Error while running zoho sync - " + t);
+             throw t;
+         }
+     });
     }
 
     @Override

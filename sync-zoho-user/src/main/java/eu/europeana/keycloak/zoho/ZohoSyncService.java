@@ -51,14 +51,13 @@ public class ZohoSyncService {
         this.repo = new CustomQueryRepository(entityManager);
     }
 
-    String runJobInBackground(int days) {
-        LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+", Project sync - "+ ENABLE_PROJECTS_SYNC);
+    public void  runZohoSync(int days) {
+        LOG.info("Contact Sync flag set to - "+ENABLE_CONTACT_SYNC+", Project Sync flag set to - "+ ENABLE_PROJECTS_SYNC);
         if (zohoConnect.getOrCreateAccessToZoho()) {
             try {
                 loadModuleDataFromZoho();
             } catch (Exception e) {
-                LOG.info("Message: " + e.getMessage() + "; cause: " + e);
-                return "Error creating bulk job.";
+                LOG.info("Error creating bulk job. Message: " + e.getMessage() + "; cause: " + e);
             }
             //Synchronize zoho Contact Details (Zoho Contact entity represents User entity in keycloak )
             String contactSyncStatus = synchroniseContacts(days);
@@ -72,7 +71,6 @@ public class ZohoSyncService {
                 conn.publishStatusReport(String.format(SLACK_MESSAGE_REQUEST,status));
             }
         }
-        return "Done.";
     }
 
     private String synchroniseContacts(int days) {
