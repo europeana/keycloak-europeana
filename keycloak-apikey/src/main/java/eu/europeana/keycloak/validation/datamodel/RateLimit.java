@@ -1,5 +1,7 @@
 package eu.europeana.keycloak.validation.datamodel;
 
+import java.io.Serializable;
+
 /**
  * RateLimit object
  * will hold the current rate limit values of the session for the specific user
@@ -8,7 +10,7 @@ package eu.europeana.keycloak.validation.datamodel;
  * @author srishti singh
  * @since 1 December 2025
  */
-public class RateLimit {
+public class RateLimit implements Serializable {
 
     /**
      * Implementation- or service-specific parameters SHOULD be prefixed
@@ -32,6 +34,7 @@ public class RateLimit {
         this.t = t;
     }
 
+    public RateLimit() {}
     public String getVendorIdentifier() {
         return vendorIdentifier;
     }
