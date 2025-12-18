@@ -32,6 +32,8 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.API_PROJECT
 
 public class ZohoSyncService {
     private static final Logger LOG = Logger.getLogger(ZohoSyncService.class);
+    public static final String MSG_PRODUCTION_MODE_ACTIVE = "!! Production Mode Active : All eligible contacts and projects will be synced !!";
+    public static final String MSG_TEST_MODE_ACTIVE = "!! Test Mode Active : Only preconfigured eligible contacts/projects will be updated to zoho !!";
     private final RealmModel realm;
     private final UserProvider userProvider;
     private final CustomQueryRepository repo;
@@ -52,7 +54,13 @@ public class ZohoSyncService {
     }
 
     public void  runZohoSync(int days) {
-        LOG.info("Contact Sync flag set to - "+ENABLE_CONTACT_SYNC+", Project Sync flag set to - "+ ENABLE_PROJECTS_SYNC);
+        LOG.info("Zoho Sync flag set to - " + ENABLE_ZOHO_SYNC + ". SyncScope - " + SYNC_SCOPE.name());
+        if (!ENABLE_ZOHO_SYNC) {
+            LOG.info("Skipping zoho sync! switch is OFF.");
+            return;
+        }
+        LOG.warn(SyncScope.ALL == SYNC_SCOPE ? MSG_PRODUCTION_MODE_ACTIVE : MSG_TEST_MODE_ACTIVE);
+
         if (zohoConnect.getOrCreateAccessToZoho()) {
             try {
                 loadModuleDataFromZoho();
@@ -64,13 +72,15 @@ public class ZohoSyncService {
             //Synchronize API Projects (Zoho APIProject entity represents ProjectKey Client in keycloak )
 
             String projectSyncStatus = synchroniseAPIProjects();
-            String status = contactSyncStatus + "  " +projectSyncStatus;
+            String status = contactSyncStatus + " " +projectSyncStatus;
             //Publish Status Report For SYNC
             if(StringUtils.isNotEmpty(status)){
                 SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
                 conn.publishStatusReport(String.format(SLACK_MESSAGE_REQUEST,status));
             }
         }
+
+
     }
 
     private String synchroniseContacts(int days) {
@@ -86,9 +96,10 @@ public class ZohoSyncService {
     private void loadModuleDataFromZoho() throws Exception {
         //Register Async batch Job to download the details for required modules from ZOHO in csv form.
         ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
-        String accountsJob = zohoBatchJob.zohoBulkCreateJob(ACCOUNTS);
-        String contactsJob = zohoBatchJob.zohoBulkCreateJob(CONTACTS);
-        String apiProjectsJob = zohoBatchJob.zohoBulkCreateJob(API_PROJECTS);
+
+        String accountsJob =zohoBatchJob.zohoBulkCreateJob(ACCOUNTS);
+        String contactsJob =zohoBatchJob.zohoBulkCreateJob(CONTACTS);
+        String apiProjectsJob =zohoBatchJob.zohoBulkCreateJob(API_PROJECTS);
 
         //Keep checking if jobs are finished ,download relevant CSV ones they are complete. Create data list from CSV.
         ZohoBatchDownload batch = new ZohoBatchDownload();

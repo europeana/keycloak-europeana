@@ -84,8 +84,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
              //copy realm to backGroundSession
              RealmModel realm = backgroundSession.realms().getRealm(realmID);
              backgroundSession.getContext().setRealm(realm);
-
-             LOG.info("Running background task for zoho sync !! Realm - "+ backgroundSession.getContext().getRealm().getName());
              ZohoSyncService service = new ZohoSyncService(backgroundSession);
              service.runZohoSync(days);
 
