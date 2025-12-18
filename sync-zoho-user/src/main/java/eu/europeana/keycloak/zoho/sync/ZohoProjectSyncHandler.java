@@ -15,15 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.ENABLE_PROJECTS_SYNC;
-import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.TEST_PROJECT_IDS_TO_UPDATE;
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
 
 /**
  * Service to handle the updates in API_Projects module of zoho, based on keycloak clients representing project keys
  */
 public class ZohoProjectSyncHandler extends AbstractSyncHandler{
     private static final Logger LOG = Logger.getLogger(ZohoProjectSyncHandler.class);
-    public static final String PROJECT_SYNC_MESSAGE = " %s Projects are updated in zoho.";
+    public static final String PROJECT_SYNC_MESSAGE = "\\n%s projects were updated in zoho.";
 
     private  final SyncHelper utils;
     private final List<String> preconfiguredProjectIdsToSync;
@@ -80,16 +79,16 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
     /**
      * Check if Zoho API_Project update is required.
      *
-     * <p>The changed details are synced if the global switch is ON,</p>
-     * <p>With exception for preconfigured project IDs which are updated
-     * even if global sync switch 'ZOHO_API_PROJECTS_SYNC'is OFF.</p>
+     * <p>The changed details are synced for all projects if the sync_scope is 'ALL' </p>
+     * <p>if the sync_scope is 'TEST_ONLY' then update only the preconfigured projects if eligible.</p>
      */
     private boolean isZohoUpdateCallRequired(APIProject zohoProject, KeycloakClient client) {
         if (client == null || !isToUpdateZohoProject(zohoProject, client)) {
             return false;
         }
-        // Condition is  : Sync is ON  or  (Sync is OFF and project is pre-configured)
-        return ENABLE_PROJECTS_SYNC || isPreconfiguredForUpdate(zohoProject);
+        // Condition is  : SyncScope is ALL  or
+        // (Sync Scope is 'TEST_ONLY' and project id is part of pre-configured test ids list)
+        return isEligibleBasedOnSyncScope(zohoProject);
     }
 
     private  boolean isToUpdateZohoProject(APIProject zohoProject, KeycloakClient client) {
@@ -111,6 +110,10 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
         return records;
     }
 
+    public boolean isEligibleBasedOnSyncScope(APIProject zohoProject) {
+        return (SYNC_SCOPE == SyncScope.ALL) ||
+                (SYNC_SCOPE == SyncScope.TEST_ONLY && isPreconfiguredForUpdate(zohoProject));
+    }
     private boolean isPreconfiguredForUpdate(APIProject project) {
         if(preconfiguredProjectIdsToSync.contains(project.getId())) {
             LOG.info("Found Project " + project.getKey() + " - " + project.getId() + " preconfigured to be updated in zoho !");

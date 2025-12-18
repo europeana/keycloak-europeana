@@ -1,39 +1,17 @@
 package eu.europeana.keycloak.zoho;
 
-import com.opencsv.bean.CsvToBeanBuilder;
-import eu.europeana.api.common.zoho.ZohoConnect;
-import eu.europeana.keycloak.SlackConnection;
-import eu.europeana.keycloak.zoho.batch.ZohoBatchDownload;
-import eu.europeana.keycloak.zoho.batch.ZohoBatchJob;
-import eu.europeana.keycloak.zoho.datamodel.APIProject;
-import eu.europeana.keycloak.zoho.datamodel.Account;
-import eu.europeana.keycloak.zoho.datamodel.Contact;
-import eu.europeana.keycloak.zoho.sync.ZohoContactSyncHandler;
-import eu.europeana.keycloak.zoho.sync.ZohoProjectSyncHandler;
-import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.ext.Provider;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-
-import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.apache.commons.lang3.StringUtils;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
-import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserProvider;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.resource.RealmResourceProvider;
 
-import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created by luthien on 14/11/2022.
@@ -43,120 +21,78 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
 public class SyncZohoUserProvider implements RealmResourceProvider {
 
     private static final Logger LOG = Logger.getLogger(SyncZohoUserProvider.class);
-    public static final String SLACK_MESSAGE_REQUEST = """
-            {"text":" %s "}
-            """;
-    private final RealmModel realm;
-    private final UserProvider userProvider;
-    private final CustomQueryRepository repo;
-
-    private final ZohoConnect zohoConnect = new ZohoConnect();
-
-    private List<Account> institutions;
-    private List<Contact> contacts;
-    private List<APIProject> apiProjects;
+    public static final String SYNC_JOB_STATUS = "syncJobStatus";
+    public static final String RUNNING = "RUNNING";
+    KeycloakSession session ;
 
     public SyncZohoUserProvider(KeycloakSession session) {
-        this.realm        = session.getContext().getRealm();
-        this.userProvider = session.users();
-        EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-        this.repo = new CustomQueryRepository(entityManager);
+        this.session = session;
     }
-
     @Override
     public Object getResource() {
         return this;
     }
-    /**
-     * Retrieves users from Zoho
-     * @return String (completed message)
-     */
 
+    /**
+     * Runs zoho syn in background
+     * @param days contacts modified in zoho till this many days ago are updated in keycloak.
+     * @return http 202 is the request is accepted , 409
+     */
     @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public String zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
+    public Response zohoSync(@DefaultValue("1") @QueryParam("days") int days) {
 
-        LOG.info("ZohoSync called.  Contact sync - "+ENABLE_CONTACT_SYNC+", Project sync - "+ ENABLE_PROJECTS_SYNC);
-        if (zohoConnect.getOrCreateAccessToZoho()) {
-            try {
-                loadModuleDataFromZoho();
-            } catch (Exception e) {
-                LOG.info("Message: " + e.getMessage() + "; cause: " + e);
-                return "Error creating bulk job.";
+        //fetch the realm ID of the current session
+        RealmModel realm = session.getContext().getRealm();
+        String realmID = session.getContext().getRealm().getId();
+
+        //Get the status of currently running sync job from DB
+        String status = realm.getAttribute(SYNC_JOB_STATUS);
+        if(RUNNING.equals(status)) {
+            return Response.status(Response.Status.OK)
+                    .entity("{\"error\" :\"Sync job already running.\"}")
+                    .build();
+        }
+        //Update the Job status on realm
+        realm.setAttribute(SYNC_JOB_STATUS,RUNNING);
+
+        KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+        //Run the process in background
+        CompletableFuture.runAsync(() -> {
+            try{
+                //When we return the immediate response the outer session gets closed , creating new session object for background task
+                runBackgroundJob(days, sessionFactory, realmID);
+            } catch (Throwable t) {
+                LOG.error("Background job failed - " + t);
+            } finally {
+                //remove the status from cache ones task is completed.Need to use separate session for this.
+                KeycloakModelUtils.runJobInTransaction(sessionFactory, sessionToUpdateJobStatus -> {
+                    RealmModel realmForStatusUpdate = sessionToUpdateJobStatus.realms().getRealm(realmID);
+                    realmForStatusUpdate.removeAttribute(SYNC_JOB_STATUS);
+                });
             }
-            //Synchronize zoho Contact Details (Zoho Contact entity represents User entity in keycloak )
-            String contactSyncStatus = synchroniseContacts(days);
-            //Synchronize API Projects (Zoho APIProject entity represents ProjectKey Client in keycloak )
-
-            String projectSyncStatus = synchroniseAPIProjects();
-            String status = contactSyncStatus + "         " +projectSyncStatus;
-            //Publish Status Report For SYNC
-            if(StringUtils.isNotEmpty(status)){
-                SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_API_AUTOMATION");
-                conn.publishStatusReport(String.format(SLACK_MESSAGE_REQUEST,status));
-            }
-        }
-        return "Done.";
+        });
+        return Response.status(Response.Status.ACCEPTED)
+                .entity("\"message\" : \"Sync job started in background.\"")
+                .build();
     }
 
-    private String synchroniseContacts(int days) {
-        ZohoContactSyncHandler contactSync  = new ZohoContactSyncHandler(realm,repo,userProvider);
-        return contactSync.syncContacts(days, institutions, contacts);
-    }
+    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
+        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
+         try {
+             //copy realm to backGroundSession
+             RealmModel realm = backgroundSession.realms().getRealm(realmID);
+             backgroundSession.getContext().setRealm(realm);
+             ZohoSyncService service = new ZohoSyncService(backgroundSession);
+             service.runZohoSync(days);
 
-    private String synchroniseAPIProjects() {
-        ZohoProjectSyncHandler projectSync = new ZohoProjectSyncHandler(realm, repo);
-        return projectSync.updateAPIProjects(apiProjects);
-    }
-
-    private void loadModuleDataFromZoho() throws Exception {
-        //Register Async batch Job to download the details for required modules from ZOHO in csv form.
-        ZohoBatchJob zohoBatchJob = new ZohoBatchJob();
-        String accountsJob = zohoBatchJob.zohoBulkCreateJob(ACCOUNTS);
-        String contactsJob = zohoBatchJob.zohoBulkCreateJob(CONTACTS);
-        String apiProjectsJob = zohoBatchJob.zohoBulkCreateJob(API_PROJECTS);
-
-        //Keep checking if jobs are finished ,download relevant CSV ones they are complete. Create data list from CSV.
-        ZohoBatchDownload batch = new ZohoBatchDownload();
-        if(StringUtils.isNotEmpty(accountsJob) && StringUtils.isNotEmpty(contactsJob)) {
-            createAccounts(batch.downloadResult(Long.valueOf(accountsJob),ACCOUNTS));
-            createContacts(batch.downloadResult(Long.valueOf(contactsJob),CONTACTS));
-            LOG.info("Accounts and Contacts Loaded successfully!! ");
-        }
-        if(StringUtils.isNotEmpty(apiProjectsJob)) {
-            createApiProjects(batch.downloadResult(Long.valueOf(apiProjectsJob),API_PROJECTS));
-            LOG.info("Api Projects Loaded successfully!! ");
-        }
-    }
-
-    private void createAccounts(String pathToAccountsCsv) throws IOException {
-        // skip the first line containing the CSV header
-        institutions = new CsvToBeanBuilder(new FileReader(pathToAccountsCsv))
-            .withType(Account.class)
-            .withSkipLines(1)
-            .build()
-            .parse();
-        Files.deleteIfExists(Paths.get(pathToAccountsCsv));
-    }
-
-    private void createContacts(String pathToContactsCsv) throws IOException {
-        // skip the first line containing the CSV header
-        contacts = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
-            .withType(Contact.class)
-            .withSkipLines(1)
-            .build()
-            .parse();
-        Files.deleteIfExists(Paths.get(pathToContactsCsv));
-    }
-
-    private void createApiProjects(String pathToContactsCsv) throws IOException {
-        apiProjects = new CsvToBeanBuilder(new FileReader(pathToContactsCsv))
-            .withType(APIProject.class)
-            .withSkipLines(1)
-            .build()
-            .parse();
-        Files.deleteIfExists(Paths.get(pathToContactsCsv));
+         } catch (Throwable t) {
+             //Throwable is used instead to capture Both Exceptions and Errors from the job
+             LOG.error("Error while running zoho sync - " + t);
+             throw t;
+         }
+     });
     }
 
     @Override

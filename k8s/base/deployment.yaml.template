@@ -91,10 +91,10 @@ spec:
               value: "${RECAPTCHA_VERIFICATION_URL_PATH}"
             - name: RECAPTCHA_SECRET
               value: "${RECAPTCHA_SECRET}"
-            - name: ZOHO_CONTACT_SYNC
-              value: "${ZOHO_CONTACT_SYNC}"
-            - name: ZOHO_API_PROJECTS_SYNC
-              value: "${ZOHO_API_PROJECTS_SYNC}"
+            - name: ZOHO_SYNC
+              value: "${ZOHO_SYNC}"
+            - name: SYNC_SCOPE
+              value: "${SYNC_SCOPE}"
             - name: SESSION_DURATION_FOR_RATE_LIMITING
               value: "${SESSION_DURATION_FOR_RATE_LIMITING}"
             - name: PERSONAL_KEY_RATE_LIMIT

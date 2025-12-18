@@ -16,8 +16,7 @@ import org.keycloak.models.UserProvider;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.ENABLE_CONTACT_SYNC;
-import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.TEST_CONTACT_IDS_TO_UPDATE;
+import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
 
 /**
  * Service to check and sync specific fields for the zoho contact or create new contact in zoho
@@ -25,9 +24,9 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.TEST_CONTAC
 
 public class ZohoContactSyncHandler extends AbstractSyncHandler {
     private static final Logger LOG = Logger.getLogger(ZohoContactSyncHandler.class);
-    public static final String CONTACTS_SYNC_MSG = "%s accounts in Zoho where compared against %s accounts in KeyCloak " +
+    public static final String CONTACTS_SYNC_MSG = "%s accounts in Zoho were compared against %s accounts in KeyCloak " +
             "where:  %s accounts are shared and %s contacts were added to Zoho. " +
-            "The affiliation for %s accounts was changed or established.";
+            "\\nThe affiliation for %s accounts was changed or established.";
     private final UserProvider userProvider;
     private final SyncHelper helper;
     private final ZohoUpdater updater;
@@ -63,8 +62,8 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
 
     public String syncContacts(int days, List<Account> institutions, List<Contact> contacts) {
         try {
-            int nrUpdatedUsers = 0;
-            int nrOfNewlyAddedContactsInZoho = 0;
+            int nrUpdatedUsers;
+            int nrOfNewlyAddedContactsInZoho;
             if (institutions != null && !institutions.isEmpty() && contacts != null && !contacts.isEmpty()) {
                 updateContactsInZoho(days, institutions, contacts);
                 nrOfNewlyAddedContactsInZoho = validateAndCreateZohoContact(contacts);
@@ -173,8 +172,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
      * @throws SDKException
      */
     private void handleUserDissociation(Contact contact) throws SDKException {
-
-        if ((ENABLE_CONTACT_SYNC || isPreconfiguredForForceUpdate(contact))
+        if (isEligibleBasedOnSyncScope(contact)
                 && StringUtils.isNotEmpty(contact.getUserAccountId())) {
 
             Record recordToUpdate = helper.requestToDissociateContact(contact);
@@ -184,11 +182,10 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
         }
     }
 
-
     /**
      * Checks if any relevant contact detail is to be updated in zoho and call zoho if required.
-     * <p>Update is skipped for users belonging to test group or if the global sync flag  is OFF.</p>
-     * <p>Update is always performed for the zohoContact ids (preconfigured separately) even if global sync switch is OFF.</p>
+     * <p>Update is skipped for users belonging to test group or if the global sync flag is OFF.</p>
+     * <p>Update is always performed for the 'preconfigured zohoContact ids' even if global sync switch is OFF.</p>
      */
     private void handleZohoContactUpdate(Contact contact, KeycloakUser keycloakUser) throws SDKException {
         if (isPartOfTestGroup(keycloakUser)) {
@@ -200,17 +197,20 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
             return;
         }
 
-        if (ENABLE_CONTACT_SYNC || isPreconfiguredForForceUpdate(contact)) {
+        if (isEligibleBasedOnSyncScope(contact)) {
             if (updater.callZohoUpdate(Long.parseLong(contact.getId()), recordToUpdate)) {
                 //List of contacts which are now updated in zoho.
                 updatedContacts.add(contact.getId() + ":" + contact.getEmail());
             }
         }
-
-
     }
 
-    private boolean isPreconfiguredForForceUpdate(Contact contact) {
+    public boolean isEligibleBasedOnSyncScope(Contact contact) {
+        return SYNC_SCOPE == SyncScope.ALL ||
+                (SYNC_SCOPE == SyncScope.TEST_ONLY && isPreconfiguredForUpdate(contact));
+    }
+
+    private boolean isPreconfiguredForUpdate(Contact contact) {
         if (preconfiguredContactIdsToSync.contains(contact.getId())) {
             LOG.info("Contact " + contact.getEmail() + " - " + contact.getId() + " will be updated in zoho !");
             return true;
@@ -245,7 +245,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
     }
 
     private void createContactInZoho(KeycloakUser user, List<String> newContacts) throws SDKException {
-        if (ENABLE_CONTACT_SYNC) {
+        if (SYNC_SCOPE == SyncScope.ALL) {
             LOG.info("Creating zoho contact " + user.getEmail());
             Record contactRequest = helper.createContactRequest(user);
             if (updater.createNewZohoContact(contactRequest)) {

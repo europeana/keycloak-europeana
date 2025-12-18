@@ -1,5 +1,7 @@
 package eu.europeana.keycloak.validation.datamodel;
 
+import java.io.Serializable;
+
 /**
  * RateLimit policy object
  * will define the rate-limit policy specific to the user
@@ -8,7 +10,7 @@ package eu.europeana.keycloak.validation.datamodel;
  * @See: https://www.ietf.org/archive/id/draft-ietf-httpapi-ratelimit-headers-10.html
  * @since 1 December 2025
  */
-public class RateLimitPolicy {
+public class RateLimitPolicy implements Serializable {
 
     /**
      * Implementation- or service-specific parameters SHOULD be prefixed
@@ -25,6 +27,8 @@ public class RateLimitPolicy {
      * "w" parameter value conveys a time window.
      */
     private long w;
+
+    public RateLimitPolicy() {}
 
     public RateLimitPolicy(String vendorIdentifier, Integer q, long w) {
         this.vendorIdentifier = vendorIdentifier;
