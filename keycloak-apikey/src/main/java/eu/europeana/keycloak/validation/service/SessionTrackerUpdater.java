@@ -47,6 +47,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         Integer quota = (rateLimitPolicy!=null) ? rateLimitPolicy.getQ():0;
         String vendorIdentifier = (rateLimitPolicy!=null)? rateLimitPolicy.getVendorIdentifier():CUSTOM;
 
+
         SessionTracker tracker = (existingTracker != null) ? existingTracker :
                 new SessionTracker(key, quota, lastAccessDate);
         //check the limits for allowed number of sessions for apikey (keycloak client) and get the validation result
