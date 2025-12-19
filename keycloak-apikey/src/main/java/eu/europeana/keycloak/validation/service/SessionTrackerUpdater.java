@@ -43,16 +43,10 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      */
     @Override
     public SessionTracker apply(String key, SessionTracker existingTracker) {
-        //Null check - for handling during keycloak pod rebalancing
-        Integer quota = (rateLimitPolicy!=null) ? rateLimitPolicy.getQ():0;
-        String vendorIdentifier = (rateLimitPolicy!=null)? rateLimitPolicy.getVendorIdentifier():CUSTOM;
-
-
         SessionTracker tracker = (existingTracker != null) ? existingTracker :
-                new SessionTracker(key, quota, lastAccessDate);
+                new SessionTracker(key, rateLimitPolicy.getQ(), lastAccessDate);
         //check the limits for allowed number of sessions for apikey (keycloak client) and get the validation result
-
-        resultReference.set(validateAndUpdateSessionTracker(tracker, vendorIdentifier,quota));
+        resultReference.set(validateAndUpdateSessionTracker(tracker,rateLimitPolicy.getVendorIdentifier(),rateLimitPolicy.getQ()));
         return tracker;
     }
 
