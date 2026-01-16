@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.zoho;
 
+import eu.europeana.keycloak.zoho.timer.ZohoSyncTask;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -62,7 +63,9 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         CompletableFuture.runAsync(() -> {
             try{
                 //When we return the immediate response the outer session gets closed , creating new session object for background task
-                runBackgroundJob(days, sessionFactory, realmID);
+                ZohoSyncTask task = new ZohoSyncTask();
+                task.run(session);
+
             } catch (Throwable t) {
                 LOG.error("Background job failed - " + t);
             } finally {
@@ -78,22 +81,22 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 .build();
     }
 
-    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
-        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
-         try {
-             //copy realm to backGroundSession
-             RealmModel realm = backgroundSession.realms().getRealm(realmID);
-             backgroundSession.getContext().setRealm(realm);
-             ZohoSyncService service = new ZohoSyncService(backgroundSession);
-             service.runZohoSync(days);
-
-         } catch (Throwable t) {
-             //Throwable is used instead to capture Both Exceptions and Errors from the job
-             LOG.error("Error while running zoho sync - " + t);
-             throw t;
-         }
-     });
-    }
+//    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
+//        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
+//         try {
+//             //copy realm to backGroundSession
+//             RealmModel realm = backgroundSession.realms().getRealm(realmID);
+//             backgroundSession.getContext().setRealm(realm);
+//             ZohoSyncService service = new ZohoSyncService(backgroundSession);
+//             service.runZohoSync(days);
+//
+//         } catch (Throwable t) {
+//             //Throwable is used instead to capture Both Exceptions and Errors from the job
+//             LOG.error("Error while running zoho sync - " + t);
+//             throw t;
+//         }
+//     });
+//    }
 
     @Override
     public void close() {

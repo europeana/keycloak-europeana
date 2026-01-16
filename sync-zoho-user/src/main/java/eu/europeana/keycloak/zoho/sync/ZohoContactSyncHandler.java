@@ -110,7 +110,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
         }
         loadKeycloakUsersFromDB();
         for (Contact zohoContactObj : contacts) {
-            //Fetch the contacts which have been updated in zoho but does not reflect details in keycloak
+            //Fetch the contacts which have been updated in zoho in last 'n' days but does not reflect details in keycloak
             calculateUsersModifiedInzoho(zohoContactObj, days);
             //handle contacts which have been updated in Keycloak but does not reflect details in zoho.
             handleZohoUpdate(zohoContactObj);
