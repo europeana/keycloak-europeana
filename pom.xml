@@ -10,7 +10,6 @@
   </parent>
 
   <artifactId>keycloak-europeana</artifactId>
-  <groupId>eu.europeana</groupId>
   <version>2.7-SNAPSHOT</version>
 
   <packaging>pom</packaging>
@@ -54,6 +53,7 @@
     <jboss.logging.version>3.5.3.Final</jboss.logging.version>
     <dependency-check-maven.version>11.1.0</dependency-check-maven.version>
 
+    <junit.version>5.12.0</junit.version>
     <snakeyaml.version>2.3</snakeyaml.version>
     <lombok.version>1.18.32</lombok.version>
 
@@ -68,8 +68,6 @@
 
     <!-- non-dependencies -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-
 
     <json.version>20240205</json.version>
     <!--    <mysql-connector-j.version>8.3.0</mysql-connector-j.version>-->

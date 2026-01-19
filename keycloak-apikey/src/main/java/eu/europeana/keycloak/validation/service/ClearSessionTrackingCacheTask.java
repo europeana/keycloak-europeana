@@ -27,7 +27,7 @@ public class ClearSessionTrackingCacheTask extends AbstractCustomScheduledTask {
   }
 
   @Override
-  public void process(KeycloakSession session) {
+  public void execute(KeycloakSession session) {
     clearSessionTrackingCache(session);
   }
 
