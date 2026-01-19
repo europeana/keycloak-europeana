@@ -42,6 +42,7 @@ public class SyncZohoUserProviderFactory implements RealmResourceProviderFactory
         //job to be run every day at configured time
         int intervalMinutes = 24*60;
         //Schedule the zoho sync task based on the configured time
+        LOG.info("Scheduling Zoho-sync task !!");
         FixedRateTaskScheduler scheduler = new FixedRateTaskScheduler(new ZohoSyncTask(),calculateInitialDelayInMillis(intervalMinutes),intervalMinutes);
         scheduler.scheduleTask(factory);
     }
