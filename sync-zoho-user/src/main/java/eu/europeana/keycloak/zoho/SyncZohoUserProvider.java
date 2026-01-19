@@ -57,15 +57,14 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
         }
         //Update the Job status on realm
         realm.setAttribute(SYNC_JOB_STATUS,RUNNING);
-
         KeycloakSessionFactory sessionFactory = session.getKeycloakSessionFactory();
+
         //Run the process in background
         CompletableFuture.runAsync(() -> {
             try{
                 //When we return the immediate response the outer session gets closed , creating new session object for background task
                 ZohoSyncTask task = new ZohoSyncTask();
-                task.run(session);
-
+                task.runBackgroundJob(session);
             } catch (Throwable t) {
                 LOG.error("Background job failed - " + t);
             } finally {
@@ -80,23 +79,6 @@ public class SyncZohoUserProvider implements RealmResourceProvider {
                 .entity("\"message\" : \"Sync job started in background.\"")
                 .build();
     }
-
-//    private static void runBackgroundJob(int days, KeycloakSessionFactory sessionFactory, String realmID) {
-//        KeycloakModelUtils.runJobInTransaction(sessionFactory, backgroundSession -> {
-//         try {
-//             //copy realm to backGroundSession
-//             RealmModel realm = backgroundSession.realms().getRealm(realmID);
-//             backgroundSession.getContext().setRealm(realm);
-//             ZohoSyncService service = new ZohoSyncService(backgroundSession);
-//             service.runZohoSync(days);
-//
-//         } catch (Throwable t) {
-//             //Throwable is used instead to capture Both Exceptions and Errors from the job
-//             LOG.error("Error while running zoho sync - " + t);
-//             throw t;
-//         }
-//     });
-//    }
 
     @Override
     public void close() {
