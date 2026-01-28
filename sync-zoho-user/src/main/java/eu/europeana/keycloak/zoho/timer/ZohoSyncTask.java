@@ -2,7 +2,6 @@ package eu.europeana.keycloak.zoho.timer;
 
 import eu.europeana.keycloak.timer.AbstractCustomScheduledTask;
 import eu.europeana.keycloak.zoho.ZohoSyncService;
-import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -31,12 +30,11 @@ public class ZohoSyncTask extends AbstractCustomScheduledTask {
     private void runSyncService(KeycloakSession session) {
 
         //fetch the realm ID of the current session
-        RealmModel realm = session.getContext().getRealm();
-        String realmID = session.getContext().getRealm().getId();
+        RealmModel realm = session.realms().getRealm("europeana");
+        String realmID = realm.getId();
 
         //Get the status of currently running sync job from DB
         String status = realm.getAttribute(SYNC_JOB_STATUS);
-
 
         if(RUNNING.equals(status)) {
             LOG.info("Sync job already running.");
