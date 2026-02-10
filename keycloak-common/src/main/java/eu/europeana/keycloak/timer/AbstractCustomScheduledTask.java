@@ -31,7 +31,7 @@ public abstract class AbstractCustomScheduledTask implements ScheduledTask {
       //Execute task
       execute(session);
     } else {
-      LOG.info("Unable to acquire lock for clearing cache , skipping the execution !!");
+      LOG.info("Unable to acquire lock for task "+getTaskName()+" , skipping the execution !!");
     }
   }
 

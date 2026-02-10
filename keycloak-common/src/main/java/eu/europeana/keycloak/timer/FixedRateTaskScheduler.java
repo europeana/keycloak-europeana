@@ -17,7 +17,7 @@ public class FixedRateTaskScheduler {
   public static final long MILLISECONDS_IN_A_MINUTE = 60000L;
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private final AbstractCustomScheduledTask task;
-  private final int intervalMinutes;
+  private final long intervalMinutes;
   private final long initialdelay;
 
   /**
@@ -36,7 +36,7 @@ public class FixedRateTaskScheduler {
    * @param keycloakSessionFactory required by {@code ClusterAwareScheduledTaskRunner}
    */
   public void scheduleTask(KeycloakSessionFactory keycloakSessionFactory){
-    LOG.info("Scheduling the task '"+task.getTaskName()+"' with interval "+intervalMinutes +" and initial delay of "+ initialdelay);
+    LOG.info("Scheduling the task '"+ task.getTaskName() +"' with interval of "+intervalMinutes +" minutes and initial delay of "+ initialdelay +" milli seconds");
     scheduler.scheduleAtFixedRate(
             new ClusterAwareScheduledTaskRunner(keycloakSessionFactory, task, intervalMinutes * MILLISECONDS_IN_A_MINUTE),
             initialdelay,
