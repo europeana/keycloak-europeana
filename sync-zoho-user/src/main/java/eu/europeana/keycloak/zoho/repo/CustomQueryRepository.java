@@ -120,7 +120,7 @@ public class CustomQueryRepository {
       String rateLimitReached = privateKey!=null ? privateKey.getRateLimitReached():null;
 
       userDetailsMap.put(email.toLowerCase(Locale.ENGLISH),
-              new KeycloakUser(id,username,email,firstName,lastName,roles,lastAccess,rateLimitReached));
+              new KeycloakUser(id,username,email,firstName,lastName,roles,lastAccess,rateLimitReached,privateKey.getKey()));
     }
     return userDetailsMap;
   }

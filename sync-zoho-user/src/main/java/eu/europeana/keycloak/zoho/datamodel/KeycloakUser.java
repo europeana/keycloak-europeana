@@ -15,8 +15,10 @@ public class KeycloakUser {
   private String lastAccess;
   private String rateLimitReached;
 
+  private String personalKey;
+
   public KeycloakUser(String id, String username, String email, String firstName, String lastName,
-      String associatedRoles,String lastAccess,String rateLimitReached) {
+      String associatedRoles,String lastAccess,String rateLimitReached,String personalKey) {
     this.id = id;
     this.username = username;
     this.email = email;
@@ -25,6 +27,7 @@ public class KeycloakUser {
     this.associatedRoles = associatedRoles;
     this.lastAccess = lastAccess;
     this.rateLimitReached =rateLimitReached;
+    this.personalKey = personalKey;
   }
 
   public String getEmail() {
@@ -95,5 +98,13 @@ public class KeycloakUser {
 
   public void setRateLimitReached(String rateLimitReached) {
     this.rateLimitReached = rateLimitReached;
+  }
+
+  public String getPersonalKey() {
+    return personalKey;
+  }
+
+  public void setPersonalKey(String personalKey) {
+    this.personalKey = personalKey;
   }
 }

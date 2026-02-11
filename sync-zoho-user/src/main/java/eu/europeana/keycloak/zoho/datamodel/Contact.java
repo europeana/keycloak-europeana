@@ -48,6 +48,9 @@ public class Contact {
     private String rateLimitReached;
 
     @CsvBindByPosition(position = 12)
+    private String personalKey;
+
+    @CsvBindByPosition(position = 13)
     private String modifiedTime;
 
     public String getId() {
@@ -132,6 +135,14 @@ public class Contact {
 
     public void setRateLimitReached(String rateLimitReached) {
         this.rateLimitReached = rateLimitReached;
+    }
+
+    public String getPersonalKey() {
+        return personalKey;
+    }
+
+    public void setPersonalKey(String personalKey) {
+        this.personalKey = personalKey;
     }
 
     public OffsetDateTime getModifiedTime(){
