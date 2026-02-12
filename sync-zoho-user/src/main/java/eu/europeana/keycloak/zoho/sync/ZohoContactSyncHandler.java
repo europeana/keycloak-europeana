@@ -24,9 +24,11 @@ import static eu.europeana.keycloak.zoho.repo.KeycloakZohoVocabulary.*;
 
 public class ZohoContactSyncHandler extends AbstractSyncHandler {
     private static final Logger LOG = Logger.getLogger(ZohoContactSyncHandler.class);
-    public static final String CONTACTS_SYNC_MSG = "%s accounts in Zoho were compared against %s accounts in KeyCloak " +
-            "where:  %s accounts are shared and %s contacts were added to Zoho. " +
-            "\\nThe affiliation for %s accounts was changed or established.";
+    public static final String CONTACTS_SYNC_MSG = "%s Zoho contacts were compared against " +
+            "%s Keycloak Users where " +
+            "\\n%s Contacts were modified in zoho since last time." +
+            "\\nThe affiliation for %s Keycloak Users is changed or established."+
+            "\\n%s Contacts are added to Zoho. ";
     private final UserProvider userProvider;
     private final SyncHelper helper;
     private final ZohoUpdater updater;
@@ -143,8 +145,8 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
                 totalContacts,
                 userProvider.getUsersCount(realm),
                 modifiedUserMap.size(),
-                nrOfNewlyAddedContactsInZoho,
-                nrUpdatedUsers);
+                nrUpdatedUsers,
+                nrOfNewlyAddedContactsInZoho);
     }
 
     private void handleZohoUpdate(Contact contact) {
