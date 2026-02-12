@@ -27,6 +27,7 @@ public class SyncHelper {
     public static final String RATE_LIMIT_REACHED = "Rate_limit_reached";
     public static final String LEAD_SOURCE = "Lead_Source";
     public static final String EMAIL = "Email";
+    public static final String PERSONAL_KEY = "Personal_key";
 
     /**
      * Converts string into String List.
@@ -70,6 +71,10 @@ public class SyncHelper {
         if(isParticipationLevelChanged(zohoContact, participationLevel)){
             recordToUpdate.addKeyValue(CONTACT_PARTICIPATION,getParticipationChoice(participationLevel));
         }
+        //check if personalKey is not aligned in keycloak and zoho
+        if(!StringUtils.equals(keycloakUser.getPersonalKey(), zohoContact.getPersonalKey())){
+            recordToUpdate.addKeyValue(PERSONAL_KEY,keycloakUser.getPersonalKey());
+        }
         return recordToUpdate;
     }
 
@@ -106,6 +111,7 @@ public class SyncHelper {
         newRecord.addFieldValue(Field.Contacts.FIRST_NAME, user.getFirstName());
         newRecord.addFieldValue(Field.Contacts.LAST_NAME, getLastNameForContact(user));
         newRecord.addKeyValue(EMAIL, user.getEmail());
+        newRecord.addKeyValue(PERSONAL_KEY, user.getPersonalKey());
 
         List<Choice<String>> participationLevelList = getParticipationChoice(participationLevel);
 

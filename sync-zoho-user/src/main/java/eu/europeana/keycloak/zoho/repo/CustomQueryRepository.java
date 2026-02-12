@@ -118,9 +118,10 @@ public class CustomQueryRepository {
       KeycloakClient privateKey = privateKeys.get(email);
       String lastAccess = privateKey!=null ? privateKey.getLastAccessDate():null;
       String rateLimitReached = privateKey!=null ? privateKey.getRateLimitReached():null;
+      String personalKey = privateKey!=null ?privateKey.getKey():null;
 
       userDetailsMap.put(email.toLowerCase(Locale.ENGLISH),
-              new KeycloakUser(id,username,email,firstName,lastName,roles,lastAccess,rateLimitReached));
+              new KeycloakUser(id,username,email,firstName,lastName,roles,lastAccess,rateLimitReached,personalKey));
     }
     return userDetailsMap;
   }
