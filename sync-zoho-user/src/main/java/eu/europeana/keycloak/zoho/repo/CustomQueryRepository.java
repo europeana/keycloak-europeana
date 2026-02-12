@@ -28,7 +28,7 @@ public class CustomQueryRepository {
               {h-schema}USER_ROLE_MAPPING urm ON u.ID = urm.USER_ID
           LEFT JOIN
               {h-schema}KEYCLOAK_ROLE kr ON urm.ROLE_ID = kr.ID
-          WHERE u.realm_id = :realmName AND u.enabled = true AND u.service_account_client_link is null
+          WHERE u.realm_id = :realmName AND u.enabled = true AND u.email_verified = true AND u.service_account_client_link is null
           GROUP BY
               u.ID,u.USERNAME,u.EMAIL,u.FIRST_NAME ,u.LAST_NAME
           ORDER BY u.EMAIL""";
@@ -45,7 +45,7 @@ public class CustomQueryRepository {
           {h-schema}CLIENT c ON kr.client = c.id
           INNER JOIN
           {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id                        
-          WHERE u.realm_id = :realmName AND u.enabled = true AND u.service_account_client_link IS NULL
+          WHERE u.realm_id = :realmName AND u.enabled = true AND u.email_verified = true AND u.service_account_client_link IS NULL
           AND kr.name = 'client_owner'
           AND c.realm_id = :realmName 
           AND c.enabled = true

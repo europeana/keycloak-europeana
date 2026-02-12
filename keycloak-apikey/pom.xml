@@ -9,7 +9,6 @@
   </parent>
 
   <artifactId>keycloak-apikey</artifactId>
-  <groupId>eu.europeana</groupId>
   <version>2.7-SNAPSHOT</version>
 
   <name>Keycloak Apikey</name>
@@ -91,9 +90,28 @@
       <artifactId>keycloak-common</artifactId>
       <version>2.7-SNAPSHOT</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
-
-
 
   <build>
     <finalName>keycloak-sessions-spi</finalName>

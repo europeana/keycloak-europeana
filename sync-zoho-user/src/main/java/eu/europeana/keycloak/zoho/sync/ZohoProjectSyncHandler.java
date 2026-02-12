@@ -92,9 +92,6 @@ public class ZohoProjectSyncHandler extends AbstractSyncHandler{
     }
 
     private  boolean isToUpdateZohoProject(APIProject zohoProject, KeycloakClient client) {
-        LOG.info("Comparing last access dates for client " + client.getKey() + " keycloak - "
-                + client.getLastAccessDate() + ", zoho -" + zohoProject.getLastAccess());
-
         // if the last access date value is changed , then consider it for updating in zoho
         return utils.isDateChangedInSource(zohoProject.getLastAccess(), client.getLastAccessDate());
     }

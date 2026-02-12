@@ -26,13 +26,12 @@ public abstract class AbstractCustomScheduledTask implements ScheduledTask {
    */
   @Override
   public void run(KeycloakSession session) {
-
     LOG.info("Acquiring the lock to execute the task "+getTaskName());
     if (acquireLock(session)) {
       //Execute task
-      process(session);
+      execute(session);
     } else {
-      LOG.info("Unable to acquire lock for clearing cache , skipping the execution !!");
+      LOG.info("Unable to acquire lock for task "+getTaskName()+" , skipping the execution !!");
     }
   }
 
@@ -40,7 +39,7 @@ public abstract class AbstractCustomScheduledTask implements ScheduledTask {
    * Logic to perform actual task , method to be called ofter acquiring the lock.
    * @param session Keycloak session
    */
-  public abstract void process(KeycloakSession session) ;
+  public abstract void execute(KeycloakSession session) ;
 
   /**
    * Creates the entry for specific task-lock in keycloaks distributed 'work' cache with fixed expiry time.
