@@ -28,6 +28,9 @@ public class SyncHelper {
     public static final String LEAD_SOURCE = "Lead_Source";
     public static final String EMAIL = "Email";
     public static final String PERSONAL_KEY = "Personal_key";
+    public static final String USERNAME = "Username";
+    public static final String EUROPEANA_ACCOUNT_SIGN_UP_FORM = "Europeana account sign-up form";
+    public static final String SEMI_COLON = ";";
 
     /**
      * Converts string into String List.
@@ -75,6 +78,10 @@ public class SyncHelper {
         if(!StringUtils.equals(keycloakUser.getPersonalKey(), zohoContact.getPersonalKey())){
             recordToUpdate.addKeyValue(PERSONAL_KEY,keycloakUser.getPersonalKey());
         }
+        //check if Username to be updated
+        if(!StringUtils.equals(keycloakUser.getUsername(),zohoContact.getUsername())){
+            recordToUpdate.addKeyValue(USERNAME,keycloakUser.getUsername());
+        }
         return recordToUpdate;
     }
 
@@ -112,11 +119,12 @@ public class SyncHelper {
         newRecord.addFieldValue(Field.Contacts.LAST_NAME, getLastNameForContact(user));
         newRecord.addKeyValue(EMAIL, user.getEmail());
         newRecord.addKeyValue(PERSONAL_KEY, user.getPersonalKey());
+        newRecord.addKeyValue(USERNAME, user.getUsername());
 
         List<Choice<String>> participationLevelList = getParticipationChoice(participationLevel);
 
         newRecord.addKeyValue(CONTACT_PARTICIPATION,new ArrayList<>(participationLevelList));
-        newRecord.addKeyValue(LEAD_SOURCE,new Choice<>("Europeana account sign-up form"));
+        newRecord.addKeyValue(LEAD_SOURCE,new Choice<>(EUROPEANA_ACCOUNT_SIGN_UP_FORM));
         newRecord.addKeyValue(USER_ACCOUNT_ID, user.getId());
         return newRecord;
     }
@@ -169,6 +177,8 @@ public class SyncHelper {
             return false;
         }
     }
+
+
     /**
      * Fetch all participation levels of a user based on roles along with existing ones.
      *
@@ -184,7 +194,7 @@ public class SyncHelper {
     public Set<String> getParticipationLevel(List<String> userRoles, String existingParticipation) {
         Set<String> participationLevels = new HashSet<>();
         if(StringUtils.isNotEmpty(existingParticipation)) {
-            List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(";")).toList();
+            List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(SEMI_COLON)).toList();
             participationLevels.addAll(existingParticipationLevelList);
         }
         participationLevels.add(ACCOUNT_HOLDER);
@@ -201,18 +211,21 @@ public class SyncHelper {
         if(StringUtils.isEmpty(contactParticipation)) {
             return Collections.emptySet();
         }
-        return Arrays.stream(contactParticipation.split(";")).filter(participation ->
+        return Arrays.stream(contactParticipation.split(SEMI_COLON)).filter(participation ->
                         !(API_CUSTOMER.equals(participation) || API_USER.equals(participation) || ACCOUNT_HOLDER.equals(participation)))
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
-    private  boolean isParticipationLevelChanged(Contact zohoContact, Set<String> participationLevel) {
-        if(StringUtils.isNotEmpty(zohoContact.getContactParticipation())) {
-            String[] levels = zohoContact.getContactParticipation().split(";");
-            return levels.length > 0 && Arrays.stream(levels)
-                    .anyMatch(p -> !participationLevel.contains(p));
-        }
-        return false;
+    /**
+     *  Compare the existing participation levels against the calculated ones.
+     *  If any of the calculated participation level is not  part of existing levels in zoho ,
+     *  then consider the participation levels needs to be updated in zoho.
+     */
+    private boolean isParticipationLevelChanged(Contact zohoContact, Set<String> calculatedParticipationLevels) {
+        String zohoParticipation = zohoContact.getContactParticipation();
+        List<String> zohoParticipationLevels = StringUtils.isNotEmpty(zohoParticipation) ?
+                Arrays.stream(zohoParticipation.split(SEMI_COLON)).toList() : Collections.emptyList();
+        return !zohoParticipationLevels.containsAll(calculatedParticipationLevels);
     }
 
     private List<Choice<String>> getParticipationChoice(Set<String> participationLevel) {

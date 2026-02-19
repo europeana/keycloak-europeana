@@ -73,7 +73,7 @@ public class ZohoUpdater {
     RecordOperations recordOperations = new RecordOperations("Contacts");
     BodyWrapper request = new BodyWrapper();
     request.setData(records);
-    LOG.info("Updating  zoho contact id :" + recordId);
+    LOG.debug("Updating  zoho contact id :" + recordId);
     APIResponse<ActionHandler> response = recordOperations.updateRecord(recordId, request,new HeaderMap());
     return processResponse(response);
   }

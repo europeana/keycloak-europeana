@@ -97,6 +97,7 @@ public class ZohoBatchJob {
         fieldAPINames.add("Last_access");
         fieldAPINames.add("Rate_limit_reached");
         fieldAPINames.add("Personal_key");
+        fieldAPINames.add("Username");
     } else if(StringUtils.equalsIgnoreCase(moduleAPIName, ACCOUNTS)) {
         fieldAPINames.add("Account_Name");
         fieldAPINames.add("Europeana_org_ID");
