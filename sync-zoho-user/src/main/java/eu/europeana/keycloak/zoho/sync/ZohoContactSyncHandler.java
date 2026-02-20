@@ -7,6 +7,7 @@ import eu.europeana.keycloak.zoho.datamodel.Contact;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
 import eu.europeana.keycloak.zoho.util.SyncHelper;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.RealmModel;
@@ -63,26 +64,30 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
      */
 
     public String syncContacts(int days, List<Account> institutions, List<Contact> contacts) {
-        try {
-            int nrUpdatedUsers;
-            int nrOfNewlyAddedContactsInZoho;
-            if (institutions != null && !institutions.isEmpty() && contacts != null && !contacts.isEmpty()) {
-                updateContactsInZoho(days, institutions, contacts);
-                nrOfNewlyAddedContactsInZoho = validateAndCreateZohoContact(contacts);
-                nrUpdatedUsers = updateUsersInKeyCloak();
-                return generateStatusReportForContactSync(contacts.size(),
-                        nrUpdatedUsers, nrOfNewlyAddedContactsInZoho);
-            }
-            LOG.error("List of Institutions and Contacts of zoho is Empty!");
-        } catch (Exception e) {
-            LOG.error("Error while synchronizing contacts from last" + days + " days.  " + e.getMessage() + "; cause: " + e);
+
+        if ((institutions == null || institutions.isEmpty()) || (contacts == null || contacts.isEmpty())) {
+            LOG.error("Skipping contact sync! List of Institutions or Contacts of zoho is Empty !");
+            return generateStatusReportForContactSync(0,
+                    0, 0);
         }
-        return null;
+
+        int nrUpdatedUsers = 0;
+        int nrOfNewlyAddedContactsInZoho = 0;
+        try {
+            updateContactsInZoho(days, institutions, contacts);
+            nrOfNewlyAddedContactsInZoho = validateAndCreateZohoContact(contacts);
+            nrUpdatedUsers = updateUsersInKeyCloak();
+        } catch (Exception e) {
+            LOG.error("Error while synchronizing contacts.",e);
+        }
+
+        return generateStatusReportForContactSync(contacts.size(),
+                nrUpdatedUsers, nrOfNewlyAddedContactsInZoho);
     }
 
     private int updateUsersInKeyCloak() {
         int updated = 0;
-        LOG.info("Checking if updated contacts exist in Keycloak ...");
+        LOG.info("Starting keycloak user affiliation update ..");
         for (Map.Entry<String, String> affiliatedUser : modifiedUserMap.entrySet()) {
             UserModel user = userProvider.getUserByEmail(realm, affiliatedUser.getKey());
             if (user != null) {
@@ -97,7 +102,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
                     LOG.info(affiliatedUser.getKey() + " affiliation updated from : " + affiliationValue + " to " +
                             zohoOrgId + " in keycloak");
                 } else {
-                    LOG.info(affiliatedUser.getKey() + " affiliation will not be updated in keycloak");
+                    LOG.debug(affiliatedUser.getKey() + " affiliation will not be updated in keycloak");
                 }
             }
         }

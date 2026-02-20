@@ -28,18 +28,22 @@ public class SyncHelper {
     public static final String LEAD_SOURCE = "Lead_Source";
     public static final String EMAIL = "Email";
     public static final String PERSONAL_KEY = "Personal_key";
+    public static final String USERNAME = "Username";
+    public static final String EUROPEANA_ACCOUNT_SIGN_UP_FORM = "Europeana account sign-up form";
+    public static final String SEMI_COLON = ";";
 
     /**
      * Converts string into String List.
-     * @param input string with delimiters
+     *
+     * @param input     string with delimiters
      * @param separator e.g. ',' ,';'
-     * @return  list of strings  or empty list
+     * @return list of strings  or empty list
      */
     public List<String> tokenizeString(String input, String separator) {
         final List<String> idList;
-        idList = StringUtils.isNotEmpty(input)?
+        idList = StringUtils.isNotEmpty(input) ?
                 Arrays.stream(input.split(separator)).map(String::trim).filter(StringUtils::isNotEmpty).toList()
-                :List.of();
+                : List.of();
         return idList;
     }
 
@@ -53,10 +57,10 @@ public class SyncHelper {
      */
     public Record getRecordForUpdate(Contact zohoContact, KeycloakUser keycloakUser, Map<String, KeycloakUser> userDetails) {
 
-        Record recordToUpdate  = new Record();
+        Record recordToUpdate = new Record();
         //check if  user Account id is changed
         if (!keycloakUser.getId().equals(zohoContact.getUserAccountId())) {
-            recordToUpdate.addKeyValue(USER_ACCOUNT_ID,keycloakUser.getId());
+            recordToUpdate.addKeyValue(USER_ACCOUNT_ID, keycloakUser.getId());
         }
         //Check if LastAccessDate is Changed in keycloak
         if (isDateChangedInSource(zohoContact.getLastAccess(), keycloakUser.getLastAccess())) {
@@ -67,13 +71,17 @@ public class SyncHelper {
             recordToUpdate.addKeyValue(RATE_LIMIT_REACHED, OffsetDateTime.parse(keycloakUser.getRateLimitReached()));
         }
         //Check if participation level changed
-        Set<String> participationLevel = calculateParticipationLevel(zohoContact, keycloakUser,userDetails);
-        if(isParticipationLevelChanged(zohoContact, participationLevel)){
-            recordToUpdate.addKeyValue(CONTACT_PARTICIPATION,getParticipationChoice(participationLevel));
+        Set<String> participationLevel = calculateParticipationLevel(zohoContact, keycloakUser, userDetails);
+        if (isParticipationLevelChanged(zohoContact, participationLevel)) {
+            recordToUpdate.addKeyValue(CONTACT_PARTICIPATION, getParticipationChoice(participationLevel));
         }
         //check if personalKey is not aligned in keycloak and zoho
-        if(!StringUtils.equals(keycloakUser.getPersonalKey(), zohoContact.getPersonalKey())){
-            recordToUpdate.addKeyValue(PERSONAL_KEY,keycloakUser.getPersonalKey());
+        if (!StringUtils.equals(keycloakUser.getPersonalKey(), zohoContact.getPersonalKey())) {
+            recordToUpdate.addKeyValue(PERSONAL_KEY, keycloakUser.getPersonalKey());
+        }
+        //check if Username to be updated
+        if (!StringUtils.equals(keycloakUser.getUsername(), zohoContact.getUsername())) {
+            recordToUpdate.addKeyValue(USERNAME, keycloakUser.getUsername());
         }
         return recordToUpdate;
     }
@@ -100,6 +108,7 @@ public class SyncHelper {
 
     /**
      * Create New record for creating  contact in zoho.
+     *
      * @param user - keycloak user
      * @return newRecord object
      */
@@ -112,32 +121,35 @@ public class SyncHelper {
         newRecord.addFieldValue(Field.Contacts.LAST_NAME, getLastNameForContact(user));
         newRecord.addKeyValue(EMAIL, user.getEmail());
         newRecord.addKeyValue(PERSONAL_KEY, user.getPersonalKey());
+        newRecord.addKeyValue(USERNAME, user.getUsername());
 
         List<Choice<String>> participationLevelList = getParticipationChoice(participationLevel);
 
-        newRecord.addKeyValue(CONTACT_PARTICIPATION,new ArrayList<>(participationLevelList));
-        newRecord.addKeyValue(LEAD_SOURCE,new Choice<>("Europeana account sign-up form"));
+        newRecord.addKeyValue(CONTACT_PARTICIPATION, new ArrayList<>(participationLevelList));
+        newRecord.addKeyValue(LEAD_SOURCE, new Choice<>(EUROPEANA_ACCOUNT_SIGN_UP_FORM));
         newRecord.addKeyValue(USER_ACCOUNT_ID, user.getId());
         return newRecord;
     }
 
     /**
      * Generates the request element for dissociating contact.
+     *
      * @param contact representing zoho contact
      * @return Record object
      */
     public Record requestToDissociateContact(Contact contact) {
         Record recordToUpdate = new Record();
-        recordToUpdate.addKeyValue(USER_ACCOUNT_ID,null);
-        recordToUpdate.addKeyValue(CONTACT_PARTICIPATION,getParticipationChoice(
+        recordToUpdate.addKeyValue(USER_ACCOUNT_ID, null);
+        recordToUpdate.addKeyValue(CONTACT_PARTICIPATION, getParticipationChoice(
                 removeAPIRelatedParticipation(contact.getContactParticipation())));
         return recordToUpdate;
     }
 
     /**
      * Check if source and target dates are different  and if target date need to be updated.
-     * @param target  date to compare from target system
-     * @param source  date to compare from source
+     *
+     * @param target date to compare from target system
+     * @param source date to compare from source
      * @return boolean
      */
     public boolean isDateChangedInSource(String target, String source) {
@@ -157,10 +169,11 @@ public class SyncHelper {
      * Checks if string represents valid date-time and is parsed using
      * {@link java.time.format.DateTimeFormatter#ISO_OFFSET_DATE_TIME}.
      * e.g. of valid date- 2007-12-03T10:15:30+01:00
+     *
      * @param date String
      * @return boolean true if valid date else false.
      */
-    public  boolean isValidDate(String date) {
+    public boolean isValidDate(String date) {
         try {
             OffsetDateTime.parse(date);
             return true;
@@ -169,6 +182,8 @@ public class SyncHelper {
             return false;
         }
     }
+
+
     /**
      * Fetch all participation levels of a user based on roles along with existing ones.
      *
@@ -177,48 +192,51 @@ public class SyncHelper {
      * <p>If user has Project key associated , then it is also an 'API Customer'.</p>
      * <p>If user has Private key , then it is also a 'API User'.</p>
      *
-     * @param userRoles keycloak roles of user
-     * @param existingParticipation  existing participation values( ';' separated)  if any
-     * @return  Set of Strings containing all participation levels.
+     * @param userRoles             keycloak roles of user
+     * @param existingParticipation existing participation values( ';' separated)  if any
+     * @return Set of Strings containing all participation levels.
      */
     public Set<String> getParticipationLevel(List<String> userRoles, String existingParticipation) {
         Set<String> participationLevels = new HashSet<>();
-        if(StringUtils.isNotEmpty(existingParticipation)) {
-            List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(";")).toList();
+        if (StringUtils.isNotEmpty(existingParticipation)) {
+            List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(SEMI_COLON)).toList();
             participationLevels.addAll(existingParticipationLevelList);
         }
         participationLevels.add(ACCOUNT_HOLDER);
-        if(userRoles.contains(SHARED_OWNER)){
+        if (userRoles.contains(SHARED_OWNER)) {
             participationLevels.add(API_CUSTOMER);
         }
-        if(userRoles.contains(CLIENT_OWNER)){
+        if (userRoles.contains(CLIENT_OWNER)) {
             participationLevels.add(API_USER);
         }
         return participationLevels;
     }
 
-    private  Set<String> removeAPIRelatedParticipation(String contactParticipation) {
-        if(StringUtils.isEmpty(contactParticipation)) {
+    private Set<String> removeAPIRelatedParticipation(String contactParticipation) {
+        if (StringUtils.isEmpty(contactParticipation)) {
             return Collections.emptySet();
         }
-        return Arrays.stream(contactParticipation.split(";")).filter(participation ->
+        return Arrays.stream(contactParticipation.split(SEMI_COLON)).filter(participation ->
                         !(API_CUSTOMER.equals(participation) || API_USER.equals(participation) || ACCOUNT_HOLDER.equals(participation)))
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
-    private  boolean isParticipationLevelChanged(Contact zohoContact, Set<String> participationLevel) {
-        if(StringUtils.isNotEmpty(zohoContact.getContactParticipation())) {
-            String[] levels = zohoContact.getContactParticipation().split(";");
-            return levels.length > 0 && Arrays.stream(levels)
-                    .anyMatch(p -> !participationLevel.contains(p));
-        }
-        return false;
+    /**
+     * Compare the existing participation levels against the calculated ones.
+     * If any of the calculated participation level is not  part of existing levels in zoho ,
+     * then consider the participation levels needs to be updated in zoho.
+     */
+    private boolean isParticipationLevelChanged(Contact zohoContact, Set<String> calculatedParticipationLevels) {
+        String zohoParticipation = zohoContact.getContactParticipation();
+        List<String> zohoParticipationLevels = StringUtils.isNotEmpty(zohoParticipation) ?
+                Arrays.stream(zohoParticipation.split(SEMI_COLON)).toList() : Collections.emptyList();
+        return !zohoParticipationLevels.containsAll(calculatedParticipationLevels);
     }
 
     private List<Choice<String>> getParticipationChoice(Set<String> participationLevel) {
         List<Choice<String>> participationLevelList = new ArrayList<>();
-        if(participationLevel !=null)
-            participationLevel.forEach(p-> participationLevelList.add(new Choice<>(p)));
+        if (participationLevel != null)
+            participationLevel.forEach(p -> participationLevelList.add(new Choice<>(p)));
         return participationLevelList;
     }
 
@@ -226,10 +244,11 @@ public class SyncHelper {
      * Get the last Name from the Keycloak user.
      * If user does not have first or last name  , use the username as the last name.
      * populate '-' as last name for users who have only the first name
-     * @param user  KeycloakUser
+     *
+     * @param user KeycloakUser
      * @return lastName for the user
      */
-    public  String getLastNameForContact(KeycloakUser user) {
+    public String getLastNameForContact(KeycloakUser user) {
         String firstName = user.getFirstName();
         String lastName = user.getLastName();
 

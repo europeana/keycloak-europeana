@@ -51,6 +51,9 @@ public class Contact {
     private String personalKey;
 
     @CsvBindByPosition(position = 13)
+    private String username;
+
+    @CsvBindByPosition(position = 14)
     private String modifiedTime;
 
     public String getId() {
@@ -143,6 +146,14 @@ public class Contact {
 
     public void setPersonalKey(String personalKey) {
         this.personalKey = personalKey;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public OffsetDateTime getModifiedTime(){
