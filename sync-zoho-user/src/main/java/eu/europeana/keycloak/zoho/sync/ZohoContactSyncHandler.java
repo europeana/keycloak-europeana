@@ -63,7 +63,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
 
     public String syncContacts(int days, List<Account> institutions, List<Contact> contacts) {
 
-        if ((institutions==null||institutions.isEmpty()) || (contacts==null||contacts.isEmpty())) {
+        if ((institutions == null || institutions.isEmpty()) || (contacts == null || contacts.isEmpty())) {
             LOG.error("Skipping contact sync! List of Institutions or Contacts of zoho is Empty !");
             return generateStatusReportForContactSync(0,
                     0, 0);
