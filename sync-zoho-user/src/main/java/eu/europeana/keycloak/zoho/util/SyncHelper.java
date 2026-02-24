@@ -76,14 +76,20 @@ public class SyncHelper {
             recordToUpdate.addKeyValue(CONTACT_PARTICIPATION, getParticipationChoice(participationLevel));
         }
         //check if personalKey is not aligned in keycloak and zoho
-        if (!StringUtils.equals(keycloakUser.getPersonalKey(), zohoContact.getPersonalKey())) {
+        if (isEffectivelyChanged(zohoContact.getPersonalKey(), keycloakUser.getPersonalKey())) {
             recordToUpdate.addKeyValue(PERSONAL_KEY, keycloakUser.getPersonalKey());
         }
         //check if Username to be updated
-        if (!StringUtils.equals(keycloakUser.getUsername(), zohoContact.getUsername())) {
+        if (isEffectivelyChanged(keycloakUser.getUsername(), zohoContact.getUsername())) {
             recordToUpdate.addKeyValue(USERNAME, keycloakUser.getUsername());
         }
         return recordToUpdate;
+    }
+
+    private static boolean isEffectivelyChanged(String value1, String value2) {
+          String val1 = StringUtils.defaultIfBlank(value1,"");
+          String val2 = StringUtils.defaultIfBlank(value2,"");
+          return !StringUtils.equals(val1,val2);
     }
 
     /**
@@ -199,7 +205,11 @@ public class SyncHelper {
     public Set<String> getParticipationLevel(List<String> userRoles, String existingParticipation) {
         Set<String> participationLevels = new HashSet<>();
         if (StringUtils.isNotEmpty(existingParticipation)) {
-            List<String> existingParticipationLevelList = Arrays.stream(existingParticipation.split(SEMI_COLON)).toList();
+            List<String> existingParticipationLevelList = new ArrayList<>(Arrays.asList(existingParticipation.split(SEMI_COLON)));
+
+            // Remove the participation for API User or API customer as it will be recalculated.
+            existingParticipationLevelList.removeIf(p -> API_CUSTOMER.equalsIgnoreCase(p) || API_USER.equalsIgnoreCase(p));
+
             participationLevels.addAll(existingParticipationLevelList);
         }
         participationLevels.add(ACCOUNT_HOLDER);

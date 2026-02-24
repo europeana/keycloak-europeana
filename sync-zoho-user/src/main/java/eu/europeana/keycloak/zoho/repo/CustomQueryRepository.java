@@ -43,13 +43,12 @@ public class CustomQueryRepository {
           {h-schema}KEYCLOAK_ROLE kr ON urm.ROLE_ID = kr.ID
           INNER JOIN 
           {h-schema}CLIENT c ON kr.client = c.id
-          INNER JOIN
-          {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id                        
+          LEFT JOIN
+          {h-schema}ROLE_ATTRIBUTE ra ON kr.id=ra.role_id AND ra.name IN('rateLimitReached','lastAccess')                       
           WHERE u.realm_id = :realmName AND u.enabled = true AND u.email_verified = true AND u.service_account_client_link IS NULL
           AND kr.name = 'client_owner'
           AND c.realm_id = :realmName 
           AND c.enabled = true
-          AND ra.name IN('rateLimitReached','lastAccess')
           """;
   private static final String FIND_PROJECT_CLIENT_ATTR = """
           SELECT c.client_id as apikey,ra.name as attribute_name,ra.value as attribute_value
@@ -135,28 +134,42 @@ public class CustomQueryRepository {
     List<Object[]> rows = nativeQuery.getResultList();
 
     Map<String, KeycloakClient> clientMap = new HashMap<>();
-    for (Object[] row : rows) {
-      String email = String.valueOf(row[0]);
-      String apikey = String.valueOf(row[1]);
-      String attributeName = String.valueOf(row[2]);
-      String attributeValue = String.valueOf(row[3]);
-      //The details are stored against User Email
-      populateClientInfoMap(clientMap, email, apikey, attributeName, attributeValue);
+    if(rows != null) {
+      for (Object[] row : rows) {
+        if(row == null|| row.length <4)
+           continue;
+        String email = getStringValue(row[0]);
+        String apikey = getStringValue(row[1]);
+        String attributeName = getStringValue(row[2]);
+        String attributeValue = getStringValue(row[3]);
+
+        //The details are stored against User Email
+        populateClientInfoMap(clientMap, email, apikey, attributeName, attributeValue);
+      }
     }
     return clientMap;
   }
 
-  private void populateClientInfoMap(Map<String, KeycloakClient> clientMap, String mapKey, String apikey, String attributeName, String attributeValue) {
-    KeycloakClient client = clientMap.get(mapKey);
+  private String getStringValue(Object obj) {
+    return obj == null ? null : obj.toString();
+  }
 
-    if (client == null) {
-      Map<String,String> attributemap = new HashMap<>();
-      if(StringUtils.isNotEmpty(attributeName)) {
-        attributemap.put(attributeName, attributeValue);
+  private void populateClientInfoMap(Map<String, KeycloakClient> clientInfo, String mapKey, String apikey, String attributeName, String attributeValue) {
+    if(mapKey != null) {
+      KeycloakClient client = clientInfo.get(mapKey);
+      // if no associated client found for the given  mapKey, then create new client object and add to map
+      if (client == null) {
+        Map<String, String> attributemap = new HashMap<>();
+        if (StringUtils.isNotEmpty(attributeName)) {
+          attributemap.put(attributeName, attributeValue);
+        }
+        clientInfo.put(mapKey, new KeycloakClient(apikey, attributemap));
+      } else {
+        // if associated client is found , then update the attributes map of that client
+        if (StringUtils.isNotEmpty(attributeName)) {
+          client.addAttribute(attributeName, attributeValue);
+        }
       }
-      clientMap.put(mapKey, new KeycloakClient(apikey,attributemap));
-    } else {
-      client.addAttribute(attributeName, attributeValue);
     }
   }
 
