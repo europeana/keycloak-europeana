@@ -105,6 +105,8 @@ spec:
               value: "${TEST_PROJECT_IDS_TO_UPDATE}"
             - name: TEST_CONTACT_IDS_TO_UPDATE
               value: "${TEST_CONTACT_IDS_TO_UPDATE}"
+            - name: TEST_USER_EMAILS_TO_CREATE
+              value: "${TEST_USER_EMAILS_TO_CREATE}"
             - name:  ZOHO_SYNC_TIME_OF_DAY
               value: "${ZOHO_SYNC_TIME_OF_DAY}"
           ports:
