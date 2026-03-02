@@ -31,6 +31,9 @@ public class SyncHelper {
     public static final String USERNAME = "Username";
     public static final String EUROPEANA_ACCOUNT_SIGN_UP_FORM = "Europeana account sign-up form";
     public static final String SEMI_COLON = ";";
+    public static final int ZOHO_CHAR_LIMIT_FOR_FIRST_NAME = 40;
+    public static final int ZOHO_CHAR_LIMIT_FOR_LAST_NAME = 80;
+    public static final char SPACE = ' ';
 
     /**
      * Converts string into String List.
@@ -50,9 +53,9 @@ public class SyncHelper {
     /**
      * Create request for update with only changed values.
      *
-     * @param zohoContact
-     * @param keycloakUser
-     * @param userDetails
+     * @param zohoContact containing contact details from zoho
+     * @param keycloakUser contains the User details from keycloak db
+     * @param userDetails map of keycloak user email and KeycloakUser
      * @return updated record object
      */
     public Record getRecordForUpdate(Contact zohoContact, KeycloakUser keycloakUser, Map<String, KeycloakUser> userDetails) {
@@ -123,8 +126,8 @@ public class SyncHelper {
 
         Set<String> participationLevel = getParticipationLevel(user.getAssociatedRoleList(), null);
         Record newRecord = new Record();
-        newRecord.addFieldValue(Field.Contacts.FIRST_NAME, user.getFirstName());
-        newRecord.addFieldValue(Field.Contacts.LAST_NAME, getLastNameForContact(user));
+        newRecord.addFieldValue(Field.Contacts.FIRST_NAME, truncateFirstNameForZoho(user.getFirstName()));
+        newRecord.addFieldValue(Field.Contacts.LAST_NAME, truncateLastNameForZoho(getLastNameForContact(user)));
         newRecord.addKeyValue(EMAIL, user.getEmail());
         newRecord.addKeyValue(PERSONAL_KEY, user.getPersonalKey());
         newRecord.addKeyValue(USERNAME, user.getUsername());
@@ -269,5 +272,49 @@ public class SyncHelper {
             lastName = "-";
         }
         return lastName;
+    }
+
+
+    /**Truncate to specified number of chars by scanning backwards until the first blank character is found
+     * e.g.If limit is 40, take substring containing first 40 chars and
+     * Remove everything after the last space char so that we get string ending with whole word.
+     * The length limits on any particular field of a module can be vied using the settings api.
+     * e.g. For 'Contacts' module get settings in <a href="https://www.zohoapis.eu/crm/v6/settings/fields?module=Contacts">
+     *     https://www.zohoapis.eu/crm/v6/settings/fields?module=Contacts</a>}
+     * @param value string
+     * @return truncated string
+     */
+    public String truncateFirstNameForZoho(String value) {
+        if(value == null || (value.length() <= ZOHO_CHAR_LIMIT_FOR_FIRST_NAME)){
+            return value;
+        }
+        String substrFromBeginning = value.substring(0, ZOHO_CHAR_LIMIT_FOR_FIRST_NAME);
+
+        if(substrFromBeginning.isBlank())
+            return substrFromBeginning;
+
+        int indexOfLastSpaceChar = substrFromBeginning.lastIndexOf(SPACE);
+        return (indexOfLastSpaceChar != -1) ? substrFromBeginning.substring(0, indexOfLastSpaceChar) : substrFromBeginning;
+    }
+
+
+    /**
+     * Truncate to Specified number of chars by scanning forwards until the first blank character is found
+     * e.g.If limit is 40, take substring containing last 40 chars.
+     * Remove everything before and including the first space char so that we get string starting with whole word.
+     * @param value last name
+     * @return truncated last name
+     */
+    public  String truncateLastNameForZoho(String value) {
+        if(value == null || (value.length() <= ZOHO_CHAR_LIMIT_FOR_LAST_NAME)){
+            return value;
+        }
+        String subStrFromEnd = value.substring(value.length()- ZOHO_CHAR_LIMIT_FOR_LAST_NAME);
+
+        if(subStrFromEnd.isBlank())
+            return subStrFromEnd;
+
+        int firstIndexOfSpace = subStrFromEnd.indexOf(SPACE);
+        return (firstIndexOfSpace != -1) ? subStrFromEnd.substring(firstIndexOfSpace + 1) : subStrFromEnd;
     }
 }

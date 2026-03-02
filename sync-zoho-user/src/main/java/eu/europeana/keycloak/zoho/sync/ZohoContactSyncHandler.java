@@ -7,7 +7,6 @@ import eu.europeana.keycloak.zoho.datamodel.Contact;
 import eu.europeana.keycloak.zoho.datamodel.KeycloakUser;
 import eu.europeana.keycloak.zoho.repo.CustomQueryRepository;
 import eu.europeana.keycloak.zoho.util.SyncHelper;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.models.RealmModel;
@@ -34,6 +33,8 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
     private final SyncHelper helper;
     private final ZohoUpdater updater;
     private final List<String> preconfiguredContactIdsToSync;
+
+    private final List<String> preconfiguredEmailsToCreate;
     private final List<String> updatedContacts = new ArrayList<>();
     HashMap<String, Institute> instituteMap = new HashMap<>();
     HashMap<String, String> modifiedUserMap = new HashMap<>();
@@ -51,6 +52,7 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
         this.updater = new ZohoUpdater();
         this.helper = new SyncHelper();
         preconfiguredContactIdsToSync = helper.tokenizeString(System.getenv(TEST_CONTACT_IDS_TO_UPDATE), ",");
+        preconfiguredEmailsToCreate = helper.tokenizeString(System.getenv(TEST_USER_EMAILS_TO_CREATE),",");
     }
 
     /**
@@ -225,6 +227,15 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
         return false;
     }
 
+
+    private boolean isPreconfiguredForCreate(String email) {
+        if (preconfiguredEmailsToCreate.contains(email)) {
+            LOG.info("User " + email + " - will be created in zoho !");
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Validates keycloak user and creates the associated contact in zoho
      *
@@ -252,7 +263,8 @@ public class ZohoContactSyncHandler extends AbstractSyncHandler {
     }
 
     private void createContactInZoho(KeycloakUser user, List<String> newContacts) throws SDKException {
-        if (SYNC_SCOPE == SyncScope.ALL) {
+        if (SYNC_SCOPE == SyncScope.ALL
+            || (SYNC_SCOPE == SyncScope.TEST_ONLY && isPreconfiguredForCreate(user.getEmail()))) {
             LOG.info("Creating zoho contact " + user.getEmail());
             Record contactRequest = helper.createContactRequest(user);
             if (updater.createNewZohoContact(contactRequest)) {

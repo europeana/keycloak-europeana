@@ -19,6 +19,9 @@ public final class KeycloakZohoVocabulary {
     //Comma separated values containing zoho contact ids for force update in zoho
     public static final String TEST_CONTACT_IDS_TO_UPDATE = "TEST_CONTACT_IDS_TO_UPDATE";
 
+    //Comma separated values containing keycloak emails to create new contacts in zoho
+    public static final String TEST_USER_EMAILS_TO_CREATE = "TEST_USER_EMAILS_TO_CREATE";
+
     //Comma separated values containing zoho project ids for force sync
     public static final String TEST_PROJECT_IDS_TO_UPDATE = "TEST_PROJECT_IDS_TO_UPDATE";
 
