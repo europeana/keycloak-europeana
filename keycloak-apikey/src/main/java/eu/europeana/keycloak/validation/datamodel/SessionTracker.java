@@ -6,60 +6,84 @@ import java.util.Objects;
 
 public class SessionTracker implements Serializable {
 
-  private static final long serialVersionUID = 1L;
-  private String id;
-  private int sessionCount;
-  private String lastAccessDate;
-  private String lastRateLimitReachingTime;
+    private static final long serialVersionUID = 1L;
+    private String id;
+    private int sessionCount;
+    private String lastAccessDate;
+    private String lastRateLimitReachingTime;
 
-  public SessionTracker(String id, int sessionCount, String lastAccessDate) {
-    this.id = id;
-    this.sessionCount = sessionCount;
-    this.lastAccessDate = lastAccessDate ;
-   }
+    //transient fields for temporary storage ,not to be updated in Infinispan cache
+    private transient ErrorMessage validationError;
+    private transient RateLimit rateLimitMetadata;
 
-  public String getId() {
-    return id;
-  }
+    public SessionTracker(String id, int sessionCount, String lastAccessDate) {
+        this.id = id;
+        this.sessionCount = sessionCount;
+        this.lastAccessDate = lastAccessDate;
+    }
 
-  public void setId(String id) {
-   this.id=id;
-  }
+    public String getId() {
+        return id;
+    }
 
-  public int getSessionCount() {
-    return sessionCount;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public void setSessionCount(int sessionCount) {
-    this.sessionCount = sessionCount;
-  }
+    public int getSessionCount() {
+        return sessionCount;
+    }
 
-  public String getLastAccessDate() {
-    return lastAccessDate;
-  }
+    public void setSessionCount(int sessionCount) {
+        this.sessionCount = sessionCount;
+    }
 
-  public void setLastAccessDate(String lastAccessDate) {
-    this.lastAccessDate = lastAccessDate;
-  }
+    public String getLastAccessDate() {
+        return lastAccessDate;
+    }
 
-  public String getLastRateLimitReachingTime() {
-    return lastRateLimitReachingTime;
-  }
+    public void setLastAccessDate(String lastAccessDate) {
+        this.lastAccessDate = lastAccessDate;
+    }
 
-  public void setLastRateLimitReachingTime(String lastRateLimitReachingTime) {
-    this.lastRateLimitReachingTime = lastRateLimitReachingTime;
-  }
+    public String getLastRateLimitReachingTime() {
+        return lastRateLimitReachingTime;
+    }
+
+    public void setLastRateLimitReachingTime(String lastRateLimitReachingTime) {
+        this.lastRateLimitReachingTime = lastRateLimitReachingTime;
+    }
 
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null || getClass() != obj.getClass()) return false;
-    SessionTracker that = (SessionTracker) obj;
-    return Objects.equals(id, that.id) &&
-        Objects.equals(sessionCount, that.sessionCount) &&
-        Objects.equals(lastAccessDate,that.lastAccessDate)&&
-        Objects.equals(lastRateLimitReachingTime,that.lastRateLimitReachingTime);
-  }
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+        SessionTracker that = (SessionTracker) obj;
+        return Objects.equals(id, that.id) &&
+            Objects.equals(sessionCount, that.sessionCount) &&
+            Objects.equals(lastAccessDate, that.lastAccessDate) &&
+            Objects.equals(lastRateLimitReachingTime, that.lastRateLimitReachingTime);
+    }
+
+    public RateLimit getRateLimitMetadata() {
+        return rateLimitMetadata;
+    }
+
+    public void setRateLimitMetadata(RateLimit rateLimitMetadata) {
+        this.rateLimitMetadata = rateLimitMetadata;
+    }
+
+    public ErrorMessage getValidationError() {
+        return validationError;
+    }
+
+    public void setValidationError(ErrorMessage validationError) {
+        this.validationError = validationError;
+    }
 
 }
