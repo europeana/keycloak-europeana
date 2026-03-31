@@ -3,6 +3,7 @@ package eu.europeana.keycloak.validation.service;
 import eu.europeana.keycloak.timer.AbstractCustomScheduledTask;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.utils.Constants;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,16 +35,25 @@ public class ClearSessionTrackingCacheTask extends AbstractCustomScheduledTask {
   private void clearSessionTrackingCache(KeycloakSession session) {
     InfinispanConnectionProvider provider = session.getProvider(InfinispanConnectionProvider.class);
     Cache<String, SessionTracker> sessionTrackerCache = provider.getCache(Constants.SESSION_TRACKER_CACHE);
+
+
     if (!sessionTrackerCache.isEmpty()){
-      updateClient(session,sessionTrackerCache);
+      //Get the snapshot of the cache
+      Map<String, SessionTracker> cacheSnapshot = new HashMap<>(sessionTrackerCache);
+
+      //clear the cache immediately
       sessionTrackerCache.clear();
       LOG.info("Infinispan cache 'sessionTrackerCache' is cleared");
+
+      //update the details of client in db based on cache.
+      updateClient(session,cacheSnapshot);
+
       return;
     }
     LOG.info("Infinispan cache 'sessionTrackerCache' is already empty");
   }
 
-  private void updateClient(KeycloakSession session,Cache<String, SessionTracker> sessionTrackerCache) {
+  private void updateClient(KeycloakSession session,Map<String, SessionTracker> sessionTrackerCache) {
     for (Map.Entry<String, SessionTracker> entry : sessionTrackerCache.entrySet()) {
       RealmModel europeanaRealm = session.realms().getRealm("europeana");
       if(europeanaRealm == null){

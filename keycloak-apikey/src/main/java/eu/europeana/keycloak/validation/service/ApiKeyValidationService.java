@@ -165,11 +165,11 @@ public class ApiKeyValidationService {
             return new ValidationResult(Status.OK, null);
         }
         SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType, rateLimitPolicy);
-        sessionTrackerCache.compute(clientId, updater);
+        SessionTracker updatedTracker = sessionTrackerCache.compute(clientId, updater);
 
-        ErrorMessage errorMessage = updater.resultReference.get();
+        ErrorMessage errorMessage = updatedTracker.getValidationError();
         Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
-        return new ValidationResult(status, errorMessage, updater.rateLimitReference.get());
+        return new ValidationResult(status, errorMessage,updatedTracker.getRateLimitMetadata());
     }
 
     /**
