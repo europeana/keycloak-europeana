@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import static eu.europeana.keycloak.utils.Constants.*;
@@ -19,10 +18,6 @@ import static eu.europeana.keycloak.utils.Constants.*;
  * @author shweta
  */
 public class SessionTrackerUpdater implements BiFunction<String, SessionTracker, SessionTracker>, Serializable {
-
-    AtomicReference<ErrorMessage> resultReference = new AtomicReference<>();
-    AtomicReference<RateLimit> rateLimitReference = new AtomicReference<>();
-
     private final String lastAccessDate;
     private final String keyType;
     private final RateLimitPolicy rateLimitPolicy;
@@ -46,7 +41,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         SessionTracker tracker = (existingTracker != null) ? existingTracker :
                 new SessionTracker(key, rateLimitPolicy.getQ(), lastAccessDate);
         //check the limits for allowed number of sessions for apikey (keycloak client) and get the validation result
-        resultReference.set(validateAndUpdateSessionTracker(tracker,rateLimitPolicy.getVendorIdentifier(),rateLimitPolicy.getQ()));
+        validateAndUpdateSessionTracker(tracker,rateLimitPolicy.getVendorIdentifier(),rateLimitPolicy.getQ());
         return tracker;
     }
 
@@ -58,24 +53,24 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      * with either a predefined limit or a custom limit defined for that client.
      *
      * @param tracker object to update
-     * @return error message if any
+
      */
-    private ErrorMessage validateAndUpdateSessionTracker(SessionTracker tracker,String policyType,int rateLimit) {
+    private void validateAndUpdateSessionTracker(SessionTracker tracker,String policyType,int rateLimit) {
         int updatedCount = tracker.getSessionCount() - 1;
         LocalDateTime lastAccessDate = LocalDateTime.now();
-
         // check if the client has exhausted the limit
-        if (updatedCount == -1) {
-            rateLimitReference.set(new RateLimit(policyType, 0, getRemainingTimeUtilReset(lastAccessDate)));
-            return PROJECT.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit) : personalKeyLimitReachedMessage(rateLimit);
+        if (updatedCount <= -1) {
+            tracker.setRateLimitMetadata(new RateLimit(policyType, 0, getRemainingTimeUtilReset(lastAccessDate)));
+            tracker.setValidationError(PROJECT.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit)
+                 : personalKeyLimitReachedMessage(rateLimit));
+        } else {
+            // if the keys rate limit is NOT exhausted, update tracker
+            updateSessionTracker(tracker, updatedCount, lastAccessDate);
+
+            tracker.setRateLimitMetadata(new RateLimit(policyType, updatedCount, getRemainingTimeUtilReset(lastAccessDate)));
+            tracker.setValidationError(null);
         }
-        // if the key is NOT exhausted, update tracker and rate limit
-        updateSessionTracker(tracker, updatedCount, lastAccessDate);
-        rateLimitReference.set(new RateLimit(policyType, updatedCount, getRemainingTimeUtilReset(lastAccessDate)));
-
-        return null;
     }
-
 
     /**
      * Update the session tracker with the session count, lastAccessDate and
