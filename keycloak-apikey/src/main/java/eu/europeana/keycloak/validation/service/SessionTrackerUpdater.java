@@ -42,7 +42,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      * <ul>
      * <li>If greater than 0:  Updates count and last access date.</li>
      * <li>If exactly 0 (limit just exhausted):   Updates count, last access date, and sets the rate limit reaching time.</li>
-     * <li>If less than 0 (limit already exhausted):   Does nothing; ignores the update. </li>
+     * <li>If less than 0 (limit already exhausted): sets the rate limit reaching time if not set for case when rate limit quota itself was 0 </li>
      * </ul>
      * @param tracker  session tracker object to update
      */
@@ -55,10 +55,10 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
         if( updatedCount > -1 ) {
             tracker.setSessionCount(updatedCount);
             tracker.setLastAccessDate(this.currentDate);
-            //If rateLimit gets exhausted , update  LastRateLimitReachingTime if not already.
-            if (updatedCount == 0 && StringUtils.isEmpty(tracker.getLastRateLimitReachingTime())) {
-                tracker.setLastRateLimitReachingTime(tracker.getLastAccessDate());
-            }
+        }
+        //If rateLimit gets exhausted, update  LastRateLimitReachingTime with lastAccessDate if not already.
+        if (updatedCount <= 0 && StringUtils.isEmpty(tracker.getLastRateLimitReachingTime())) {
+            tracker.setLastRateLimitReachingTime(tracker.getLastAccessDate());
         }
     }
 
