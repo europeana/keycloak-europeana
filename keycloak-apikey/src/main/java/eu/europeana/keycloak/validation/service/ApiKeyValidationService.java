@@ -1,6 +1,7 @@
 package eu.europeana.keycloak.validation.service;
 
 import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
+import eu.europeana.keycloak.validation.datamodel.RateLimit;
 import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
 import eu.europeana.keycloak.validation.datamodel.ValidationResult;
@@ -147,7 +148,7 @@ public class ApiKeyValidationService {
 
     /**
      * Performs the rate limit check for the input client.
-     * *
+     *
      *
      * @param clientId  Keycloak client Id
      * @param keyType   indicating type of apikey e.g. 'PersonalKey','ProjectKey' or empty
@@ -164,14 +165,87 @@ public class ApiKeyValidationService {
                     + " not found. Cannot perform rate limit check");
             return new ValidationResult(Status.OK, null);
         }
-        SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(LocalDateTime.now()), keyType, rateLimitPolicy);
+
+        //Update the sessionTracking cache
+        LocalDateTime now = LocalDateTime.now();
+
+        SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(now), rateLimitPolicy);
         SessionTracker updatedTracker = sessionTrackerCache.compute(clientId, updater);
 
-        ErrorMessage errorMessage = updatedTracker.getValidationError();
-        Status status = errorMessage != null ? Status.TOO_MANY_REQUESTS : Status.OK;
-        return new ValidationResult(status, errorMessage,updatedTracker.getRateLimitMetadata());
+        //Generate updated rate limit details for the requested apikey
+        RateLimit rateLimit = new RateLimit(rateLimitPolicy.getVendorIdentifier(),
+            updatedTracker.getSessionCount(),
+            getRemainingTimeUtilReset(now));
+
+        // If the rateLimit is already reached in the past  and the current count is zero , send 429
+        if (isRateLimitAlreadyExhausted(now, updatedTracker.getLastRateLimitReachingTime(), updatedTracker.getSessionCount())) {
+            //create result with error message for 429 status
+            return new ValidationResult(Status.TOO_MANY_REQUESTS,
+                generateMessageForQuotaExhaustion(keyType, rateLimitPolicy.getQ()),
+                rateLimit);
+        }
+
+        return new ValidationResult(Status.OK, null ,rateLimit);
     }
 
+    /**
+     * Calculates remaining time in second
+     *
+     * @param dateTime last access time
+     * @return time reamining till the new quota is assigned
+     */
+    private long getRemainingTimeUtilReset(LocalDateTime dateTime) {
+        int minutesElapsed = dateTime.getMinute() % RATE_LIMIT_DURATION;
+        if (minutesElapsed == 0) {
+            return ((RATE_LIMIT_DURATION * 60L) - dateTime.getSecond());  // totalSeconds - seconds elapsed (for the new time window slot)
+        } else {
+            return (((RATE_LIMIT_DURATION - minutesElapsed) * 60L) - dateTime.getSecond()); // remaining seconds - seconds elapsed
+        }
+    }
+
+    private ErrorMessage generateMessageForQuotaExhaustion(String keyType, int limit) {
+        return (PROJECT.equals(keyType) ?
+              projectKeyLimitReachedMessage(limit)
+            : personalKeyLimitReachedMessage(limit)
+        );
+    }
+
+    private static ErrorMessage personalKeyLimitReachedMessage(int limit) {
+        return ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(
+                String.valueOf(limit),
+                String.valueOf(RATE_LIMIT_DURATION))
+            .formatErrorMessage(String.valueOf(limit),
+                String.valueOf(RATE_LIMIT_DURATION));
+    }
+
+    private static ErrorMessage projectKeyLimitReachedMessage(int limit) {
+        return ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(limit),
+            String.valueOf(RATE_LIMIT_DURATION));
+    }
+
+    /**
+     * Checks if session count is 0  i.e. rateLimit quota is over  and  the lastRateLimitReachingTime is populated.
+     * if its present,then checks if the lastRateLimitReachingTime was in the past
+     * indicating that it is not exhausted in current validate call-
+     */
+    public boolean isRateLimitAlreadyExhausted(LocalDateTime currentDateTime,
+        String lastRateLimitReachingTime, int sessionCount) {
+
+        if (sessionCount == 0 && !StringUtils.isBlank(lastRateLimitReachingTime)) {
+            LocalDateTime lastRateLimitReachingDateTime = LocalDateTime.parse(
+                lastRateLimitReachingTime, FORMATTER);
+
+            LOG.info("lastRateLimitReachingTime  String : " + lastRateLimitReachingTime);
+            LOG.info("Local time  : " + currentDateTime);
+
+            boolean before = lastRateLimitReachingDateTime.isBefore(currentDateTime);
+            LOG.info(before);
+
+            return before;
+        }
+        return false;
+    } 
+ 
     /**
      * Calculate the type of apikey based on specific roles associated to the client.
      *
