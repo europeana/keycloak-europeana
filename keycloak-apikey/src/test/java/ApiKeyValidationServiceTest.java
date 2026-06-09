@@ -38,8 +38,8 @@ class ApiKeyValidationServiceTest {
     }
     @Test
     void whenCurrentTimeIsAfterLastTimeRateLimitReached(){
-        Assertions.assertTrue(service.isRateLimitAlreadyExhausted
-            (LocalDateTime.now(),"2026-06-05T16:46:26Z",0));
+        Assertions.assertTrue(service.isRateLimitExhaustedBeforeCurrentRequest
+            (Constants.FORMATTER.format(LocalDateTime.now()),"2026-06-05T16:46:26Z",0));
     }
 
     @ParameterizedTest
@@ -50,14 +50,14 @@ class ApiKeyValidationServiceTest {
     })
     @DisplayName("Should return false when lastReachedTime is empty or null")
     void testWhenEmptyOrNullLastReachedTime(String lastReachedTime, int sessionCount) {
-        Assert.assertFalse(service.isRateLimitAlreadyExhausted(LocalDateTime.now(), lastReachedTime, sessionCount));
+        Assert.assertFalse(service.isRateLimitExhaustedBeforeCurrentRequest(Constants.FORMATTER.format(LocalDateTime.now()), lastReachedTime, sessionCount));
     }
 
     @Test
     @DisplayName("Should return false when session count is greater than zero")
     void testSessionCountGreaterThanZero() {
-        Assertions.assertFalse(service.isRateLimitAlreadyExhausted
-            (LocalDateTime.now(),"2026-06-05T16:46:26Z",1));
+        Assertions.assertFalse(service.isRateLimitExhaustedBeforeCurrentRequest
+            (Constants.FORMATTER.format(LocalDateTime.now()),"2026-06-05T16:46:26Z",1));
     }
 
 
@@ -65,9 +65,8 @@ class ApiKeyValidationServiceTest {
     @DisplayName("Should return false  If current time and the rateLimit reaching time are same ,"
         + " that means the rate limit was exhausted during current calculation and 429 should not be sent to user")
     void whenCurrentTimeIsEqualToLastTimeRateLimitReached() {
-        LocalDateTime now = LocalDateTime.parse("2026-06-05T16:46:26Z", Constants.FORMATTER);
-        Assertions.assertFalse(service.isRateLimitAlreadyExhausted
-            (now, "2026-06-05T16:46:26Z", 0));
+        Assertions.assertFalse(service.isRateLimitExhaustedBeforeCurrentRequest
+            ("2026-06-05T16:46:26Z", "2026-06-05T16:46:26Z", 0));
     }
 
 }

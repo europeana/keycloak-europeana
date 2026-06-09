@@ -168,17 +168,20 @@ public class ApiKeyValidationService {
 
         //Update the sessionTracking cache
         LocalDateTime now = LocalDateTime.now();
-
-        SessionTrackerUpdater updater = new SessionTrackerUpdater(FORMATTER.format(now), rateLimitPolicy);
+        String currentDateTimeString = FORMATTER.format(now);
+        SessionTrackerUpdater updater = new SessionTrackerUpdater(currentDateTimeString, rateLimitPolicy);
         SessionTracker updatedTracker = sessionTrackerCache.compute(clientId, updater);
 
-        //Generate updated rate limit details for the requested apikey
+        //Generate remaining rate limit details for the requested apikey
         RateLimit rateLimit = new RateLimit(rateLimitPolicy.getVendorIdentifier(),
             updatedTracker.getSessionCount(),
             getRemainingTimeUtilReset(now));
 
-        // If the rateLimit is already reached in the past  and the current count is zero , send 429
-        if (isRateLimitAlreadyExhausted(now, updatedTracker.getLastRateLimitReachingTime(), updatedTracker.getSessionCount())) {
+        // If the rateLimit is zero by default or is already exhausted , send 429
+        if (ifDefaultRateLimitIsZero(rateLimitPolicy) ||
+            isRateLimitExhaustedBeforeCurrentRequest(currentDateTimeString,
+                updatedTracker.getLastRateLimitReachingTime(),
+                updatedTracker.getSessionCount())) {
             //create result with error message for 429 status
             return new ValidationResult(Status.TOO_MANY_REQUESTS,
                 generateMessageForQuotaExhaustion(keyType, rateLimitPolicy.getQ()),
@@ -186,6 +189,10 @@ public class ApiKeyValidationService {
         }
 
         return new ValidationResult(Status.OK, null ,rateLimit);
+    }
+
+    private boolean ifDefaultRateLimitIsZero(RateLimitPolicy rateLimitPolicy) {
+        return (rateLimitPolicy!=null && rateLimitPolicy.getQ() == 0 );
     }
 
     /**
@@ -224,24 +231,28 @@ public class ApiKeyValidationService {
     }
 
     /**
-     * Checks if session count is 0  i.e. rateLimit quota is over  and  the lastRateLimitReachingTime is populated.
-     * if its present,then checks if the lastRateLimitReachingTime was in the past
-     * indicating that it is not exhausted in current validate call-
+     * Determines if rate Limit was already exhausted before current request. <br>
+     * Logic:<br>
+     *  1. Verifies if session count is 0 and a "last limit reached time" is recorded.<br>
+     *  2. Compares the two timestamps - "limit reached time" and "current request time".<br>
+     *  3. Returns true only if the limit was reached at a time strictly before the current request.<br>
+     *
+     * @param currentRequestTimeStr - Current request time
+     * @param quotaDepletedTimeStr - String indicating last time rate limit was reached/exhausted
+     * @param availableSessionCount updated session count from cache
+     * @return boolean true if the 'quotaDepletedTime' isBefore 'currentRequestTime'.
      */
-    public boolean isRateLimitAlreadyExhausted(LocalDateTime currentDateTime,
-        String lastRateLimitReachingTime, int sessionCount) {
+    public boolean isRateLimitExhaustedBeforeCurrentRequest(String currentRequestTimeStr,
+        String quotaDepletedTimeStr, int availableSessionCount) {
 
-        if (sessionCount == 0 && !StringUtils.isBlank(lastRateLimitReachingTime)) {
-            LocalDateTime lastRateLimitReachingDateTime = LocalDateTime.parse(
-                lastRateLimitReachingTime, FORMATTER);
+        if (availableSessionCount == 0 && !StringUtils.isBlank(quotaDepletedTimeStr)) {
 
-            LOG.info("lastRateLimitReachingTime  String : " + lastRateLimitReachingTime);
-            LOG.info("Local time  : " + currentDateTime);
+            LocalDateTime currentRequestTime =LocalDateTime.parse(
+                currentRequestTimeStr, FORMATTER);
+            LocalDateTime quotaDepletedTime = LocalDateTime.parse(
+                quotaDepletedTimeStr, FORMATTER);
 
-            boolean before = lastRateLimitReachingDateTime.isBefore(currentDateTime);
-            LOG.info(before);
-
-            return before;
+            return quotaDepletedTime.isBefore(currentRequestTime);
         }
         return false;
     } 
