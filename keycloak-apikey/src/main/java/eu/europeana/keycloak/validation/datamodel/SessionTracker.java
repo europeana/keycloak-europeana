@@ -12,10 +12,6 @@ public class SessionTracker implements Serializable {
     private String lastAccessDate;
     private String lastRateLimitReachingTime;
 
-    //transient fields for temporary storage ,not to be updated in Infinispan cache
-    private transient ErrorMessage validationError;
-    private transient RateLimit rateLimitMetadata;
-
     public SessionTracker(String id, int sessionCount, String lastAccessDate) {
         this.id = id;
         this.sessionCount = sessionCount;
@@ -68,22 +64,6 @@ public class SessionTracker implements Serializable {
             Objects.equals(sessionCount, that.sessionCount) &&
             Objects.equals(lastAccessDate, that.lastAccessDate) &&
             Objects.equals(lastRateLimitReachingTime, that.lastRateLimitReachingTime);
-    }
-
-    public RateLimit getRateLimitMetadata() {
-        return rateLimitMetadata;
-    }
-
-    public void setRateLimitMetadata(RateLimit rateLimitMetadata) {
-        this.rateLimitMetadata = rateLimitMetadata;
-    }
-
-    public ErrorMessage getValidationError() {
-        return validationError;
-    }
-
-    public void setValidationError(ErrorMessage validationError) {
-        this.validationError = validationError;
     }
 
 }

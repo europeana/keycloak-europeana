@@ -1,16 +1,10 @@
 package eu.europeana.keycloak.validation.service;
 
-import eu.europeana.keycloak.validation.datamodel.ErrorMessage;
-import eu.europeana.keycloak.validation.datamodel.RateLimit;
 import eu.europeana.keycloak.validation.datamodel.RateLimitPolicy;
 import eu.europeana.keycloak.validation.datamodel.SessionTracker;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.function.BiFunction;
-
-import static eu.europeana.keycloak.utils.Constants.*;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Class to track sessions for clients/keys
@@ -18,13 +12,11 @@ import static eu.europeana.keycloak.utils.Constants.*;
  * @author shweta
  */
 public class SessionTrackerUpdater implements BiFunction<String, SessionTracker, SessionTracker>, Serializable {
-    private final String lastAccessDate;
-    private final String keyType;
+    private final String currentDate;
     private final RateLimitPolicy rateLimitPolicy;
 
-    public SessionTrackerUpdater(String lastAccessDate, String keyType, RateLimitPolicy rateLimitPolicy) {
-        this.lastAccessDate = lastAccessDate;
-        this.keyType = keyType;
+    public SessionTrackerUpdater(String currentDate, RateLimitPolicy rateLimitPolicy) {
+        this.currentDate = currentDate;
         this.rateLimitPolicy = rateLimitPolicy;
     }
 
@@ -33,82 +25,42 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      * The number of sessions per time limit are validated , updated if required for the client.
      *
      * @param key             keycloak Client object
-     * @param existingTracker Sessiontracker object for key
+     * @param existingTracker Session tracker object for key
      * @return updated SessionTracker object
      */
     @Override
     public SessionTracker apply(String key, SessionTracker existingTracker) {
         SessionTracker tracker = (existingTracker != null) ? existingTracker :
-                new SessionTracker(key, rateLimitPolicy.getQ(), lastAccessDate);
-        //check the limits for allowed number of sessions for apikey (keycloak client) and get the validation result
-        validateAndUpdateSessionTracker(tracker,rateLimitPolicy.getVendorIdentifier(),rateLimitPolicy.getQ());
+                new SessionTracker(key, rateLimitPolicy.getQ(), currentDate);
+        updateSessionTracker(tracker);
         return tracker;
     }
 
-
     /**
-     * Updates the session tracker object with the session counts
-     * NOTE : the best would be to change it in the infinispan instead of counting up,
-     * to decrease from the limit so that the limit could be initialized every hour
-     * with either a predefined limit or a custom limit defined for that client.
-     *
-     * @param tracker object to update
-
+     * Decrements the session count by 1 and updates the access dates.<br>
+     * Below is Behavior based on the new count for rate Limit - <br>
+     * <ul>
+     * <li>If greater than 0:  Updates count and last access date.</li>
+     * <li>If exactly 0 (limit just exhausted):   Updates count, last access date, and sets the rate limit reaching time.</li>
+     * <li>If less than 0 (limit already exhausted): sets the rate limit reaching time if not set for case when rate limit quota itself was 0 </li>
+     * </ul>
+     * @param tracker  session tracker object to update
      */
-    private void validateAndUpdateSessionTracker(SessionTracker tracker,String policyType,int rateLimit) {
+    private void updateSessionTracker(SessionTracker tracker){
+
+        //Reduce Session Count by 1
         int updatedCount = tracker.getSessionCount() - 1;
-        LocalDateTime lastAccessDate = LocalDateTime.now();
-        // check if the client has exhausted the limit
-        if (updatedCount <= -1) {
-            tracker.setRateLimitMetadata(new RateLimit(policyType, 0, getRemainingTimeUtilReset(lastAccessDate)));
-            tracker.setValidationError(PROJECT.equals(keyType) ? projectKeyLimitReachedMessage(rateLimit)
-                 : personalKeyLimitReachedMessage(rateLimit));
-        } else {
-            // if the keys rate limit is NOT exhausted, update tracker
-            updateSessionTracker(tracker, updatedCount, lastAccessDate);
 
-            tracker.setRateLimitMetadata(new RateLimit(policyType, updatedCount, getRemainingTimeUtilReset(lastAccessDate)));
-            tracker.setValidationError(null);
+        //If session count is 0 or more , update details on tracker object
+        if( updatedCount > -1 ) {
+            tracker.setSessionCount(updatedCount);
+            tracker.setLastAccessDate(this.currentDate);
         }
-    }
-
-    /**
-     * Update the session tracker with the session count, lastAccessDate and
-     * if the limit is reached (usage is exhausted) updates the LastRateLimitReachingTime
-     *
-     * @param tracker      existing tracker
-     * @param updatedCount updated count
-     */
-    private void updateSessionTracker(SessionTracker tracker, int updatedCount, LocalDateTime lastAccessDate) {
-        tracker.setSessionCount(updatedCount);
-        tracker.setLastAccessDate(FORMATTER.format(lastAccessDate));
-        if (updatedCount == 0 && StringUtils.isEmpty(tracker.getLastRateLimitReachingTime())) {
+        //If rateLimit gets exhausted, update  LastRateLimitReachingTime with lastAccessDate if not already.
+        if (updatedCount <= 0 && StringUtils.isEmpty(tracker.getLastRateLimitReachingTime())) {
             tracker.setLastRateLimitReachingTime(tracker.getLastAccessDate());
         }
     }
 
-    private ErrorMessage projectKeyLimitReachedMessage(int limit) {
-        return ErrorMessage.LIMIT_PROJECT_KEYS_429.formatError(String.valueOf(limit), String.valueOf(RATE_LIMIT_DURATION));
-    }
 
-    private ErrorMessage personalKeyLimitReachedMessage(int limit) {
-        return ErrorMessage.LIMIT_PERSONAL_KEYS_429.formatError(String.valueOf(limit),
-                        String.valueOf(RATE_LIMIT_DURATION))
-                .formatErrorMessage(String.valueOf(limit), String.valueOf(RATE_LIMIT_DURATION));
-    }
-
-    /**
-     * Calculates remaining time in second
-     *
-     * @param dateTime last access time
-     * @return time reamining till the new quota is assigned
-     */
-    private long getRemainingTimeUtilReset(LocalDateTime dateTime) {
-        int minutesElapsed = dateTime.getMinute() % RATE_LIMIT_DURATION;
-        if (minutesElapsed == 0) {
-            return ((RATE_LIMIT_DURATION * 60L) - dateTime.getSecond());  // totalSeconds - seconds elapsed (for the new time window slot)
-        } else {
-            return (((RATE_LIMIT_DURATION - minutesElapsed) * 60L) - dateTime.getSecond()); // remaining seconds - seconds elapsed
-        }
-    }
 }
