@@ -24,7 +24,10 @@ COPY config/elastic-apm-agent-1.52.1.jar ./conf/
 # 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-# 8 create intermediary build
+# Create directory for storing access logs
+RUN mkdir -p /var/log/containers && chown -R keycloak:root /var/log/containers
+
+# 9 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
 # 8 get another copy of Keycloak image and apply changes there again
