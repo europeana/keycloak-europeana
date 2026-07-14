@@ -25,7 +25,7 @@ COPY config/elastic-apm-agent-1.52.1.jar ./conf/
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
 # Create directory for storing access logs
-RUN mkdir -p /var/log/containers && chown -R keycloak:root /var/log/containers
+RUN mkdir -p /var/log/containers && chown -R 1000:0 /var/log/containers
 
 # 9 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
