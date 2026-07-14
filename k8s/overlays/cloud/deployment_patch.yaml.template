@@ -29,7 +29,7 @@ spec:
                       -Dquarkus.http.access-log.enabled=true
                       -Dquarkus.http.access-log.log-to-file=true
                       -Dquarkus.http.access-log.base-file-name=keycloak-kube-system_nginx-ingresses
-                      -Dquarkus.http.access-log.log-directory=/var/log/containers"
+                      -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log"
             - name: KC_CACHE_STACK
               value: "kubernetes"
             - name: KC_CUSTOM_INFINISPAN_CONFIG
