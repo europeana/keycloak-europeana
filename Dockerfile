@@ -18,10 +18,13 @@ COPY dependencies ./providers/
 # 5 copy quarkus configuration with custom jdbc settings
 COPY config/cache-ispn-impl.xml ./conf/
 
-# 6 copy theme
+# 6 copy elastic apm jar
+COPY config/elastic-apm-agent-1.52.1.jar ./conf/
+
+# 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-# 7 create intermediary build
+# 8 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
 # 8 get another copy of Keycloak image and apply changes there again
@@ -35,6 +38,8 @@ COPY --from=builder /opt/keycloak/providers/ ./providers/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
+
+COPY --from=builder /opt/keycloak/conf/elastic-apm-agent-1.52.1.jar ./conf/
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
