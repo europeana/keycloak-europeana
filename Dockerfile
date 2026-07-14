@@ -36,7 +36,7 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 
-RUN wget https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/1.52.1/elastic-apm-agent-1.52.1.jar -O /usr/local/elastic-apm-agent.jar
+ADD https://repo1.maven.org/maven2/co/elastic/apm/elastic-apm-agent/1.52.1/elastic-apm-agent-1.52.1.jar /usr/local/elastic-apm-agent.jar
 
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
