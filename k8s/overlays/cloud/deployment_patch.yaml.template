@@ -17,6 +17,8 @@ spec:
             - --log=console
             - --log-console-format="'%d{HH:mm:ss.SSS} %p %c:%L [%t] - %m%n>'"
             - --cache-config-file=cache-ispn-impl.xml
+            - --http-access-log-enabled=true
+            - --http-access-log-file-enabled=true
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: JAVA_OPTS_APPEND
