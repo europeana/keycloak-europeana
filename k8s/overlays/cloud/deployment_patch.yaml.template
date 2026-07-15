@@ -20,18 +20,15 @@ spec:
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: JAVA_OPTS_APPEND
-              value: "-javaagent:/opt/keycloak/conf/elastic-apm-agent-1.52.1.jar
-                      -Delastic.apm.application_packages=${ELASTIC_APP_PACKAGES}
-                      -Delastic.apm.server_urls=${ELASTIC_APM_SERVERS}
-                      -Delastic.apm.service_name=${APP_NAME}
-                      -Delastic.apm.enabled=${COLLECT_APM}
-                      -Delastic.apm.environment=${K8S_NAMESPACE}
+              value: "-javaagent:/opt/keycloak/conf/opentelemetry-javaagent.jar
+                      -Dotel.resource.attributes=service.name=keycloak-test,deployment.environment=test
+                      -Dotel.exporter.otlp.endpoint=https://apm.eanadev.org:8200
+                      -Dotel.exporter.otlp.protocol=http/protobuf
+                      -Dotel.javaagent.logging=simple
                       -Dquarkus.http.access-log.enabled=true
                       -Dquarkus.http.access-log.log-to-file=true
                       -Dquarkus.http.access-log.base-file-name=keycloak-kube-system_nginx-ingresses
-                      -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log
-                      -Delastic.apm.log_level=DEBUG
-                      -Delastic.apm.trace_methods=org.keycloak.services.resources.*"
+                      -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log"
             - name: KC_CACHE_STACK
               value: "kubernetes"
             - name: KC_CUSTOM_INFINISPAN_CONFIG
