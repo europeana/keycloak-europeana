@@ -31,9 +31,7 @@ spec:
                       -Dquarkus.http.access-log.base-file-name=keycloak-kube-system_nginx-ingresses
                       -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log
                       -Delastic.apm.log_level=DEBUG
-                      -Delastic.apm.bootstrap_agent_classes=true
-                      -Delastic.apm.plugins_reuse_method_matches=false
-                      -Delastic.apm.pre_initialize_classes=false"
+                      -Delastic.apm.trace_methods=org.keycloak.services.resources.*"
             - name: KC_CACHE_STACK
               value: "kubernetes"
             - name: KC_CUSTOM_INFINISPAN_CONFIG
