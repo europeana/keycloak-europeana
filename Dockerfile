@@ -24,7 +24,6 @@ COPY config/elastic-apm-agent-1.52.1.jar ./conf/
 # 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-RUN mkdir /opt/keycloak/log
 # 8 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
@@ -41,6 +40,9 @@ COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 
 COPY --from=builder /opt/keycloak/conf/elastic-apm-agent-1.52.1.jar ./conf/
+
+#Create Directory for writing access logs as enabling access logs for custom location doesn not create dir directly
+RUN mkdir -p /opt/keycloak/data/log && chmod 777 /opt/keycloak/data/log
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
