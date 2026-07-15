@@ -24,6 +24,7 @@ COPY config/elastic-apm-agent-1.52.1.jar ./conf/
 # 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
+RUN mkdir /opt/keycloak/log
 # 8 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
