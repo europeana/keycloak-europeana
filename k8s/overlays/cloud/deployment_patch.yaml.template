@@ -26,7 +26,7 @@ spec:
                       -Dotel.exporter.otlp.protocol=http/protobuf
                       -Dotel.javaagent.logging=simple
                       -Dquarkus.http.access-log.enabled=true
-                      -Dquarkus.http.access-log.log-to-file=true
+                      -Dquarkus.http.access-log.log-to-file=false
                       -Dquarkus.http.access-log.base-file-name=keycloak-access
                       -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log"
             - name: KC_CACHE_STACK
