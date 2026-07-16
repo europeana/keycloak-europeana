@@ -26,7 +26,8 @@ spec:
                       -Delastic.apm.service_name=${APP_NAME}
                       -Delastic.apm.enabled=${COLLECT_APM}
                       -Delastic.apm.environment=${K8S_NAMESPACE}
-                      -Delastic.apm.trace_methods=org.keycloak.protocol.oidc.OIDCLoginProtocolService#token*,eu.europeana.keycloak.validation.provider.ApiKeyValidationProvider#validateApiKey*                      -Dquarkus.http.access-log.enabled=true
+                      -Delastic.apm.trace_methods=org.keycloak.protocol.oidc.OIDCLoginProtocolService#token*,eu.europeana.keycloak.validation.provider.ApiKeyValidationProvider#validateApiKey*
+                      -Dquarkus.http.access-log.enabled=true
                       -Dquarkus.http.access-log.log-to-file=false
                       -Dquarkus.http.access-log.base-file-name=keycloak-access
                       -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log"
