@@ -11,6 +11,20 @@ spec:
         fluentd/multiline: 'true'
     # selector.matchLabels is provided via Kustomize
     spec:
+# This ensures the volume is owned by UID 1000, which Keycloak expects
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 1000:1000 /opt/keycloak/data/log"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: log-sync-volume
+              mountPath: /opt/keycloak/data/log
       containers:
         - name: keycloak
           image: europeana/keycloak
