@@ -25,6 +25,8 @@ spec:
                       -Dotel.exporter.otlp.endpoint=https://apm.eanadev.org:8200
                       -Dotel.exporter.otlp.protocol=http/protobuf
                       -Dotel.javaagent.logging=simple
+                      -Dotel.traces.exporter=otlp
+                      -Dotel.metrics.exporter=otlp
                       -Dquarkus.http.access-log.enabled=true
                       -Dquarkus.http.access-log.log-to-file=false
                       -Dquarkus.http.access-log.base-file-name=keycloak-access
