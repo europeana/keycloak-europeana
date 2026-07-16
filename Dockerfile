@@ -21,8 +21,6 @@ COPY config/cache-ispn-impl.xml ./conf/
 # 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-RUN mkdir /opt/keycloak/log
-
 # 7 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
@@ -38,6 +36,10 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
+
+#Create Directory for writing access logs as enabling access logs for custom location doesn not create dir directly
+RUN mkdir -p /opt/keycloak/data/log && chmod 777 /opt/keycloak/data/log
+
 
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
