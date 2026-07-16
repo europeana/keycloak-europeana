@@ -21,6 +21,8 @@ COPY config/cache-ispn-impl.xml ./conf/
 # 6 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
+RUN mkdir /opt/keycloak/log
+
 # 7 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 

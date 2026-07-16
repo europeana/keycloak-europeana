@@ -130,3 +130,11 @@ spec:
             limits:
               memory: "${MEMORY_LIMIT}M"
               cpu: "${CPU_LIMIT}m"
+          volumeMounts:
+              - name: log-sync-volume
+                mountPath: /opt/keycloak/data/log
+      volumes:
+            - name: log-sync-volume
+              hostPath:
+                path: /var/log/keycloak
+                type: DirectoryOrCreate
