@@ -20,7 +20,7 @@ spec:
             - -Djgroups.dns.query=${HEADLESS_SVC_NAME}
           env:
             - name: JAVA_OPTS_APPEND
-              value: "-javaagent:/opt/keycloak/conf/elastic-apm-agent-1.48.1.jar
+              value: "-javaagent:/opt/keycloak/conf/elastic-apm-agent-1.56.0.jar
                       -Delastic.apm.application_packages=${ELASTIC_APP_PACKAGES}
                       -Delastic.apm.server_urls=${ELASTIC_APM_SERVERS}
                       -Delastic.apm.service_name=${APP_NAME}

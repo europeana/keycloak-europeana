@@ -19,7 +19,7 @@ COPY dependencies ./providers/
 COPY config/cache-ispn-impl.xml ./conf/
 
 # 6 copy elastic apm jar
-COPY config/elastic-apm-agent-1.48.1.jar ./conf/
+COPY config/elastic-apm-agent-1.56.0.jar ./conf/
 COPY config/opentelemetry-javaagent.jar ./conf/
 
 # 7 copy theme
@@ -40,7 +40,7 @@ COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 
-COPY --from=builder /opt/keycloak/conf/elastic-apm-agent-1.48.1.jar ./conf/
+COPY --from=builder /opt/keycloak/conf/elastic-apm-agent-1.56.0.jar ./conf/
 COPY --from=builder /opt/keycloak/conf/opentelemetry-javaagent.jar ./conf/
 
 #Create Directory for writing access logs as enabling access logs for custom location doesn not create dir directly
