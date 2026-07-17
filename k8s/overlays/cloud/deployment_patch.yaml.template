@@ -22,7 +22,9 @@ spec:
             - name: JAVA_OPTS_APPEND
               value: "-javaagent:/opt/keycloak/conf/opentelemetry-javaagent.jar
                       -Dotel.service.name=${APP_NAME}
+                      -Dotel.resource.attributes=deployment.environment=${K8S_NAMESPACE}
                       -Dotel.exporter.otlp.endpoint=${ELASTIC_APM_SERVERS}
+                      -Dotel.sdk.disabled=${COLLECT_APM}
                       -Dotel.exporter.otlp.protocol=grpc
                       -Dotel.logs.exporter=none
                       -Dotel.javaagent.logging=simple
