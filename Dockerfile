@@ -43,9 +43,6 @@ COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 COPY --from=builder /opt/keycloak/conf/elastic-apm-agent-1.56.0.jar ./conf/
 COPY --from=builder /opt/keycloak/conf/opentelemetry-javaagent.jar ./conf/
 
-#Create Directory for writing access logs as enabling access logs for custom location doesn not create dir directly
-RUN mkdir -p /opt/keycloak/data/log && chmod 777 /opt/keycloak/data/log
-
 # 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
 # CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
