@@ -24,6 +24,7 @@ spec:
                       -Dotel.service.name=keycloak-test
                       -Dotel.exporter.otlp.endpoint=https://apm.eanadev.org:8200
                       -Dotel.exporter.otlp.protocol=grpc
+                      -Dotel.logs.exporter=none
                       -Dotel.javaagent.logging=simple
                       -Dquarkus.http.access-log.enabled=true
                       -Dquarkus.http.access-log.log-to-file=false"
