@@ -22,7 +22,7 @@ spec:
             - name: JAVA_OPTS_APPEND
               value: "-javaagent:/opt/keycloak/conf/opentelemetry-javaagent.jar
                       -Dotel.service.name=keycloak-test
-                      -Dotel.exporter.otlp.endpoint=apm.eanadev.org:8200
+                      -Dotel.exporter.otlp.endpoint=https://apm.eanadev.org:8200
                       -Dotel.exporter.otlp.protocol=grpc
                       -Dotel.javaagent.logging=simple
                       -Dquarkus.http.access-log.enabled=true
