@@ -21,10 +21,7 @@ spec:
           env:
             - name: JAVA_OPTS_APPEND
               value: " -Dquarkus.http.access-log.enabled=true
-                       -Dquarkus.http.access-log.log-to-file=true
-                       -Dquarkus.http.access-log.base-file-name=keycloak-access
-                       -Dquarkus.http.access-log.log-directory=/opt/keycloak/data/log"
-
+                       -Dquarkus.http.access-log.log-to-file=false"
           env:
             - name: KC_CACHE_STACK
               value: "kubernetes"
