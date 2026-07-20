@@ -34,3 +34,5 @@ spec:
               value: "kubernetes"
             - name: KC_CUSTOM_INFINISPAN_CONFIG
               value: "true"
+            - name: KC_LOG
+              value: "console"
