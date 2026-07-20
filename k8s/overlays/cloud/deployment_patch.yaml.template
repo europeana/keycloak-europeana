@@ -28,11 +28,10 @@ spec:
                       -Dotel.exporter.otlp.protocol=grpc
                       -Dotel.logs.exporter=none
                       -Dotel.javaagent.logging=simple
-                      -Dotel.metrics.exporter=otlp
-                      -Dquarkus.http.access-log.enabled=${ENABLE_ACCESS_LOGS}"
+                      -Dotel.metrics.exporter=otlp"
             - name: KC_CACHE_STACK
               value: "kubernetes"
             - name: KC_CUSTOM_INFINISPAN_CONFIG
               value: "true"
-            - name: KC_LOG
-              value: "console"
+            - name: KC_HTTP_ACCESS_LOG_ENABLED
+              value: "${ENABLE_ACCESS_LOGS}"
