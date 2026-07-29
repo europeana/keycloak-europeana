@@ -18,18 +18,21 @@ COPY dependencies ./providers/
 # 5 copy quarkus configuration with custom jdbc settings
 COPY config/cache-ispn-impl.xml ./conf/
 
-# 6 copy theme
+# 6 copy otel-javaagent apm jar
+COPY config/opentelemetry-javaagent.jar ./conf/
+
+# 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 
-# 7 create intermediary build
+# 8 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
 
-# 8 get another copy of Keycloak image and apply changes there again
+# 9 get another copy of Keycloak image and apply changes there again
 # see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
 FROM quay.io/keycloak/keycloak:${keycloak_version}
 WORKDIR /opt/keycloak
 
-# 9 copy add-ons, dependencies, optimised libs and theme again to new copy
+# 10 copy add-ons, dependencies, optimised libs and theme again to new copy
 COPY --from=builder /opt/keycloak/providers/ ./providers/
 #COPY --from=builder /opt/keycloak/conf/ ./conf/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
@@ -37,6 +40,8 @@ COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
 
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 
-# 10 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
+COPY --from=builder /opt/keycloak/conf/opentelemetry-javaagent.jar ./conf/
+
+# 11 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
 # fix for redirect issue.
 # CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]

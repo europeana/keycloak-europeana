@@ -18,6 +18,22 @@ public class SessionTracker implements Serializable {
         this.lastAccessDate = lastAccessDate;
     }
 
+    /**
+     * Constructs new SessionTracker Object from existing.
+     * Deep copy the object. As we don't have Mutable fields in class ,
+     * shallow copy code below is effectively a deep copy.
+     * @param existing SessionTracker object
+     */
+    public SessionTracker(SessionTracker existing) {
+        if(existing!=null) {
+            this.id = existing.id;
+            this.sessionCount = existing.sessionCount;
+            this.lastAccessDate = existing.lastAccessDate;
+            this.lastRateLimitReachingTime = existing.lastRateLimitReachingTime;
+        }
+    }
+
+
     public String getId() {
         return id;
     }
@@ -53,17 +69,24 @@ public class SessionTracker implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
         SessionTracker that = (SessionTracker) obj;
         return Objects.equals(id, that.id) &&
             Objects.equals(sessionCount, that.sessionCount) &&
             Objects.equals(lastAccessDate, that.lastAccessDate) &&
             Objects.equals(lastRateLimitReachingTime, that.lastRateLimitReachingTime);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, sessionCount, lastAccessDate, lastRateLimitReachingTime);
+    }
+
+
 
 }

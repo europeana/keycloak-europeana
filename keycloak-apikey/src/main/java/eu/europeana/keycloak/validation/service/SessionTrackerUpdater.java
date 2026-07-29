@@ -30,7 +30,7 @@ public class SessionTrackerUpdater implements BiFunction<String, SessionTracker,
      */
     @Override
     public SessionTracker apply(String key, SessionTracker existingTracker) {
-        SessionTracker tracker = (existingTracker != null) ? existingTracker :
+        SessionTracker tracker = (existingTracker != null) ? new SessionTracker(existingTracker) :
                 new SessionTracker(key, rateLimitPolicy.getQ(), currentDate);
         updateSessionTracker(tracker);
         return tracker;
