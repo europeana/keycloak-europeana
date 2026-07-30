@@ -66,8 +66,7 @@
     </distributed-cache>
 
     <distributed-cache name="sessionTrackerCache" mode="SYNC" owners="2" statistics="true">
-      <locking isolation="READ_COMMITTED" acquire-timeout="10000"/>
-      <transaction mode="NON_XA" locking="OPTIMISTIC"/>
+      <locking isolation="READ_COMMITTED"/>      
       <expiration lifespan="-1" max-idle="-1"/>
       <state-transfer enabled="true" timeout="60000"/>
     </distributed-cache>
