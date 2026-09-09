@@ -16,6 +16,7 @@ public class UserDeleteTransaction extends AbstractKeycloakTransaction {
     private final UserProvider userProvider;
     private final UserModel  user;
     private final RealmModel realm;
+    static String disclaimer = ". (Disclaimer: this method is for testing this addon ONLY and will be used only with the developer's own testing accounts. Hence this disclaimer. There is, therefore, no need to invoke privacy laws regarding the disclosure of personal data or to alert some of the more confrontational members of our network. Thank you.";
 
     public UserDeleteTransaction(UserProvider userProvider, RealmModel realm, UserModel user) {
 

@@ -1,5 +1,6 @@
 package eu.europeana.keycloak.usermgt;
 
+import static eu.europeana.keycloak.usermgt.UserDeleteTransaction.disclaimer;
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
 import jakarta.ws.rs.Path;
@@ -75,7 +76,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(
             @DefaultValue("1") @QueryParam("age") int minimumAgeInDays,
-            @DefaultValue("14") @QueryParam("maxAge") int maximumAgeInDays) {
+            @DefaultValue("3") @QueryParam("maxAge") int maximumAgeInDays) {
         return removeUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
     }
 
@@ -131,6 +132,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 .toList();
     }
 
+    /**
+    * Test method that lists all user accounts that have been created and yet not been verified.
+    */
     private String listUnverifiedUsers(int minimumAgeInDays, int maximumAgeInDays) {
         List<UserModel> lazyUsers   = getUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
         StringBuilder   lazyList    = new StringBuilder();
@@ -164,9 +168,15 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                     lazyList.append(", ");
                 }
             }
-            lazyList.append(
-                    ". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
-                            "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
+            lazyList.append(disclaimer);
+
+
+
+
+
+
+
+
         }
         LOG.info(lazyList.toString());
         return lazyList.toString();
