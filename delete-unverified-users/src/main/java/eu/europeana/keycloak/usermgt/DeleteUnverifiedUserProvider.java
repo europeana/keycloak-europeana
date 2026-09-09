@@ -45,9 +45,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private  static final Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
 
     private KeycloakSession session;
-
     private RealmModel realm;
-
     private UserProvider userProvider;
 
     public DeleteUnverifiedUserProvider(KeycloakSession session) {
@@ -62,18 +60,23 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     }
 
     /**
-     * Removes Users based on these criteria: - UserModel.EMAIL_VERIFIED = "false" - UserModel.INCLUDE_SERVICE_ACCOUNT =
-     * "false" - was created less than [minimumAgeInDays] day(s) ago Details about the number and IDs of deleted users
-     * are logged.
-     * @param minimumAgeInDays minimum age in days
+     * Removes Users based on these criteria:
+     * - UserModel.EMAIL_VERIFIED = "false"
+     * - UserModel.INCLUDE_SERVICE_ACCOUNT = "false"
+     * - Was created between [minimumAgeInDays] and [maximumAgeInDays] days ago
+     * - Has the explicit required action 'VERIFY_EMAIL'
+     *
+     * @param minimumAgeInDays minimum age in days (default 1)
+     * @param maximumAgeInDays maximum age in days (default 14)
      * @return String (completed message)
      */
     @Path("")
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(
-        @DefaultValue("1") @QueryParam("age") int minimumAgeInDays) {
-        return removeUnverifiedUsers(minimumAgeInDays);
+            @DefaultValue("1") @QueryParam("age") int minimumAgeInDays,
+            @DefaultValue("14") @QueryParam("maxAge") int maximumAgeInDays) {
+        return removeUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
     }
 
     @Override
@@ -81,46 +84,55 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         // No specific implementation required
     }
 
-    private String removeUnverifiedUsers(int minimumAgeInDays) {
-        int             nrOfDeletedUsers           = 0;
-        List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays);
+    private String removeUnverifiedUsers(int minimumAgeInDays, int maximumAgeInDays) {
+        int nrOfDeletedUsers = 0;
+        List<UserModel> unverifiedUsersToYesterday = getUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
 
         for (UserModel user : unverifiedUsersToYesterday) {
-
-             UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user);
+            UserDeleteTransaction userDeleteTransaction = new UserDeleteTransaction(userProvider, realm, user);
             session.getTransactionManager().enlistPrepare(userDeleteTransaction);
             nrOfDeletedUsers++;
 
             LOG.info("#" + nrOfDeletedUsers + " - " + user.getUsername() + " scheduled for deletion");
         }
         if (nrOfDeletedUsers > 0) {
-            LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " day(s)");
+            LOG.info(nrOfDeletedUsers + SUCCESS_MSG + minimumAgeInDays + " to " + maximumAgeInDays + " day(s)");
         } else {
-            LOG.info("No unverified users found in the realm "+realm);
+            LOG.info("No unverified users found in the realm " + realm);
         }
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_DELETE_UNVERIFIED_USERS");
-        conn.publishStatusReport(String.format(DELETION_REPORT_MESSAGE,nrOfDeletedUsers));
+        conn.publishStatusReport(String.format(DELETION_REPORT_MESSAGE, nrOfDeletedUsers));
         return "Unverified user delete job finished.";
     }
 
     /**
-     * This method retrieves a List of UserModels filtered on the property (UserModel.EMAIL_VERIFIED: "false") and
-     * excludes all Service Accounts: (UserModel.INCLUDE_SERVICE_ACCOUNT, "false") and also excludes any account created
-     * less than [minimumAgeInDays] ago
-     *
-     * @return List of UserModels
+     * Retrieves UserModels where EMAIL_VERIFIED is false and SERVICE_ACCOUNT is false,
+     * bounded within the creation age window [minimumAgeInDays, maximumAgeInDays],
+     * and containing the 'VERIFY_EMAIL' required action.
      */
-    private List<UserModel> getUnverifiedUsers(int minimumAgeInDays) {
-        return userProvider.searchForUserStream(
-                               realm,
-                emailNotVerified)
-                           .filter(u -> u.getCreatedTimestamp() <
-                                        (System.currentTimeMillis() - (MILLIS_PER_DAY * minimumAgeInDays)))
-                           .toList();
+    private List<UserModel> getUnverifiedUsers(int minimumAgeInDays, int maximumAgeInDays) {
+        long now = System.currentTimeMillis();
+        long minAgeTimestamp = now - (MILLIS_PER_DAY * minimumAgeInDays);
+        long maxAgeTimestamp = now - (MILLIS_PER_DAY * maximumAgeInDays);
+
+        return userProvider.searchForUserStream(realm, emailNotVerified)
+                .filter(u -> {
+                    long created = u.getCreatedTimestamp();
+
+                    // Check 1: Account must be created inside the window [maxAgeTimestamp, minAgeTimestamp]
+                    boolean isWithinAgeWindow = created <= minAgeTimestamp && created >= maxAgeTimestamp;
+
+                    // Check 2: Account must explicitly have the VERIFY_EMAIL required action
+                    boolean hasVerifyEmailAction = u.getRequiredActionsStream()
+                            .anyMatch(UserModel.RequiredAction.VERIFY_EMAIL.name()::equals);
+
+                    return isWithinAgeWindow && hasVerifyEmailAction;
+                })
+                .toList();
     }
 
-    private String listUnverifiedUsers(int minimumAgeInDays) {
-        List<UserModel> lazyUsers   = getUnverifiedUsers(minimumAgeInDays);
+    private String listUnverifiedUsers(int minimumAgeInDays, int maximumAgeInDays) {
+        List<UserModel> lazyUsers   = getUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
         StringBuilder   lazyList    = new StringBuilder();
         int             lazyCounter = 0;
         int             lazySize    = lazyUsers.size();
@@ -134,8 +146,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 lazyList.append(lazySize);
                 lazyList.append(" users ");
             }
-            lazyList.append(" found the effort of validating their email address beyond their capabilities and were " +
-                            "therefore asked to leave the premises. ");
+            lazyList.append("found the effort of validating their email address beyond their capabilities and were " +
+                    "therefore asked to leave the premises. ");
             if (lazySize > 1) {
                 lazyList.append("They are: ");
             } else {
@@ -153,13 +165,12 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                 }
             }
             lazyList.append(
-                ". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
-                "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
+                    ". (Disclaimer: this is just for testing and will be used only on the developer's own testing " +
+                            "accounts. Invoking the privacy laws for communicating private data is therefore not required. Thank you.");
         }
         LOG.info(lazyList.toString());
         return lazyList.toString();
     }
-
 
     private String logMessage(UserModel user, String message, int nrOfDeletedUsers) {
         StringBuilder msg = new StringBuilder();
@@ -197,7 +208,4 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         msg.append(" ");
         return LOG_PREFIX + msg;
     }
-
-
-
 }
