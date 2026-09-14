@@ -30,9 +30,11 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private static final Logger LOG         = Logger.getLogger(DeleteUnverifiedUserProvider.class);
     private static final String LOG_PREFIX  = "KEYCLOAK_EVENT:";
     private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
+    private static final String DISCLAIMER = ". (Disclaimer: this method is for testing this addon ONLY and will be used only with the developer's own testing accounts. Hence this disclaimer. There is, therefore, no need to invoke privacy laws regarding the disclosure of personal data or to alert some of the more confrontational members of our network. Thank you.)";
+
     private static final String DELETION_REPORT_MESSAGE  = "{\"text\":\" %s unverified accounts were deleted.\"}";
 
-    private static Map<String, String> emailNotVerified;
+    private static final Map<String, String> emailNotVerified;
 
     static {
         emailNotVerified = new HashMap<>();
@@ -45,9 +47,9 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     // (e.g. when set to 24L => removes all unverified users registered before yesterday, same time)
     private  static final Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
 
-    private KeycloakSession session;
-    private RealmModel realm;
-    private UserProvider userProvider;
+    private final KeycloakSession session;
+    private final RealmModel realm;
+    private final UserProvider userProvider;
 
     public DeleteUnverifiedUserProvider(KeycloakSession session) {
         this.session      = session;
@@ -168,7 +170,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                     lazyList.append(", ");
                 }
             }
-            lazyList.append(disclaimer);
+            lazyList.append(DISCLAIMER);
 
 
 
