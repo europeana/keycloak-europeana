@@ -77,7 +77,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     @Produces({MediaType.APPLICATION_JSON})
     public String delete(
             @DefaultValue("1") @QueryParam("age") int minimumAgeInDays,
-            @DefaultValue("3") @QueryParam("maxAge") int maximumAgeInDays) {
+            @DefaultValue("5") @QueryParam("maxAge") int maximumAgeInDays) {
         return removeUnverifiedUsers(minimumAgeInDays, maximumAgeInDays);
     }
 
