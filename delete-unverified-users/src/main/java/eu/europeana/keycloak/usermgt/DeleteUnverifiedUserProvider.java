@@ -1,6 +1,5 @@
 package eu.europeana.keycloak.usermgt;
 
-import static eu.europeana.keycloak.usermgt.UserDeleteTransaction.disclaimer;
 import static org.keycloak.utils.StringUtil.isNotBlank;
 
 import jakarta.ws.rs.Path;
@@ -70,7 +69,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
      * - Has the explicit required action 'VERIFY_EMAIL'
      *
      * @param minimumAgeInDays minimum age in days (default 1)
-     * @param maximumAgeInDays maximum age in days (default 14)
+     * @param maximumAgeInDays maximum age in days (default 3)
      * @return String (completed message)
      */
     @Path("")
