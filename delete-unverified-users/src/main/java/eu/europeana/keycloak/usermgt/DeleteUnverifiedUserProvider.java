@@ -31,7 +31,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     private static final String SUCCESS_MSG = " unverified user accounts are scheduled for removal because their email addresses were not verified within ";
     private static final String DISCLAIMER = ". (Disclaimer: this method is for testing this addon ONLY and will be used only with the developer's own testing accounts. Hence this disclaimer. There is, therefore, no need to invoke privacy laws regarding the disclosure of personal data or to alert some of the more confrontational members of our network. Thank you.)";
 
-    private static final String DELETION_REPORT_MESSAGE  = "{\"text\":\" %s unverified accounts were deleted.\"}";
+    private static final String DELETION_REPORT_MESSAGE = "{\"text\":\"%d unverified accounts were deleted.\"}";
+//    private static final String DELETION_REPORT_MESSAGE  = "{\"text\":\" %s unverified accounts were deleted.\"}";
 
     private static final Map<String, String> emailNotVerified;
 
@@ -44,7 +45,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
     // change this value to set how many hours before {SYSDATE} unverified users (i.e. not confirmed by email)
     // must have registered at least, before they are removed when this add-on is triggered
     // (e.g. when set to 24L => removes all unverified users registered before yesterday, same time)
-    private  static final Long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
+    private  static final long MILLIS_PER_DAY = 24L * 60L * 60L * 1000L;
 
     private final KeycloakSession session;
     private final RealmModel realm;
@@ -103,7 +104,8 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
             LOG.info("No unverified users found in the realm " + realm);
         }
         SlackConnection conn = new SlackConnection("SLACK_WEBHOOK_DELETE_UNVERIFIED_USERS");
-        conn.publishStatusReport(String.format(DELETION_REPORT_MESSAGE, nrOfDeletedUsers));
+        // Convert primitive int to Integer explicitly if autoboxing isn't kicking in
+        conn.publishStatusReport(String.format(DELETION_REPORT_MESSAGE, Integer.valueOf(nrOfDeletedUsers)));
         return "Unverified user delete job finished.";
     }
 

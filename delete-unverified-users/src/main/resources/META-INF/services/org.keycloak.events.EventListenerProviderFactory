@@ -1,1 +1,1 @@
-com.example.keycloak.LoginTrackerEventListenerProviderFactory
+eu.europeana.keycloak.usermgt.LoginTrackerEventListenerProviderFactory
