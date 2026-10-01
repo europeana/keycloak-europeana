@@ -128,7 +128,10 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                     boolean hasVerifyEmailAction = u.getRequiredActionsStream()
                             .anyMatch(UserModel.RequiredAction.VERIFY_EMAIL.name()::equals);
 
-                    return isWithinAgeWindow && hasVerifyEmailAction;
+                    // Check 3: User has never logged in (excludes existing users who updated email)
+                    boolean neverLoggedIn = u.getFirstAttribute("hasLoggedIn") == null;
+
+                    return isWithinAgeWindow && hasVerifyEmailAction && neverLoggedIn;
                 })
                 .toList();
     }

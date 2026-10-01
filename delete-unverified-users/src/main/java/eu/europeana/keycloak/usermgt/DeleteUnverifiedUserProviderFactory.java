@@ -38,5 +38,4 @@ public class DeleteUnverifiedUserProviderFactory implements RealmResourceProvide
     public void close() {
         //No additional close actions required
     }
-
 }

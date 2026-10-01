@@ -42,5 +42,4 @@ public class UserDeleteTransaction extends AbstractKeycloakTransaction {
     protected void rollbackImpl() {
         //
     }
-
 }
