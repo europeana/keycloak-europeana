@@ -127,7 +127,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
                     // Check 1: Account must be created inside the window [maxAgeTimestamp, minAgeTimestamp]
                     boolean isWithinAgeWindow = created <= minAgeTimestamp && created >= maxAgeTimestamp;
                     if (isWithinAgeWindow){
-                        sb.append("age is between " + minimumAgeInDays + " and " + maximumAgeInDays + " days - ");
+                        sb.append("age is between ").append(minimumAgeInDays).append(" and ").append(maximumAgeInDays).append(" days - ");
                     }
 
                     // Check 2: Account must explicitly have the VERIFY_EMAIL required action
