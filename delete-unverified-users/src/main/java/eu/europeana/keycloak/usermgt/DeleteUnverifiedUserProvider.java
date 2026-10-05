@@ -118,6 +118,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
         long now = System.currentTimeMillis();
         long minAgeTimestamp = now - (MILLIS_PER_DAY * minimumAgeInDays);
         long maxAgeTimestamp = now - (MILLIS_PER_DAY * maximumAgeInDays);
+        StringBuilder sb = new StringBuilder("User account delete status: ");
 
         return userProvider.searchForUserStream(realm, emailNotVerified)
                 .filter(u -> {
@@ -125,15 +126,32 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
 
                     // Check 1: Account must be created inside the window [maxAgeTimestamp, minAgeTimestamp]
                     boolean isWithinAgeWindow = created <= minAgeTimestamp && created >= maxAgeTimestamp;
+                    if (isWithinAgeWindow){
+                        sb.append("age is between " + minimumAgeInDays + " and " + maximumAgeInDays + " days - ");
+                    }
 
                     // Check 2: Account must explicitly have the VERIFY_EMAIL required action
                     boolean hasVerifyEmailAction = u.getRequiredActionsStream()
                             .anyMatch(UserModel.RequiredAction.VERIFY_EMAIL.name()::equals);
 
+                    if (hasVerifyEmailAction){
+                        sb.append("has 'Verify Email Action set - ");
+                    }
+
                     // Check 3: User has never logged in (excludes existing users who updated email)
                     boolean neverLoggedIn = u.getFirstAttribute("hasLoggedIn") == null;
 
-                    return isWithinAgeWindow && hasVerifyEmailAction && neverLoggedIn;
+                    if (neverLoggedIn){
+                        sb.append("has never logged in yet.");
+                    }
+
+
+                    if (isWithinAgeWindow && hasVerifyEmailAction && neverLoggedIn){
+                        LOG.info("User account is eligible for deletion based on all three criteria");
+                        return true;
+                    } else {
+                        return false;
+                    }
                 })
                 .toList();
     }
