@@ -12,6 +12,8 @@ spec:
       ttlSecondsAfterFinished: 86400
       template:
         metadata:
+          labels:
+            app: keycloakuser-cleanup
           annotations:
             fluentd/include: '${COLLECT_LOGS}'
             fluentd/multiline: 'true'

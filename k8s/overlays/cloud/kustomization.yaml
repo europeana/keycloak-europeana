@@ -7,3 +7,6 @@ resources:
 
 patches:
   - path: deployment_patch.yaml
+
+transformers:
+  - app-label-transformer.yaml

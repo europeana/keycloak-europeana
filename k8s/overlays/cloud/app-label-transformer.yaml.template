@@ -1,0 +1,21 @@
+apiVersion: builtin
+kind: LabelTransformer
+metadata:
+  name: app-label-transformer
+labels:
+    app: ${APP_NAME}
+fieldSpecs:
+  - path: metadata/labels
+    create: true
+  - path: spec/selector
+    version: v1
+    kind: Service
+    create: true
+  - path: spec/selector/matchLabels
+    group: apps
+    kind: Deployment
+    create: true
+  - path: spec/template/metadata/labels
+    group: apps
+    kind: Deployment
+    create: true

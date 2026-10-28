@@ -68,6 +68,7 @@ public class DeleteUnverifiedUserProvider implements RealmResourceProvider {
      * - UserModel.INCLUDE_SERVICE_ACCOUNT = "false"
      * - Was created between [minimumAgeInDays] and [maximumAgeInDays] days ago
      * - Has the explicit required action 'VERIFY_EMAIL'
+     * - UserModel attribute "hasLoggedIn" is null
      *
      * @param minimumAgeInDays minimum age in days (default 1)
      * @param maximumAgeInDays maximum age in days (default 3)
