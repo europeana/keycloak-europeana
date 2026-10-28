@@ -3,7 +3,7 @@ kind: LabelTransformer
 metadata:
   name: app-label-transformer
 labels:
-  app: keycloak-prod
+    app: ${APP_NAME}
 fieldSpecs:
   - path: metadata/labels
     create: true

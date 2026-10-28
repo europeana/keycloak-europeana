@@ -9,4 +9,4 @@ patches:
   - path: deployment_patch.yaml
 
 transformers:
-  - app-label-transformer.yaml
+  - app-label-transformer.yaml.template
