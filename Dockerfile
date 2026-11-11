@@ -1,4 +1,4 @@
-ARG keycloak_version=23.0.7
+ARG keycloak_version=26.8.1
 ARG theme_version=0.12.1
 
 # 1 get theme from GitHub
@@ -23,6 +23,7 @@ COPY config/opentelemetry-javaagent.jar ./conf/
 
 # 7 copy theme
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
+COPY --from=theme /opt/keycloak/themes/europeana-v2 ./themes/europeana-v2
 
 # 8 create intermediary build
 RUN /opt/keycloak/bin/kc.sh build
@@ -37,6 +38,7 @@ COPY --from=builder /opt/keycloak/providers/ ./providers/
 #COPY --from=builder /opt/keycloak/conf/ ./conf/
 COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
 COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
+COPY --from=builder /opt/keycloak/themes/europeana-v2 ./themes/europeana-v2
 
 COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
 
