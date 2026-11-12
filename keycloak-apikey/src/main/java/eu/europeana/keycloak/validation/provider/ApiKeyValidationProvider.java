@@ -23,7 +23,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resources.Cors;
+import org.keycloak.services.cors.Cors;
 
 import static eu.europeana.keycloak.utils.Constants.*;
 
@@ -83,7 +83,7 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     setupCors("DELETE");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      return this.cors.add(Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
     }
     return checkAndDisableApiKey(clientPublicID, result.getUser());
   }
@@ -91,9 +91,11 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   @Path("/{clientPublicId}")
   @OPTIONS
   public Response disableApikeyPreflight() {
-    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-        .auth().allowedMethods("DELETE")
-        .preflight().build();
+    return session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("DELETE")
+            .preflight()
+            .add(Response.ok());
   }
 
   private Response checkAndDisableApiKey(String clientPublicID, UserModel user) {
@@ -101,20 +103,20 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     ClientModel clientToBeDisabled = session.clients().getClientById(session.getContext().getRealm(),
         clientPublicID);
     if (clientToBeDisabled==null){
-      return this.cors.builder(Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404)).build();
+      return this.cors.add(Response.status(Status.NOT_FOUND).entity(ErrorMessage.CLIENT_UNKNOWN_404));
     }
     List<Apikey> clientList = listKeysService.getPrivateAndProjectkeys(user);
     //check if requested client is part of clients associated to authorized user
     if (clientList.stream().noneMatch(apikey -> apikey.getId().equals(clientToBeDisabled.getId()))) {
-      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+      return this.cors.add(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403));
     }
     //check if key already disabled
     if (!clientToBeDisabled.isEnabled()){
-      return this.cors.builder(Response.status(Status.GONE).entity(ErrorMessage.CLIENT_ALREADY_DISABLED_410)).build();
+      return this.cors.add(Response.status(Status.GONE).entity(ErrorMessage.CLIENT_ALREADY_DISABLED_410));
     }
     //disable the key
     clientToBeDisabled.setEnabled(false);
-    return this.cors.builder(Response.status(Status.NO_CONTENT)).build();
+    return this.cors.add(Response.status(Status.NO_CONTENT));
   }
 
   @Path("")
@@ -123,32 +125,34 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
     setupCors("POST");
     ValidationResult result = service.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      return this.cors.add(Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
     }
     UserModel userModel = result.getUser();
     List<ClientModel> personalKeys = getPersonalKeys(userModel);
     if (!personalKeys.isEmpty()) {
       if (personalKeys.stream().anyMatch(ClientModel::isEnabled)){
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400)).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.DUPLICATE_KEY_400));
       }
       //check if user owns 3 disabled personal keys
       if (personalKeys.stream().filter(p-> !p.isEnabled()).count() == ALLOWED_NUMBER_OF_DISABLED_KEYS){
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.KEY_LIMIT_REACHED_400)).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST).entity(ErrorMessage.KEY_LIMIT_REACHED_400));
       }
     }
     //Create new key and associate it to user
     KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
         null, userModel.getUsername());
     Apikey apikey = clientCreationService.registerKey(userModel,Constants.PERSONAL_KEY,Constants.PRIVATE_KEY_DESCRIPTION);
-    return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
+    return this.cors.add(Response.status(Status.OK).entity(apikey));
   }
 
   @Path("")
   @OPTIONS
   public Response registerPersonalKeyPreflight() {
-    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-          .auth().allowedMethods("POST")
-          .preflight().build();
+    return session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("POST")
+            .preflight()
+            .add(Response.ok());
   }
 
 
@@ -186,10 +190,11 @@ public class ApiKeyValidationProvider implements RealmResourceProvider {
   }
 
   private void setupCors(String allowedMethod) {
-    this.cors = Cors.add(session.getContext().getHttpRequest())
-        .auth().allowedMethods(allowedMethod)
-        .exposedHeaders("Allow")
-        .allowAllOrigins();
+    this.cors = session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods(allowedMethod)
+            .exposedHeaders("Allow")
+            .allowAllOrigins();
   }
 
 

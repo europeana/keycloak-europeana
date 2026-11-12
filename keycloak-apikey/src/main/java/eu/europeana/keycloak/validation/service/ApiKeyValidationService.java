@@ -55,7 +55,9 @@ public class ApiKeyValidationService {
         AuthResult authResult = AuthenticationManager.verifyIdentityToken(
                 this.session, this.realm, session.getContext().getUri(),
                 session.getContext().getConnection(), false, true, null, false,
-                tokenString, session.getContext().getRequestHeaders());
+                tokenString,
+                session.getContext().getHttpRequest().getHttpHeaders(),
+                null);
 
         if (authResult == null || authResult.getClient() == null) {
             return new ValidationResult(Status.UNAUTHORIZED, ErrorMessage.TOKEN_INVALID_401);

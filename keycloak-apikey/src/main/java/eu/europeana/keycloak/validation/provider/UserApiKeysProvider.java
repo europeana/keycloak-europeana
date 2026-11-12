@@ -11,7 +11,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resources.Cors;
+import org.keycloak.services.cors.Cors;
 
 /**
  * Provider class for fetching keys(clients) associated to keycloak user
@@ -47,23 +47,26 @@ public class UserApiKeysProvider implements RealmResourceProvider {
     setupCors();
     ValidationResult result = validationService.validateAuthToken(Constants.GRANT_TYPE_PASSWORD);
     if(result.getErrorResponse() != null) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      return this.cors.add(Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
     }
-    return this.cors.builder(Response.ok().entity(listKeysService.getPrivateAndProjectkeys(result.getUser()))).build();
+    return this.cors.add(Response.ok().entity(listKeysService.getPrivateAndProjectkeys(result.getUser())));
   }
 
   @Path("/clients")
   @OPTIONS
-  public Response getKeysAssociatedToUserPreflight(){
-    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-        .auth().allowedMethods("GET")
-        .preflight().build();
+  public Response getKeysAssociatedToUserPreflight() {
+    return session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("GET")
+            .preflight()
+            .add(Response.ok());
   }
 
   private void setupCors() {
-    this.cors = Cors.add(session.getContext().getHttpRequest())
-        .auth().allowedMethods("GET")
-        .exposedHeaders("Allow")
-        .allowAllOrigins();
+    this.cors = session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("GET")
+            .exposedHeaders("Allow")
+            .allowAllOrigins();
   }
 }

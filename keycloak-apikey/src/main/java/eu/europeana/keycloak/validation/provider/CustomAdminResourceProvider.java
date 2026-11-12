@@ -32,7 +32,7 @@ import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.*;
 import org.keycloak.services.resource.RealmResourceProvider;
-import org.keycloak.services.resources.Cors;
+import org.keycloak.services.cors.Cors;
 
 import static eu.europeana.keycloak.utils.Constants.*;
 /**
@@ -65,12 +65,12 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     this.setupCors("POST");
     ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
     if (!result.isSuccess()) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      return this.cors.add(Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
     }
     //allow project key creation only to the authenticated users who have admin role
     UserModel userModel = result.getUser();
     if(userModel.getRoleMappingsStream().noneMatch(p->ADMIN_ROLE_NAME.equals(p.getName()))){
-      return this.cors.builder(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+      return this.cors.add(Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403));
     }
 
     //Validate request form data
@@ -81,14 +81,14 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     if(!PROJECT_KEY.equals(decodedFormParameters.getFirst("type"))
         || StringUtils.isBlank(decodedFormParameters.getFirst("name"))
         || userForKeyCreation ==null){
-      return this.cors.builder(Response.status(Status.BAD_REQUEST)).build();
+      return this.cors.add(Response.status(Status.BAD_REQUEST));
     }
 
     //Create new key and associate it to user
     KeyCloakClientCreationService clientCreationService = new KeyCloakClientCreationService(session,
         null, decodedFormParameters.getFirst("name"));
     Apikey apikey = clientCreationService.registerKey(userForKeyCreation,PROJECT_KEY,null);
-    return this.cors.builder(Response.status(Status.OK).entity(apikey)).build();
+    return this.cors.add(Response.status(Status.OK).entity(apikey));
   }
 
   @Path("/sessioncount")
@@ -98,20 +98,20 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     try {
       ValidationResult result = service.validateAuthToken(GRANT_TYPE_PASSWORD);
       if (!result.isSuccess()) {
-        return this.cors.builder(
-            Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+        return this.cors.add(
+            Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
       }
       //allow project key creation only to the authenticated users who have admin role
       UserModel userModel = result.getUser();
       if (userModel.getRoleMappingsStream()
           .noneMatch(p -> ADMIN_ROLE_NAME.equals(p.getName()))) {
-        return this.cors.builder(
-            Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403)).build();
+        return this.cors.add(
+            Response.status(Status.FORBIDDEN).entity(ErrorMessage.USER_NOT_AUTHORIZED_403));
       }
       return getCachedSessionDetails();
     }
     catch (Exception e){
-       return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)).build();
+       return this.cors.add(Response.status(Status.INTERNAL_SERVER_ERROR));
     }
   }
 
@@ -126,23 +126,26 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
       details.add("rateLimitReached",StringUtils.getIfEmpty(entry.getValue().getLastRateLimitReachingTime(),()->""));
       cachedObject.add(entry.getKey(),details);
     }
-    return this.cors.builder(Response.status(Status.OK).entity(cachedObject.build().toString())).build();
+    return this.cors.add(Response.status(Status.OK).entity(cachedObject.build().toString()));
 
   }
 
   private void setupCors(String allowedMethod) {
-    this.cors = Cors.add(session.getContext().getHttpRequest())
-        .auth().allowedMethods(allowedMethod)
-        .exposedHeaders("Allow")
-        .allowAllOrigins();
+    this.cors = session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods(allowedMethod)
+            .exposedHeaders("Allow")
+            .allowAllOrigins();
   }
 
   @Path("/client")
   @OPTIONS
-  public Response createProjectKeyPreflight(){
-    return Cors.add(session.getContext().getHttpRequest(), Response.ok())
-        .auth().allowedMethods("POST")
-        .preflight().build();
+  public Response createProjectKeyPreflight() {
+    return session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("POST")
+            .preflight()
+            .add(Response.ok());
   }
 
   @Path("/client")
@@ -151,7 +154,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
     this.setupCors("GET");
     ValidationResult result = service.validateAuthToken(null);
     if (!result.isSuccess()) {
-      return this.cors.builder(Response.status(result.getHttpStatus()).entity(result.getErrorResponse())).build();
+      return this.cors.add(Response.status(result.getHttpStatus()).entity(result.getErrorResponse()));
     }
 
     EntityManager entityManager = session.getProvider(JpaConnectionProvider.class).getEntityManager();
@@ -165,7 +168,7 @@ public class CustomAdminResourceProvider implements RealmResourceProvider {
             .add("projects", Json.createArrayBuilder(projects))
             .add("internal", Json.createArrayBuilder(internal)).build();
 
-    return this.cors.builder(Response.status(Status.OK).entity(registeredClients.toString())).build();
+    return this.cors.add(Response.status(Status.OK).entity(registeredClients.toString()));
   }
 
 }

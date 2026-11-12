@@ -67,7 +67,7 @@ public class CustomEmailSenderProvider implements EmailSenderProvider {
       transport.sendMessage(msg,msg.getAllRecipients());
     } catch (Exception ex) {
       ServicesLogger.LOGGER.failedToSendEmail(ex);
-      throw new EmailException(ex);
+      throw new EmailException("Failed to send email", ex);
     }
   }
 
@@ -120,7 +120,7 @@ public class CustomEmailSenderProvider implements EmailSenderProvider {
     msg.setSentDate(new Date());
     msg.setRecipient(RecipientType.TO,this.toInternetAddress(address,null));
     if(this.getAddressForCC()!=null && !this.getAddressForCC().isBlank())
-       msg.setRecipient(RecipientType.BCC,this.toInternetAddress(getAddressForCC(),null));
+       msg.setRecipient(RecipientType.CC,this.toInternetAddress(getAddressForCC(),null));
     if(this.getAddressForBCC()!=null && !this.getAddressForBCC().isBlank())
       msg.setRecipient(RecipientType.BCC,this.toInternetAddress(getAddressForBCC(),null));
     return msg;
@@ -151,6 +151,12 @@ public class CustomEmailSenderProvider implements EmailSenderProvider {
     } else {
       throw new EmailException("Please provide a valid address", null);
     }
+  }
+
+  @Override
+  public void validate(Map<String, String> config) throws EmailException {
+    session.getProvider(EmailSenderProvider.class, "default")
+            .validate(config);
   }
 
   @Override

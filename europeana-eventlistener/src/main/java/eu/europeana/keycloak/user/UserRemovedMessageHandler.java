@@ -23,8 +23,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.jboss.logging.Logger;
-import org.keycloak.email.DefaultEmailSenderProvider;
 import org.keycloak.email.EmailException;
+import org.keycloak.email.EmailSenderProvider;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -32,7 +32,6 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserModel.UserRemovedEvent;
 import static eu.europeana.keycloak.user.UserRemovedConfig.*;
-
 
 /**
  * Created by luthien on 25/10/2021.
@@ -199,7 +198,7 @@ public class UserRemovedMessageHandler {
         } else {
             HttpEntity entity = response.getEntity();
             String responseString = EntityUtils.toString(entity);
-            userSetToken = readJsonValue(responseString, "access_token");
+            userSetToken = readJsonValue(responseString);
             if (isNotBlank(userSetToken)){
                 if (DEBUG_LOGS){
                     LOG.info("User set access token: " + userSetToken);
@@ -345,7 +344,7 @@ public class UserRemovedMessageHandler {
     private boolean sendSlackEmailMessage(KeycloakSession session, UserModel slackUserModel, UserRemovedEvent deleteEvent,String message) {
 
 
-        DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+        EmailSenderProvider senderProvider = session.getProvider(EmailSenderProvider.class);
         UserModel deleteUser = deleteEvent.getUser();
 
         try {
@@ -406,14 +405,14 @@ public class UserRemovedMessageHandler {
     }
 
     private boolean isNotBlank(String str) {
-        return (null != str && !str.isEmpty() && !str.isBlank());
+        return (null != str && !str.isBlank());
     }
 
-    private String readJsonValue(String jsonString, String key){
+    private String readJsonValue(String jsonString){
         String token;
         JsonReader jsonReader = Json.createReader(new StringReader(jsonString));
         JsonObject jsonObject = jsonReader.readObject();
-        token = jsonObject.getString(key);
+        token = jsonObject.getString("access_token");
         jsonReader.close();
         return token;
     }

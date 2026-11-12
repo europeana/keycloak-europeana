@@ -38,7 +38,7 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.RoleProvider;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserProvider;
-import org.keycloak.services.resources.Cors;
+import org.keycloak.services.cors.Cors;
 import org.keycloak.utils.EmailValidationUtil;
 
 public class RegistrationService {
@@ -55,29 +55,29 @@ public class RegistrationService {
   private final RealmModel realm;
   private final UserProvider userProvider;
 
-  private final HttpRequest request;
-
   private Cors cors;
 
   public RegistrationService(KeycloakSession session) {
     this.session =session;
     this.realm = session.getContext().getRealm();
     this.userProvider = session.users();
-    this.request = session.getContext().getHttpRequest();
   }
 
   private void setupCors() {
-    this.cors = Cors.add(this.request)
-        .auth().allowedMethods("POST")
-        .allowAllOrigins();
+    this.cors = session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("POST")
+            .allowAllOrigins();
   }
 
   @Path("")
   @OPTIONS
   public Response registerWithCaptchaPreflight() {
-    return Cors.add(this.request, Response.ok())
-        .auth().allowedMethods("POST","OPTIONS")
-        .auth().preflight().build();
+    return session.getProvider(Cors.class)
+            .auth()
+            .allowedMethods("POST", "OPTIONS")
+            .preflight()
+            .add(Response.ok());
   }
 
   @Path("")
@@ -85,45 +85,60 @@ public class RegistrationService {
   @Consumes({MediaType.APPLICATION_JSON})
   @Produces({MediaType.APPLICATION_JSON})
   public Response registerWithCaptcha(RegistrationInput input){
+    setupCors();
+
     try {
-      setupCors();
       verifyCaptcha();
       //input Email id validations
 
       if (input == null || StringUtils.isEmpty(input.getEmail())) {
-        return this.cors.builder(Response.status(Status.BAD_REQUEST)
-            .entity(new ErrorResponse("400-missing-email","The email address is missing","Please fill the email address with the email associated to your Europeana account"))).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST)
+            .entity(new ErrorResponse(
+                    "400-missing-email",
+                    "The email address is missing",
+                    "Please fill the email address with the email associated to your Europeana account")));
       }
       String email = input.getEmail().toLowerCase();
       validateEmail(email);
       //Validate User
       UserModel user = userProvider.getUserByEmail(realm, email);
       if (user == null) {
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unknown","Europeana account not known",
-            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail())))).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+                "400-account-unknown",
+                "Europeana account not known",
+            String.format(ACCOUNT_NOT_FOUND_FOR_EMAIL, input.getEmail()))));
       }
       if(!user.isEmailVerified()){
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-unconfirmed","Europeana account not yet confirmed",
-            EMAIL_NOT_VERIFIED))).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+                "400-account-unconfirmed",
+                "Europeana account not yet confirmed",
+            EMAIL_NOT_VERIFIED)));
       }
       if(!user.isEnabled()){
-        return this.cors.builder(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse("400-account-disabled","Europeana account has been disabled",
-            ACCOUNT_DISABLED))).build();
+        return this.cors.add(Response.status(Status.BAD_REQUEST).entity(new ErrorResponse(
+                "400-account-disabled",
+                "Europeana account has been disabled",
+            ACCOUNT_DISABLED)));
       }
 
-      LOG.info("Found user: "+ user.getUsername() + " for provided email : " + input.getEmail());
+      LOG.info("Found user: "+ user.getUsername() +
+              " for provided email : " + input.getEmail());
       updateKeyAndNotifyUser(user);
 
-      return this.cors.builder(Response.ok().entity("")).build();
+      return this.cors.add(Response.ok().entity(""));
     }
     catch (CaptchaException ex){
-      return this.cors.builder(Response.status(Status.BAD_REQUEST)
-          .entity(new ErrorResponse("400-captcha-error","There was a problem validating reCaptcha",
-              ex.getMessage()))).build();
+      return this.cors.add(Response.status(Status.BAD_REQUEST)
+          .entity(new ErrorResponse(
+                  "400-captcha-error",
+                  "There was a problem validating reCaptcha",
+              ex.getMessage())));
     }
     catch (EmailException ex){
-      return this.cors.builder(Response.status(Status.INTERNAL_SERVER_ERROR)
-          .entity(new ErrorResponse("500-Internal-Server-Error","Internal Server Error",ex.getMessage()))).build();
+      return this.cors.add(Response.status(Status.INTERNAL_SERVER_ERROR)
+          .entity(new ErrorResponse(
+                  "500-Internal-Server-Error",
+                  "Internal Server Error",ex.getMessage())));
     }
   }
 
