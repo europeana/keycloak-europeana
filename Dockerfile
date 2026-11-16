@@ -5,45 +5,29 @@ ARG theme_version=0.12.1
 FROM europeana/keycloak-theme:${theme_version} AS theme
 
 # 2 get base Keycloak image
-FROM quay.io/keycloak/keycloak:${keycloak_version} as builder
+FROM quay.io/keycloak/keycloak:${keycloak_version} AS builder
 WORKDIR /opt/keycloak
+
 ENV KC_DB=postgres
+ENV KC_HTTP_RELATIVE_PATH=/auth
 
-# 3 copy addons to Quarkus providers dir
+# 3 copy addons + dependencies to Quarkus providers dir
 COPY addon-jars ./providers/
-
-# 4 copy addon dependencies to Quarkus providers dir
 COPY dependencies ./providers/
 
-# 5 copy quarkus configuration with custom jdbc settings
+# 4 copy quarkus configuration with custom jdbc settings + otel-javaagent apm jar to conf
 COPY config/cache-ispn-impl.xml ./conf/
-
-# 6 copy otel-javaagent apm jar
 COPY config/opentelemetry-javaagent.jar ./conf/
 
-# 7 copy theme
+# 5 copy theme(s)
 COPY --from=theme /opt/keycloak/themes/europeana ./themes/europeana
 COPY --from=theme /opt/keycloak/themes/europeana-v2 ./themes/europeana-v2
 
-# 8 create intermediary build
+# 6 build the optimized Keycloak installation
 RUN /opt/keycloak/bin/kc.sh build
 
-# 9 get another copy of Keycloak image and apply changes there again
-# see https://github.com/keycloak/keycloak/discussions/10502?sort=new why
+# 7 get the final image and transfer entire optimized installation to it
 FROM quay.io/keycloak/keycloak:${keycloak_version}
 WORKDIR /opt/keycloak
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
-# 10 copy add-ons, dependencies, optimised libs and theme again to new copy
-COPY --from=builder /opt/keycloak/providers/ ./providers/
-#COPY --from=builder /opt/keycloak/conf/ ./conf/
-COPY --from=builder /opt/keycloak/lib/quarkus/ ./lib/quarkus/
-COPY --from=builder /opt/keycloak/themes/europeana ./themes/europeana
-COPY --from=builder /opt/keycloak/themes/europeana-v2 ./themes/europeana-v2
-
-COPY --from=builder /opt/keycloak/conf/cache-ispn-impl.xml ./conf/
-
-COPY --from=builder /opt/keycloak/conf/opentelemetry-javaagent.jar ./conf/
-
-# 11 start command / entry point was moved to Kustomizer deployment-patch.yaml.template
-# fix for redirect issue.
-# CMD ["start", "--optimized", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
