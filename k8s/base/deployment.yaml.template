@@ -9,6 +9,7 @@ spec:
       annotations:
         fluentd/include: '${COLLECT_LOGS}'
         fluentd/multiline: 'true'
+        deployment.europeana.eu/build-id: '${DEPLOYMENT_BUILD_ID}'
     # selector.matchLabels is provided via Kustomize
     spec:
       containers:
