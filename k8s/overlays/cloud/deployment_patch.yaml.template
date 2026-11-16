@@ -34,3 +34,5 @@ spec:
               value: "true"
             - name: KC_HTTP_ACCESS_LOG_ENABLED
               value: "${ENABLE_ACCESS_LOGS}"
+            - name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+              value: "false"
